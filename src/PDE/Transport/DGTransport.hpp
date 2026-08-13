@@ -268,6 +268,7 @@ class Transport {
                 const std::vector< std::size_t >&,
                 const std::unordered_map< std::size_t, std::size_t >&,
                 const std::vector< std::vector<tk::real> >&,
+                const std::vector< int >&,
                 tk::Fields& U,
                 tk::Fields&,
                 std::vector< std::size_t >& ) const

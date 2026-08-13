@@ -324,6 +324,7 @@ class CompFlow {
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& mtInv,
+                const std::vector< int >&,
                 tk::Fields& U,
                 tk::Fields&,
                 std::vector< std::size_t >& shockmarker) const

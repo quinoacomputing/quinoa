@@ -246,12 +246,13 @@ class DGPDE {
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& mtInv,
+                const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
     {
       self->limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel,
-                   gid, bid, mtInv, U, P, shockmarker );
+                   gid, bid, mtInv, srcFlag, U, P, shockmarker );
     }
 
     //! Public interface to update the conservative variable solution
@@ -495,6 +496,7 @@ class DGPDE {
                           const std::vector< std::size_t >&,
                           const std::unordered_map< std::size_t, std::size_t >&,
                           const std::vector< std::vector<tk::real> >&,
+                          const std::vector< int >&,
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
@@ -684,12 +686,13 @@ class DGPDE {
                   const std::vector< std::size_t >& gid,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
                   const std::vector< std::vector<tk::real> >& mtInv,
+                  const std::vector< int >& srcFlag,
                   tk::Fields& U,
                   tk::Fields& P,
                   std::vector< std::size_t >& shockmarker ) const override
       {
         data.limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                    bid, mtInv, U, P, shockmarker );
+                    bid, mtInv, srcFlag, U, P, shockmarker );
       }
       void CPL( const tk::Fields& prim,
                 const tk::Fields& geoElem,
