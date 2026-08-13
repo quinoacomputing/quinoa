@@ -1486,6 +1486,63 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
       mati_deck.get< tag::yield_stress >());
 
+    // Johnson-Cook damage parameters
+    // jc_d1
+    if (!sol_mat[imat+1]["jc_d1"].valid())
+      sol_mat[imat+1]["jc_d1"] =
+        std::vector< tk::real >(ntype, 0.05);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d1", ntype,
+      mati_deck.get< tag::jc_d1 >());
+
+    // jc_d2
+    if (!sol_mat[imat+1]["jc_d2"].valid())
+      sol_mat[imat+1]["jc_d2"] =
+        std::vector< tk::real >(ntype, 3.44);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d2", ntype,
+      mati_deck.get< tag::jc_d2 >());
+
+    // jc_d3
+    if (!sol_mat[imat+1]["jc_d3"].valid())
+      sol_mat[imat+1]["jc_d3"] =
+        std::vector< tk::real >(ntype, -2.12);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d3", ntype,
+      mati_deck.get< tag::jc_d3 >());
+
+    // jc_d4
+    if (!sol_mat[imat+1]["jc_d4"].valid())
+      sol_mat[imat+1]["jc_d4"] =
+        std::vector< tk::real >(ntype, 0.002);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d4", ntype,
+      mati_deck.get< tag::jc_d4 >());
+
+    // jc_d5
+    if (!sol_mat[imat+1]["jc_d5"].valid())
+      sol_mat[imat+1]["jc_d5"] =
+        std::vector< tk::real >(ntype, 0.61);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d5", ntype,
+      mati_deck.get< tag::jc_d5 >());
+
+    // t_melt
+    if (!sol_mat[imat+1]["t_melt"].valid())
+      sol_mat[imat+1]["t_melt"] =
+        std::vector< tk::real >(ntype, 1793.0);
+    checkStoreMatProp(sol_mat[imat+1], "t_melt", ntype,
+      mati_deck.get< tag::t_melt >());
+
+    // t_room
+    if (!sol_mat[imat+1]["t_room"].valid())
+      sol_mat[imat+1]["t_room"] =
+        std::vector< tk::real >(ntype, 293.0);
+    checkStoreMatProp(sol_mat[imat+1], "t_room", ntype,
+      mati_deck.get< tag::t_room >());
+
+    // damage_length_scale
+    if (!sol_mat[imat+1]["damage_length_scale"].valid())
+      sol_mat[imat+1]["damage_length_scale"] =
+        std::vector< tk::real >(ntype, 1.0e-3);
+    checkStoreMatProp(sol_mat[imat+1], "damage_length_scale", ntype,
+      mati_deck.get< tag::damage_length_scale >());
+
     // assign solid
     is_solid = true;
   }
@@ -1530,6 +1587,63 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
       mati_deck.get< tag::yield_stress >());
 
+    // Johnson-Cook damage parameters
+    // jc_d1
+    if (!sol_mat[imat+1]["jc_d1"].valid())
+      sol_mat[imat+1]["jc_d1"] =
+        std::vector< tk::real >(ntype, 0.05);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d1", ntype,
+      mati_deck.get< tag::jc_d1 >());
+
+    // jc_d2
+    if (!sol_mat[imat+1]["jc_d2"].valid())
+      sol_mat[imat+1]["jc_d2"] =
+        std::vector< tk::real >(ntype, 3.44);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d2", ntype,
+      mati_deck.get< tag::jc_d2 >());
+
+    // jc_d3
+    if (!sol_mat[imat+1]["jc_d3"].valid())
+      sol_mat[imat+1]["jc_d3"] =
+        std::vector< tk::real >(ntype, -2.12);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d3", ntype,
+      mati_deck.get< tag::jc_d3 >());
+
+    // jc_d4
+    if (!sol_mat[imat+1]["jc_d4"].valid())
+      sol_mat[imat+1]["jc_d4"] =
+        std::vector< tk::real >(ntype, 0.002);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d4", ntype,
+      mati_deck.get< tag::jc_d4 >());
+
+    // jc_d5
+    if (!sol_mat[imat+1]["jc_d5"].valid())
+      sol_mat[imat+1]["jc_d5"] =
+        std::vector< tk::real >(ntype, 0.61);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d5", ntype,
+      mati_deck.get< tag::jc_d5 >());
+
+    // t_melt
+    if (!sol_mat[imat+1]["t_melt"].valid())
+      sol_mat[imat+1]["t_melt"] =
+        std::vector< tk::real >(ntype, 1793.0);
+    checkStoreMatProp(sol_mat[imat+1], "t_melt", ntype,
+      mati_deck.get< tag::t_melt >());
+
+    // t_room
+    if (!sol_mat[imat+1]["t_room"].valid())
+      sol_mat[imat+1]["t_room"] =
+        std::vector< tk::real >(ntype, 293.0);
+    checkStoreMatProp(sol_mat[imat+1], "t_room", ntype,
+      mati_deck.get< tag::t_room >());
+
+    // damage_length_scale
+    if (!sol_mat[imat+1]["damage_length_scale"].valid())
+      sol_mat[imat+1]["damage_length_scale"] =
+        std::vector< tk::real >(ntype, 1.0e-3);
+    checkStoreMatProp(sol_mat[imat+1], "damage_length_scale", ntype,
+      mati_deck.get< tag::damage_length_scale >());
+
     // assign solid
     is_solid = true;
   }
@@ -1557,6 +1671,63 @@ LuaParser::registerMaterials(
         std::vector< tk::real >(ntype, 300.0e+06);
     checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
       mati_deck.get< tag::yield_stress >());
+
+    // Johnson-Cook damage parameters
+    // jc_d1
+    if (!sol_mat[imat+1]["jc_d1"].valid())
+      sol_mat[imat+1]["jc_d1"] =
+        std::vector< tk::real >(ntype, 0.05);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d1", ntype,
+      mati_deck.get< tag::jc_d1 >());
+
+    // jc_d2
+    if (!sol_mat[imat+1]["jc_d2"].valid())
+      sol_mat[imat+1]["jc_d2"] =
+        std::vector< tk::real >(ntype, 3.44);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d2", ntype,
+      mati_deck.get< tag::jc_d2 >());
+
+    // jc_d3
+    if (!sol_mat[imat+1]["jc_d3"].valid())
+      sol_mat[imat+1]["jc_d3"] =
+        std::vector< tk::real >(ntype, -2.12);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d3", ntype,
+      mati_deck.get< tag::jc_d3 >());
+
+    // jc_d4
+    if (!sol_mat[imat+1]["jc_d4"].valid())
+      sol_mat[imat+1]["jc_d4"] =
+        std::vector< tk::real >(ntype, 0.002);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d4", ntype,
+      mati_deck.get< tag::jc_d4 >());
+
+    // jc_d5
+    if (!sol_mat[imat+1]["jc_d5"].valid())
+      sol_mat[imat+1]["jc_d5"] =
+        std::vector< tk::real >(ntype, 0.61);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d5", ntype,
+      mati_deck.get< tag::jc_d5 >());
+
+    // t_melt
+    if (!sol_mat[imat+1]["t_melt"].valid())
+      sol_mat[imat+1]["t_melt"] =
+        std::vector< tk::real >(ntype, 1793.0);
+    checkStoreMatProp(sol_mat[imat+1], "t_melt", ntype,
+      mati_deck.get< tag::t_melt >());
+
+    // t_room
+    if (!sol_mat[imat+1]["t_room"].valid())
+      sol_mat[imat+1]["t_room"] =
+        std::vector< tk::real >(ntype, 293.0);
+    checkStoreMatProp(sol_mat[imat+1], "t_room", ntype,
+      mati_deck.get< tag::t_room >());
+
+    // damage_length_scale
+    if (!sol_mat[imat+1]["damage_length_scale"].valid())
+      sol_mat[imat+1]["damage_length_scale"] =
+        std::vector< tk::real >(ntype, 1.0e-3);
+    checkStoreMatProp(sol_mat[imat+1], "damage_length_scale", ntype,
+      mati_deck.get< tag::damage_length_scale >());
 
     // assign solid
     is_solid = true;
@@ -1597,6 +1768,63 @@ LuaParser::registerMaterials(
         std::vector< tk::real >(ntype, 300.0e+06);
     checkStoreMatProp(sol_mat[imat+1], "yield_stress", ntype,
       mati_deck.get< tag::yield_stress >());
+
+    // Johnson-Cook damage parameters
+    // jc_d1
+    if (!sol_mat[imat+1]["jc_d1"].valid())
+      sol_mat[imat+1]["jc_d1"] =
+        std::vector< tk::real >(ntype, 0.05);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d1", ntype,
+      mati_deck.get< tag::jc_d1 >());
+
+    // jc_d2
+    if (!sol_mat[imat+1]["jc_d2"].valid())
+      sol_mat[imat+1]["jc_d2"] =
+        std::vector< tk::real >(ntype, 3.44);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d2", ntype,
+      mati_deck.get< tag::jc_d2 >());
+
+    // jc_d3
+    if (!sol_mat[imat+1]["jc_d3"].valid())
+      sol_mat[imat+1]["jc_d3"] =
+        std::vector< tk::real >(ntype, -2.12);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d3", ntype,
+      mati_deck.get< tag::jc_d3 >());
+
+    // jc_d4
+    if (!sol_mat[imat+1]["jc_d4"].valid())
+      sol_mat[imat+1]["jc_d4"] =
+        std::vector< tk::real >(ntype, 0.002);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d4", ntype,
+      mati_deck.get< tag::jc_d4 >());
+
+    // jc_d5
+    if (!sol_mat[imat+1]["jc_d5"].valid())
+      sol_mat[imat+1]["jc_d5"] =
+        std::vector< tk::real >(ntype, 0.61);
+    checkStoreMatProp(sol_mat[imat+1], "jc_d5", ntype,
+      mati_deck.get< tag::jc_d5 >());
+
+    // t_melt
+    if (!sol_mat[imat+1]["t_melt"].valid())
+      sol_mat[imat+1]["t_melt"] =
+        std::vector< tk::real >(ntype, 1793.0);
+    checkStoreMatProp(sol_mat[imat+1], "t_melt", ntype,
+      mati_deck.get< tag::t_melt >());
+
+    // t_room
+    if (!sol_mat[imat+1]["t_room"].valid())
+      sol_mat[imat+1]["t_room"] =
+        std::vector< tk::real >(ntype, 293.0);
+    checkStoreMatProp(sol_mat[imat+1], "t_room", ntype,
+      mati_deck.get< tag::t_room >());
+
+    // damage_length_scale
+    if (!sol_mat[imat+1]["damage_length_scale"].valid())
+      sol_mat[imat+1]["damage_length_scale"] =
+        std::vector< tk::real >(ntype, 1.0e-3);
+    checkStoreMatProp(sol_mat[imat+1], "damage_length_scale", ntype,
+      mati_deck.get< tag::damage_length_scale >());
 
     // assign solid
     is_solid = true;

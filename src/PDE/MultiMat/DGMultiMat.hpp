@@ -833,6 +833,27 @@ class MultiMat {
           }
         }
 
+        // Clean up damage in mixed/trace cells
+        // In Eulerian codes, damage gets "painted" on the mesh as material advects.
+        // Cells that were once pure-solid but are now mixed retain their damage history
+        // even though most of the solid has advected away. Reset damage in these cells.
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (solidx[k] > 0)
+          {
+            tk::real alpha_k = U(e, volfracDofIdx(nmat, k, rdof, 0));
+
+            // If material is no longer significantly present, reset damage
+            // Use same threshold as smoothstep to be consistent
+            if (alpha_k < 0.95)
+            {
+              tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
+              // Reset damage to minimum value (not zero, for numerical stability)
+              U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 1.0e-06 * arho_k;
+            }
+          }
+        }
+
         // Volume fraction redistribution for highly damaged solids (spallation)
         // When solid is critically damaged AND in tension, transfer volume to fluid
         // (void formation/spallation). Only proceed if there's at least one fluid
