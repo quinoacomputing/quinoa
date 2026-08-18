@@ -34,7 +34,6 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
-    //m_material = StiffenedGas(g, ps, c_v, mu);
     type = EOSType::StiffenedGas;
     new (&m_material.stiffenedGas)
       StiffenedGas(g, ps, c_v, mu);
@@ -115,7 +114,6 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto ps = getspecprop< tag::pstiff >(k);
       auto c_v = getspecprop< tag::cv >(k);
       auto mu = getspecprop< tag::mu >(k);
-      //m_material = StiffenedGas(g, ps, c_v, mu);
       type = EOSType::StiffenedGas;
       new (&m_material.stiffenedGas)
         StiffenedGas(g, ps, c_v, mu);
@@ -135,7 +133,6 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto mu_ref = getspecprop< tag::mu_ref >(k);
       auto C = getspecprop< tag::C >(k);
       auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
-      //m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, mu, temp_ref, mu_ref, C, Sutherland);
       type = EOSType::ThermallyPerfectGas;
       new (&m_material.thermallyPerfectGas)
         ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, mu, temp_ref, mu_ref, C, Sutherland);
