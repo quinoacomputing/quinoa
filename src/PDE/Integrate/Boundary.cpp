@@ -309,20 +309,38 @@ viscousBoundaryFaceIntDG(
         // face normal
         std::array< real, 3 > fn{{geoFace(f,1), geoFace(f,2), geoFace(f,3)}};
 
-        // Compute right and left cell diameters for numerical flux
-        // Compute distances between vertices and take maximum
-        tk::real diameter_l = 0.0;
-        tk::real diameter_r = 0.0;
-        for (std::size_t i = 0; i<3; ++i) {
-          for (std::size_t j=i+1; j<4; ++j) {
-            diameter_l = std::max(diameter_l, tk::length(
-                                   coordel_l[i][0] - coordel_l[j][0],
-                                   coordel_l[i][1] - coordel_l[j][1],
-                                   coordel_l[i][2] - coordel_l[j][2] ) );
-          }
+        // Compute the tetrahedron insphere diameter for the numerical flux:
+        // h_K = 2 r_K = 6 V_K / S_K = |det(J_K)| / S_K.
+        constexpr std::array< std::array< std::size_t, 3 >, 4 > tetFaces{{
+          {{ 0, 1, 2 }},
+          {{ 0, 1, 3 }},
+          {{ 0, 2, 3 }},
+          {{ 1, 2, 3 }} }};
+
+        tk::real surfaceArea_l = 0.0;
+        for (const auto& face : tetFaces) {
+          const auto a = face[0];
+          const auto b = face[1];
+          const auto c = face[2];
+
+          const std::array< tk::real, 3 > ab_l{{
+            coordel_l[b][0] - coordel_l[a][0],
+            coordel_l[b][1] - coordel_l[a][1],
+            coordel_l[b][2] - coordel_l[a][2] }};
+          const std::array< tk::real, 3 > ac_l{{
+            coordel_l[c][0] - coordel_l[a][0],
+            coordel_l[c][1] - coordel_l[a][1],
+            coordel_l[c][2] - coordel_l[a][2] }};
+          const std::array< tk::real, 3 > cross_l{{
+            ab_l[1]*ac_l[2] - ab_l[2]*ac_l[1],
+            ab_l[2]*ac_l[0] - ab_l[0]*ac_l[2],
+            ab_l[0]*ac_l[1] - ab_l[1]*ac_l[0] }};
+          surfaceArea_l += 0.5 * std::sqrt( tk::dot(cross_l, cross_l) );
         }
 
-        const tk::real he = diameter_l;
+        Assert( surfaceArea_l > 0.0, "Degenerate boundary tetrahedron" );
+
+        const tk::real he = std::abs(detT_l) / surfaceArea_l;
 
         // Gaussian quadrature
         for (std::size_t igp=0; igp<ng; ++igp)
