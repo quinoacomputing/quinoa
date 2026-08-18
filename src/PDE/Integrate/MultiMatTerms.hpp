@@ -209,7 +209,7 @@ void fluxTerms_multimat_kokkos(
   std::size_t ncomp,
   std::size_t nmat,
   Kokkos::View<const size_t*, memory_space>  solidx,
-  const std::vector< inciter::EOS >& /*mat_blk*/,
+  //const std::vector< inciter::EOS >& /*mat_blk*/,
   Kokkos::Array<tk::real, NSTATE_MAX>& ugp, // this is state essentially
   Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, NMAT_MAX>& g, 
   Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, NMAT_MAX>& asig,

@@ -643,7 +643,7 @@ tk::volInt_constP(
 
         auto wt = wgp[igp] * geoElem_d_view(e * geo_nprop);
         
-        evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+        evalPolynomialSol(/*mat_blk,*/ intsharp, ncomp, nprim,
           rdof, nmat, e, rdof, m_nprop, p_nprop, geo_nprop,
           bparam, solidx_d_view, inpoel_d_view, 
           cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
@@ -653,7 +653,7 @@ tk::volInt_constP(
         // Compute flux and apply each component to R as produced
         // Removes the need for large [NCOMP_MAX][3] fl array and separate pass of update_rhs_device
         // DO NOT SIMPLIFY INTO idof LOOP it forces the array out of the registers!
-        fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, mat_blk, state, g, asig, al,
+        fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, /*mat_blk,*/ state, g, asig, al,
                                   [&](std::size_t c, real f0, real f1, real f2)
         {
           const auto mark = c*ndof;

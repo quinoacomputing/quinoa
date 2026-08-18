@@ -504,7 +504,7 @@ nonConservativeInt_constP(
       //auto wt = wgp[igp] * geoElem(e, 0);
       auto wt = wgp[igp] * geoElem_d_view(e*geo_nprop);
 
-      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+      evalPolynomialSol(/*mat_blk,*/ intsharp, ncomp, nprim,
         //rdof, nmat, e, rdof, inpoel, coord, geoElem,
         //{{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
         rdof,nmat,e,rdof,m_nprop,p_nprop,geo_nprop,
