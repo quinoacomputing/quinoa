@@ -1,28 +1,28 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/SmallShearSolid.hpp
+  \file      src/PDE/EoS/NeoHookeanSolid.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Small shear strain equation of state for solids
-  \details   This file declares functions for the SmallShearSolid equation of
+  \brief     Neo-Hookean equation of state for solids
+  \details   This file declares functions for the NeoHookeanSolid equation of
              state for the compressible flow equations. These functions are
              taken from Plohr, J. N., & Plohr, B. J. (2005). Linearized analysis
              of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
-             Mechanics, 537, 55-89. The SmallShearSolid EOS uses a small-shear
+             Mechanics, 537, 55-89. The NeoHookeanSolid EOS uses a small-shear
              approximation for the elastic contribution, and a stiffened gas EOS
              for the hydrodynamic contribution of the internal energy.
 */
 // *****************************************************************************
-#ifndef SmallShearSolid_h
-#define SmallShearSolid_h
+#ifndef NeoHookeanSolid_h
+#define NeoHookeanSolid_h
 
 #include "Data.hpp"
 
 namespace inciter {
 
-class SmallShearSolid {
+class NeoHookeanSolid {
 
   private:
     tk::real m_gamma, m_pstiff, m_cv, m_mu, m_rho0;
@@ -35,10 +35,10 @@ class SmallShearSolid {
 
   public:
     //! Default constructor
-    SmallShearSolid() = default;
+    NeoHookeanSolid() = default;
 
     //! Constructor
-    SmallShearSolid(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
+    NeoHookeanSolid(tk::real gamma, tk::real pstiff, tk::real cv, tk::real mu );
 
     //! Set rho0 EOS parameter; i.e. the initial density
     void setRho0(tk::real rho0);
@@ -65,7 +65,7 @@ class SmallShearSolid {
     { return 0.0; }
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
-    //!   inverse deformation gradient tensor using the SmallShearSolid EOS
+    //!   inverse deformation gradient tensor using the NeoHookeanSolid EOS
     std::array< std::array< tk::real, 3 >, 3 >
     CauchyStress(
       tk::real alpha,
@@ -151,11 +151,11 @@ class SmallShearSolid {
     }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i SmallShearSolid object reference
-    friend void operator|( PUP::er& p, SmallShearSolid& i ) { i.pup(p); }
+    //! \param[in,out] i NeoHookeanSolid object reference
+    friend void operator|( PUP::er& p, NeoHookeanSolid& i ) { i.pup(p); }
     //@}
 };
 
 } //inciter::
 
-#endif // SmallShearSolid_h
+#endif // NeoHookeanSolid_h
