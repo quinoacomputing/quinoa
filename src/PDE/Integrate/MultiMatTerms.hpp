@@ -41,6 +41,7 @@ nonConservativeInt( const bool pref,
                     const Fields& P,
                     const std::vector< std::vector< tk::real > >& riemannDeriv,
                     const std::vector< std::size_t >& ndofel,
+                    const std::vector< int >& srcFlag,
                     Fields& R,
                     int intsharp );
 
@@ -83,6 +84,7 @@ pressureRelaxationInt( const bool pref,
                        const Fields& P,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
+                       const std::vector< int >& srcFlag,
                        Fields& R,
                        int intsharp );
 
