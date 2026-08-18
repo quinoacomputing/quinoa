@@ -625,7 +625,7 @@ tk::volInt_constP(
       Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, NMAT_MAX> g = {};
       Kokkos::Array<Kokkos::Array<Kokkos::Array<real, 3>, 3>, NMAT_MAX> asig = {};
       Kokkos::Array<real, NMAT_MAX> al = {};
-      Kokkos::Array<Kokkos::Array<real, 3>, NCOMP_MAX> fl = {};
+      //Kokkos::Array<Kokkos::Array<real, 3>, NCOMP_MAX> fl = {};
       Kokkos::Array<real, NMAT_MAX> apk = {};
       Kokkos::Array<real, NSTATE_MAX> state = {};
 
@@ -650,12 +650,34 @@ tk::volInt_constP(
           {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U_d_view, 
           P_d_view, state);
 
-        // compute flux
-        fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, 
-          mat_blk, state, g, asig, al, fl, apk);
-            
-        // Call device version explicitly
-        tk::update_rhs_device(ncomp, ndof, ndof, wt, r_nprop, e, dBdx, fl, R_d_view);  
+        // Compute flux and apply each component to R as produced
+        // Removes the need for large [NCOMP_MAX][3] fl array and separate pass of update_rhs_device
+        // DO NOT SIMPLIFY INTO idof LOOP it forces the array out of the registers!
+        fluxTerms_multimat_kokkos(ncomp, nmat, solidx_d_view, mat_blk, state, g, asig, al,
+                                  [&](std::size_t c, real f0, real f1, real f2)
+        {
+          const auto mark = c*ndof;
+          R_d_view(e*r_nprop + mark+1) +=
+            wt*(f0*dBdx[0][1] + f1*dBdx[1][1] + f2*dBdx[2][1]);
+          R_d_view(e*r_nprop + mark+2) +=
+            wt*(f0*dBdx[0][2] + f1*dBdx[1][2] + f2*dBdx[2][2]);
+          R_d_view(e*r_nprop + mark+3) +=
+            wt*(f0*dBdx[0][3] + f1*dBdx[1][3] + f2*dBdx[2][3]);
+          if (ndof>4) {
+            R_d_view(e*r_nprop + mark+4) +=
+              wt*(f0*dBdx[0][4] + f1*dBdx[1][4] + f2*dBdx[2][4]);
+            R_d_view(e*r_nprop + mark+5) +=
+              wt*(f0*dBdx[0][5] + f1*dBdx[1][5] + f2*dBdx[2][5]);
+            R_d_view(e*r_nprop + mark+6) +=
+              wt*(f0*dBdx[0][6] + f1*dBdx[1][6] + f2*dBdx[2][6]);
+            R_d_view(e*r_nprop + mark+7) +=
+              wt*(f0*dBdx[0][7] + f1*dBdx[1][7] + f2*dBdx[2][7]);
+            R_d_view(e*r_nprop + mark+8) +=
+              wt*(f0*dBdx[0][8] + f1*dBdx[1][8] + f2*dBdx[2][8]);
+            R_d_view(e*r_nprop + mark+9) +=
+              wt*(f0*dBdx[0][9] + f1*dBdx[1][9] + f2*dBdx[2][9]);
+          }
+        }, apk);
       }
     }
   });
