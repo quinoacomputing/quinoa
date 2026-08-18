@@ -102,6 +102,43 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
   }
 }
 
+void buildEOSDevice( std::vector< tk::EOSDevice >& eosd )
+// *****************************************************************************
+//  Mirror per-material EOS constants needed by device kernels
+//! \details Reads the same input deck fields as initializeMaterialEoS()
+//!   Throws for material types soundspeedDevice() does not implement
+//!   Therefore unsupported configs will fail on the host
+//!   Rather than failing/returning wrong value silently on device side 
+// *****************************************************************************
+{
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+  const auto& matprop = g_inputdeck.get< tag::material >();
+  const auto& matidxmap = g_inputdeck.get< tag::matidxmap >();
+
+  eosd.clear();
+  eosd.resize( nmat );
+
+  for (std::size_t k=0; k<nmat; ++k){
+    auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get< tag::eos >();
+    auto& m = eosd[k];
+
+    if (mateos == ctr::MaterialType::STIFFENEDGAS) {
+      m.type = tk::EOSDevice::StiffenedGas;
+      m.gamma = getmatprop< tag::gamma >(k);
+      m.pstiff = getmatprop< tag::pstiff >(k);
+    }
+    else if (mateos == ctr::MaterialType::SMALLSHEARSOLID) {
+      m.type = tk::EOSDevice::SmallShearSolid;
+      m.gamma = getmatprop< tag::gamma >(k);
+      m.pstiff = getmatprop< tag::pstiff >(k);
+      m.mu = getmatprop< tag::mu >(k);
+    }
+    else {
+      Throw( "Material-" + std::to_string(k) + " uses a device-unimplemented EOS." );
+    }
+  }
+}
+
 bool
 cleanTraceMultiMat(
   tk::real t,

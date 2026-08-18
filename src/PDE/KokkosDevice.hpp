@@ -68,6 +68,55 @@ namespace tk {
 		ErrChk( NGvol(ndof) <= NQUAD_MAX, "Max. " + std::to_string(NQUAD_MAX) + " quadrature points supported.");
 	}
 
+        // POD mirror of the per-material EOS constants needed by device kernel
+        // Note this is NOT a general EOS port, the union_EOS branch is not device-compatible yet and needs work
+        // This thing only contains the scalars needed by soundspeed()
+        // inciter::EOS is not trivially copyable yet and cannot be captured into device lambda
+        // So I use this to port the pressureRelaxation without needing to invest in finishing the union_EOS
+        // This is still built on the host from the inputdeck fields used by initializeMaterialEOS(), uploaded ONCE only
+        struct EOSDevice {
+          enum Type : int { StiffenedGas=0, SmallShearSolid=1, GodunovRomenski=2 };
+          int type = StiffenedGas;
+          real gamma = 0.0;
+          real pstiff = 0.0;
+          real mu = 0.0;
+          real rho0 = 0.0;
+          real K0 = 0.0;
+          real alpha = 0.0;
+        }; //eosd
+
+        // This is the device equivalent of mat_blk[k].compute<EOS::soundspeed>(arho,apr,alpha,k)
+        // Host versions Throw and std::cout on a nonfinite result but neither works on device so I dropped the check here
+        KOKKOS_INLINE_FUNCTION
+        real soundspeedDevice( const EOSDevice& m, real arho, real apr, real alpha )
+        {
+          const auto al_eff = std::fmax( 1.0e-14, alpha );
+          
+          if (m.type == EOSDevice::StiffenedGas) {
+            const auto p_eff = std::fmax( 1.0e-15, apr + al_eff*m.pstiff );
+            return std::sqrt( m.gamma*p_eff/arho );
+          }
+          else if (m.type == EOSDevice::SmallShearSolid) {
+            // Barton 2019 approximated elastic contribution
+            auto a = (4.0/3.0) * m.mu * al_eff / arho;
+            const auto p_eff = std::fmax( 1.0e-15, apr + al_eff*m.pstiff );
+            a += m.gamma * p_eff / arho;
+            return std::sqrt(a);
+          }
+          else { //GodunovRomenski
+            const auto rho = arho/al_eff;
+            const auto rrho0a = std::pow( rho/m.rho0, m.alpha );
+            // pressure_coldcompr(arho, al_eff)
+            const auto p_cc = al_eff*(m.K0/m.alpha*(rrho0a*rho/m.rho0)*(rrho0a-1.0));
+            // DpccDrho(rho)
+            const auto dpdrho = m.K0/(m.rho0*m.alpha)
+                              * ((2.0*m.alpha+1.0)*(rrho0a*rrho0a) - (m.alpha+1.0)*rrho0a);
+            auto a = std::fmax( 1.0e-15, dpdrho + (m.gamma+1.0)*(apr - p_cc)/arho );
+            a += (4.0/3.0)*al_eff*m.mu/arho;
+            return std::sqrt(a);
+          }
+        }//ssd
+
 
 	// Persistent device-resident buffers for const-P DG kernels
 	// Bundles all device views that would otherwise be allocated by kernels
@@ -95,6 +144,10 @@ namespace tk {
 		pinned_view stage_P;
 		pinned_view stage_R;
 		pinned_view stage_rd;
+
+                // Per-material EOS constants
+                // Time and partition invariant so only upload once when first allocated
+                Kokkos::View< EOSDevice*, memory_space > eos;
 
 		// Host-provenance of mesh data resident on device
 		const std::size_t* src_inpoel = nullptr;

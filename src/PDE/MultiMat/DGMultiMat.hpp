@@ -104,6 +104,7 @@ class MultiMat {
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
+      buildEOSDevice( m_eosDev );
     }
 
     // Copy constructor
@@ -119,6 +120,7 @@ class MultiMat {
       m_riemann(x.m_riemann),
       m_bc(x.m_bc),
       m_mat_blk(x.m_mat_blk),
+      m_eosDev(x.m_eosDev),
       m_dev()
     {}
 
@@ -133,6 +135,7 @@ class MultiMat {
       m_riemann(std::move(x.m_riemann)),
       m_bc(std::move(x.m_bc)),
       m_mat_blk(std::move(x.m_mat_blk)),
+      m_eosDev(std::move(x.m_eosDev)),
       m_dev(std::move(x.m_dev))
     {}
 
@@ -1055,27 +1058,36 @@ class MultiMat {
                                        inpoel, coord, geoElem, U, P, riemannDeriv,
                                        R, intsharp, &m_dev, true );
 
+        // Must run BEFORE download with prestaged=true it accumulates to device R
+        if (g_inputdeck.get< tag::multimat, tag::prelax >()) {
+          const auto ct_d = g_inputdeck.get< tag::multimat, tag::prelax_timescale >();
+          tk::pressureRelaxationInt_constP( nmat, m_eosDev, ndof, rdof, nelem, inpoel, coord, geoElem, U, P, ct_d,
+                                            R, intsharp, &m_dev, true );
+        }
+
         // Single D2H of R, after the last kernel that touches it
         tk::downloadStaged( exec, R.getPointerNonConst(), m_dev.stage_R, m_dev.R, R.getSize(), "R_d_view" );
 
         // And finally here's the source term on the host side
         // It's not device callable so this += lands on host R and needs to be post-download to avoid ovewrite
-        tk::srcInt_constP( nmat, t, m_mat_blk, ndof, U.nprop()/rdof, nelem, inpoel, coord, geoElem, Problem::src, R );
+        // Guarded by a boolean so it only calls if necessary
+        if constexpr (Problem::hasSrc)
+          tk::srcInt_constP( nmat, t, m_mat_blk, ndof, U.nprop()/rdof, nelem, inpoel, coord, geoElem, Problem::src, R );
       }
       else {
         tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
                                 inpoel, coord, geoElem, U, P, riemannDeriv,
                                 ndofel, R, intsharp );
-      }
 
-      // compute finite pressure relaxation terms
-      if (g_inputdeck.get< tag::multimat, tag::prelax >())
-      {
-        const auto ct = g_inputdeck.get< tag::multimat,
-                                         tag::prelax_timescale >();
-        tk::pressureRelaxationInt( pref, nmat, m_mat_blk, ndof,
-                                   rdof, nelem, inpoel, coord, geoElem, U, P,
-                                   ndofel, ct, R, intsharp );
+        // compute finite pressure relaxation terms
+        if (g_inputdeck.get< tag::multimat, tag::prelax >())
+        {
+          const auto ct = g_inputdeck.get< tag::multimat,
+                                           tag::prelax_timescale >();
+          tk::pressureRelaxationInt( pref, nmat, m_mat_blk, ndof,
+                                     rdof, nelem, inpoel, coord, geoElem, U, P,
+                                     ndofel, ct, R, intsharp );
+        }
       }
     }
 
@@ -1640,6 +1652,7 @@ class MultiMat {
     BCStateFn m_bc;
     //! EOS material block
     std::vector< EOS > m_mat_blk;
+    std::vector< tk::EOSDevice > m_eosDev;
 
     // Persistent device resident scratch buffer for constP kernels
     // This is the stuff we hoisted out from the _constP functions

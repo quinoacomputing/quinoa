@@ -409,19 +409,6 @@ nonConservativeInt_constP(
   if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
-  /*
-  // U,P change per call so always upload
-  size_t P_size = P.getSize();
-  ensureDeviceCapacity(dv.P, "nconsv_P_d_view", P_size);
-  auto P_h_view = changeToView(P.getPointer(), P_size);
-  Kokkos::deep_copy(dv.P, P_h_view);
-
-  size_t U_size = U.getSize();
-  ensureDeviceCapacity(dv.U, "nconsv_U_d_view", U_size);
-  auto U_h_view = changeToView(U.getPointer(), U_size);
-  Kokkos::deep_copy(dv.U, U_h_view);
-  */
-
   // Up, P, R change per call so always upload
   // Staged thru pagelock memory and queued on default exec space instance (async copies)
   // Kernel runs on the same instance (stream) so its ordered after without needing to fence
@@ -1001,6 +988,255 @@ pressureRelaxationInt( const bool pref,
       updateRhsPre( ncomp, ndof, ndofel[e], wt, e, B, s_prelax, R );
     }
   }
+}
+
+void
+pressureRelaxationInt_constP(
+  std::size_t nmat,
+  const std::vector< tk::EOSDevice >& eosd,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const tk::real ct,
+  Fields& R,
+  int intsharp,
+  nonConsvIntDeviceViews* dev, bool prestaged ) //added this
+// *****************************************************************************
+//  Compute volume integrals for multi-material DG (const-order, not p-adaptive)
+//! \details This is called for multi-material DG, computing volume integrals of
+//!   terms in the volume fraction and energy equations, which do not exist in
+//!   the single-material flow formulation (for `CompFlow` DG). For further
+//!   details see Pelanti, M., & Shyue, K. M. (2019).
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Total number of elements
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
+//! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms
+//! \param[in,out] R Right-hand side vector added to
+//! \param[in] intsharp Interface reconstruction indicator
+// *****************************************************************************
+{
+  Kokkos::Profiling::pushRegion("pressureRelaxInt");
+
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::energyIdx;
+  using inciter::velocityIdx;
+  using inciter::deformIdx;
+  using inciter::pressureIdx;
+  
+  using inciter::volfracDofIdx;
+  using inciter::energyDofIdx;
+  using inciter::deformDofIdx;
+
+  const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
+
+  // Interface-compression parameter read on host
+  // g_inputdeck is not addressable from the device
+  auto bparam = inciter::g_inputdeck.get<tag::multimat,tag::intsharp_param>();
+
+  const std::size_t ncomp = U.nprop()/rdof;
+  const std::size_t nprim = P.nprop()/rdof;
+
+  const std::size_t m_nprop = U.nprop();
+  const std::size_t p_nprop = P.nprop();
+  const std::size_t r_nprop = R.nprop();
+  const std::size_t geo_nprop = geoElem.nprop();
+
+  // Fail loudly on the hoest if the config overruns fixed-size device scratch arrays
+  // Otherwise we are corrupting thread-private memory
+  checkKokkosCaps( nmat, ndof, rdof, ncomp, nprim );
+
+  // Need to evaluate numSolids() here on host before capturing it into the kernel
+  const std::size_t nsld = inciter::numSolids(nmat, solidx);
+
+  // Quadrature points
+  // We only need to compute this once for constant P
+  const auto ng = tk::NGvol(ndof);
+
+  // Persistent device buffers
+  // Prevents redundant cudaMallocs and cudaFrees per call
+  nonConsvIntDeviceViews local_dev;
+  nonConsvIntDeviceViews& dv = dev ? *dev : local_dev;
+
+  // Variables go here
+  // First check whether device already holds this partition's mesh data at current meshgen state
+  // Refer to tk::meshResident() for more details
+  const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
+
+  // Solidx
+  auto solidx_h_view = changeToView(solidx.data(), nmat);
+  if (ensureDeviceCapacity(dv.solidx, "nconsv_solidx_d_view", nmat) || !mesh_ok)
+    Kokkos::deep_copy(dv.solidx, solidx_h_view);
+
+  // Inpoel
+  const std::size_t inpoel_size = inpoel.size();
+  auto inpoel_h_view = changeToView(inpoel.data(), inpoel_size);
+  if (ensureDeviceCapacity(dv.inpoel, "nconsv_inpoel_d_view", inpoel_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.inpoel, inpoel_h_view);
+
+  // Transfer coord (nodal coordinates)
+  size_t coordx_size = coord[0].size();
+  auto cx_h_view = changeToView(coord[0].data(), coordx_size);
+  if (ensureDeviceCapacity(dv.cx, "nconsv_cx_d_view", coordx_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.cx, cx_h_view);
+
+  size_t coordy_size = coord[1].size();
+  auto cy_h_view = changeToView(coord[1].data(), coordy_size);
+  if (ensureDeviceCapacity(dv.cy, "nconsv_cy_d_view", coordy_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.cy, cy_h_view);
+  
+  size_t coordz_size = coord[2].size();
+  auto cz_h_view = changeToView(coord[2].data(), coordz_size);
+  if (ensureDeviceCapacity(dv.cz, "nconsv_cz_d_view", coordz_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.cz, cz_h_view);
+
+  // geoElem and EOS transfer
+  size_t geoElem_size = geoElem.getSize();
+  auto geoElem_h_view = changeToView(geoElem.getPointer(), geoElem_size);
+  if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
+
+  auto eos_h_view = changeToView( eosd.data(), nmat );
+  if (ensureDeviceCapacity(dv.eos, "eos_d_view", nmat))
+    Kokkos::deep_copy(dv.eos, eos_h_view);
+
+  // Up, P, R change per call so always upload
+  // Staged thru pagelock memory and queued on default exec space instance (async copies)
+  // Kernel runs on the same instance (stream) so its ordered after without needing to fence
+  auto exec = Kokkos::DefaultExecutionSpace();
+
+  const std::size_t R_size = R.getSize();
+  if(!prestaged){
+    uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "nconsv_R_d_view" );
+
+    const std::size_t P_size = P.getSize();
+    uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "nconsv_P_d_view" );
+
+    const std::size_t U_size = U.getSize();
+    uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "nconsv_U_d_view" );
+  }
+
+  // Shallow copies of view handle
+  // Does not touch device memory, just gives kernel below local names and captures plain views by value into KOKKOS_LAMBDA
+  // If volIntDeviceViews struct (or a ref to it) is captured it will be invalid on device
+  auto solidx_d_view = dv.solidx;
+  auto inpoel_d_view = dv.inpoel;
+  auto cx_d_view = dv.cx;
+  auto cy_d_view = dv.cy;
+  auto cz_d_view = dv.cz;
+  auto geoElem_d_view = dv.geoElem;
+  auto P_d_view = dv.P;
+  auto U_d_view = dv.U;
+  auto R_d_view = dv.R;
+  auto eos_d_view = dv.eos;
+
+  // Quadrature points can be hoisted out
+  // Because P is constant
+  Kokkos::Array<Kokkos::Array<real,NQUAD_MAX>, 3> coordgp = {};
+  Kokkos::Array<real,NQUAD_MAX> wgp = {};
+  GaussQuadratureTet(ng,coordgp,wgp);
+
+  // compute volume integrals
+  Kokkos::parallel_for("pRelax_kernel", range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
+  {
+    // element size, geoElem column 4
+    const auto dx = geoElem_d_view(e*geo_nprop + 4)/2.0;
+ 
+    Kokkos::Array<real, NSTATE_MAX> state = {};
+    Kokkos::Array<real, NDOF_MAX> B = {};
+    Kokkos::Array<real, NMAT_MAX> apmat = {};
+    Kokkos::Array<real, NMAT_MAX> kmat = {};
+    Kokkos::Array<int,  NMAT_MAX> do_relax = {};
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      eval_basis( rdof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
+
+      const auto wt = wgp[igp] * geoElem_d_view(e*geo_nprop);
+
+      evalPolynomialSol( intsharp, ncomp, nprim,
+        rdof, nmat, e, rdof, m_nprop, p_nprop, geo_nprop,
+        bparam, solidx_d_view, inpoel_d_view,
+        cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B,
+        U_d_view, P_d_view, state );
+ 
+      // get bulk pressures and bulk modulii
+      real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
+      bool is_relax(false);
+
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        const real arhomat  = state[densityIdx(nmat, k)];
+        const real alphamat = state[volfracIdx(nmat, k)];
+        apmat[k] = state[ncomp+pressureIdx(nmat, k)];
+        do_relax[k] = 1;
+
+        bool include_solid(true);
+        if (solidx_d_view(k) > 0 && apmat[k] < 1e3*alphamat) include_solid = false;
+
+        if (include_solid && alphamat >= inciter::volfracPRelaxLim()) {
+          // device mirror of mat_blk[k].compute<EOS::soundspeed>(...)
+          // NOTE: the host version Throws on a non-finite result; that check is
+          // not available on device and is deliberately omitted here.
+          const real amat = soundspeedDevice( eos_d_view(k), arhomat,
+                                              apmat[k], alphamat );
+          kmat[k] = arhomat * amat * amat;
+          pb += apmat[k];
+
+          // relaxation parameters
+          trelax = std::fmax( trelax, ct*dx/amat );
+          nume += alphamat * apmat[k] / kmat[k];
+          deno += alphamat * alphamat / kmat[k];
+
+          is_relax = true;
+        }
+        else do_relax[k] = 0;
+      }
+
+      real p_relax(0.0);
+      if (is_relax) p_relax = nume/deno;
+
+      // Accumulate straight into R. The host version built an ncomp-sized
+      // s_prelax array, but only the volfrac and energy rows are ever non-zero
+      // and updateRhsPre then added wt*s_prelax[c]*B[idof] for every c. Same
+      // sparsity as ncf, so skip the array.
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        if (do_relax[k] != 1) continue;
+        const auto s_alpha = (apmat[k] - p_relax*state[volfracIdx(nmat, k)])
+          * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
+        for (std::size_t idof=0; idof<ndof; ++idof) {
+          R_d_view(e*r_nprop + volfracDofIdx(nmat,k,ndof,idof))
+            += wt * s_alpha * B[idof];
+          R_d_view(e*r_nprop + energyDofIdx(nmat,k,ndof,idof))
+            += wt * (-pb*s_alpha) * B[idof];
+        }
+      }
+    }
+  });
+
+  //Kokkos::deep_copy(R_h_view, R_d_view);
+
+  // Queued on same instance as kernel so ordered after it
+  // Fence before copying out of pinned buffer
+  if (!prestaged)
+    downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "nconsv_R_d_view" ); 
+ 
+  Kokkos::Profiling::popRegion();
 }
 
 void

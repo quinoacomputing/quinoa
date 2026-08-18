@@ -34,6 +34,9 @@ class MultiMatProblemSinewavePacket {
     using eq = tag::multimat;
 
   public:
+    //! Add boolean to turn src on/off
+    static constexpr bool hasSrc = false;
+    
     //! Initialize numerical solution
     static tk::InitializeFn::result_type
     initialize( ncomp_t ncomp, const std::vector< EOS >&,
