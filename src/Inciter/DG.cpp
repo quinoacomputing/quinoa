@@ -1883,6 +1883,20 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
+  // Add source flag array to element-centered field output
+  std::vector< tk::real > srcFlag( begin(m_srcFlag), end(m_srcFlag) );
+  // Here m_srcFlag has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells.
+  // For the purpose of output, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the srcFlag vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
+  srcFlag.resize( nelem );
+  for (const auto& [child,parent] : addedTets)
+    srcFlag[child] = static_cast< tk::real >( m_srcFlag[parent] );
+  elemfields.push_back( srcFlag );
+
   // Compute plastic deformation averaged for all materials
   std::vector< tk::real > plasticDeformation(nelem);
   g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, m_p, plasticDeformation);
@@ -1903,6 +1917,8 @@ DG::writeFields(
   }
 
   elemfieldnames.push_back( "shock_marker" );
+
+  elemfieldnames.push_back( "src_flag" );
 
   if (plasticDeformation.size() > 0)
     elemfieldnames.push_back( "plastic_deformation" );
