@@ -20,6 +20,30 @@
 #include "EoS/GetMatProp.hpp"
 #include "Kokkos_Core.hpp"
 
+#include <type_traits>
+static_assert(std::is_copy_constructible_v<inciter::StiffenedGas>);
+static_assert(std::is_copy_constructible_v<inciter::JWL>);
+static_assert(std::is_copy_constructible_v<inciter::SmallShearSolid>);
+static_assert(std::is_copy_constructible_v<inciter::LinearMieGruneisen>);
+static_assert(std::is_copy_constructible_v<inciter::WilkinsAluminum>);
+static_assert(std::is_copy_constructible_v<inciter::GodunovRomenski>);
+static_assert(std::is_copy_constructible_v<inciter::ThermallyPerfectGas>);
+
+static_assert(
+  std::is_copy_constructible_v<inciter::EOS>,
+  "EOS must be copy constructible"
+);
+
+static_assert(
+  std::is_copy_assignable_v<inciter::EOS>,
+  "EOS must be copy assignable"
+);
+
+static_assert(
+  std::is_move_constructible_v<inciter::EOS>,
+  "EOS must be move constructible"
+);
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
