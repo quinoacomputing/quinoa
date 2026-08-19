@@ -49,9 +49,9 @@ class EOS {
 
     //! Init-state flag and helpers for movement
     bool m_active{false};
-    void destroy() noexcept;
-    void copyFrom(const EOS& other);
-    void moveFrom(EOS&& other);
+    //void destroy() noexcept;
+    //void copyFrom(const EOS& other);
+    //void moveFrom(EOS&& other);
 
     union EOSUnion {
         StiffenedGas stiffenedGas;
@@ -63,7 +63,7 @@ class EOS {
         ThermallyPerfectGas thermallyPerfectGas;
 
         EOSUnion() {}
-        ~EOSUnion() {}
+        //~EOSUnion() {}
         EOSUnion(const StiffenedGas& s) : stiffenedGas(s) {}
         EOSUnion(const JWL& s) : jwl(s) {}
         EOSUnion(const WilkinsAluminum& s) : wilkinsAluminum(s) {}
@@ -80,6 +80,7 @@ class EOS {
     //! Constructor
     explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k );
 
+    /*
     //! Movement
     EOS(const EOS& other);
     EOS& operator=(const EOS& other);
@@ -89,6 +90,7 @@ class EOS {
 
     //! Destructor
     ~EOS();
+    */
 
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
@@ -590,6 +592,8 @@ class EOS {
     friend void operator|( PUP::er& p, EOS& s ) { s.pup(p); }
     //@}
 };
+
+static_assert( std::is_trivially_copyable_v< EOS >, "EOS must be trivially copyable to mirror into a Kokkos view");
 
 } // inciter::
 

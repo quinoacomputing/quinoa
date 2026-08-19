@@ -158,6 +158,7 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     Throw( "Unknown PDE type encountered in EOS ctor" );
 }
 
+/*
 // Destroy
 EOS::~EOS()
 {
@@ -338,3 +339,4 @@ EOS& EOS::operator=(EOS&& other)
 
   return *this;
 }
+*/
