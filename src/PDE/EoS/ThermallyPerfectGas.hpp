@@ -20,9 +20,18 @@ namespace inciter {
 class ThermallyPerfectGas {
 
   private:
+    // Fixed NASA-9 extents; hard-coded in LuaParser.cpp
+    static constexpr std::size_t s_nintervals = 3;
+    static constexpr std::size_t s_ncoeff = 8;
+    static constexpr std::size_t s_ntrange = 4;
+
     tk::real m_R;
-    std::vector< std::vector< tk::real > > m_cp_coeff{3, std::vector< tk::real >(8)};
-    std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
+    // Used raw C arrays here to avoid constexpr issue
+    tk::real m_cp_coeff[s_nintervals][s_ncoeff]{};
+    tk::real m_t_range[s_ntrange]{};
+
+    //std::vector< std::vector< tk::real > > m_cp_coeff{3, std::vector< tk::real >(8)};
+    //std::vector< tk::real > m_t_range{std::vector< tk::real >(4)};
     tk::real m_dH_ref;
     tk::real m_mu;
     tk::real m_temp_ref;
@@ -43,12 +52,12 @@ class ThermallyPerfectGas {
       if (temp_poly < m_t_range[0]) {
         t_rng_idx = 0;
         temp_poly = m_t_range[0];
-      } else if (temp_poly > m_t_range.back()) {
-        t_rng_idx = m_t_range.size() - 2;
-        temp_poly = m_t_range.back();
+      } else if (temp_poly > m_t_range[s_ntrange-1]) {
+        t_rng_idx = s_ntrange - 2;  //m_t_range.size() - 2;
+        temp_poly = m_t_range[s_ntrange-1]; //.back();
       } else {
       // Valid bounds
-        for (std::size_t k = 0; k < m_t_range.size() - 1; k++) {
+        for (std::size_t k = 0; k < s_ntrange - 1; k++) {
           if (temp_poly >= m_t_range[k] && temp_poly <= m_t_range[k+1]) {
             t_rng_idx = k;
             break;
@@ -231,8 +240,14 @@ class ThermallyPerfectGas {
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     void pup( PUP::er &p ) /*override*/ {
       p | m_R;
-      p | m_cp_coeff;
-      p | m_t_range;
+      //p | m_cp_coeff;
+      for (std::size_t i=0; i<s_nintervals; ++i){
+        for (std::size_t j=0; j<s_ncoeff; ++j)
+          p | m_cp_coeff[i][j];
+      }
+      for (std::size_t i=0; i<s_ntrange; ++i)
+        p | m_t_range[i];
+      //p | m_t_range;
       p | m_dH_ref;
       p | m_mu;
       p | m_temp_ref;
@@ -246,6 +261,8 @@ class ThermallyPerfectGas {
     friend void operator|( PUP::er& p, ThermallyPerfectGas& i ) { i.pup(p); }
     //@}
 };
+
+static_assert( std::is_trivially_copyable_v< ThermallyPerfectGas >, "ThermallyPerfectGas must stay POD for the EOS union." );
 
 } //inciter::
 
