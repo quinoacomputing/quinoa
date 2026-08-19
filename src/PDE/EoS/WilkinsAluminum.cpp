@@ -265,7 +265,7 @@ WilkinsAluminum::shearspeed(
 //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 //!   for the single-material system, this argument can be left unspecified
 //!   by the calling code
-//! \return Material shear-wave speed speed
+//! \return Material shear-wave speed speed using the SmallShearSolid EoS
 // *************************************************************************
 {
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).

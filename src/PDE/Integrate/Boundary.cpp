@@ -399,7 +399,6 @@ bndSurfInt( const bool pref,
             const Fields& P,
             const Fields& W,
             const std::vector< std::size_t >& ndofel,
-            const std::vector< int >& srcFlag,
             Fields& R,
             std::vector< std::vector< tk::real > >& riemannDeriv,
             int intsharp )
@@ -428,7 +427,6 @@ bndSurfInt( const bool pref,
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] W Mesh velocity vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
-//! \param[in] srcFlag Whether a source was added to each element
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
@@ -537,8 +535,7 @@ bndSurfInt( const bool pref,
 
           // Compute the state variables at the left element
           evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof, nmat, el,
-            dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, ugp,
-            srcFlag[el]);
+            dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, ugp);
 
           auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
 
@@ -694,7 +691,6 @@ bndSurfInt_constP(
   const Fields& U,
   const Fields& P,
   const Fields& W,
-  const std::vector< int >& srcFlag,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp )
@@ -722,7 +718,6 @@ bndSurfInt_constP(
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] W Mesh velocity vector at recent time step
-//! \param[in] srcFlag Whether a source was added to each element
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms.
@@ -812,8 +807,7 @@ bndSurfInt_constP(
 
           // Compute the state variables at the left element
           evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof, nmat, el,
-            rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, ugp,
-            srcFlag[el]);
+            rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, ugp);
 
           auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
 

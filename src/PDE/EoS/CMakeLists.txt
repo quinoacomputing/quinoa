@@ -2,7 +2,7 @@ add_library(EOS
             EOS.cpp
             StiffenedGas.cpp
             JWL.cpp
-            NeoHookeanSolid.cpp
+            SmallShearSolid.cpp
             LinearMieGruneisen.cpp
             WilkinsAluminum.cpp
             GodunovRomenski.cpp

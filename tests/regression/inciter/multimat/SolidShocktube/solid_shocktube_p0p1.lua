@@ -24,7 +24,7 @@ inciter = {
   material = {
     -- Copper
     {
-      eos = "neohookeansolid",
+      eos = "smallshearsolid",
       id = { 1, 2 },
       gamma = { 4.22, 4.22 }, -- ratio of specific heats
       cv = { 3978.0, 3978.0 }, -- specific heat at const volume

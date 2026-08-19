@@ -48,7 +48,6 @@ surfInt( const bool pref,
          const Fields& W,
          const std::vector< std::size_t >& ndofel,
          const tk::real dt,
-         const std::vector< int >& srcFlag,
          Fields& R,
          std::vector< std::vector< tk::real > >& riemannDeriv,
          int intcompr=0 );
@@ -90,7 +89,6 @@ surfInt_constP(
   const Fields& P,
   const Fields& W,
   const tk::real /*dt*/,
-  const std::vector< int >& srcFlag,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp=0 );
