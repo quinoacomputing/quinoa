@@ -1492,9 +1492,6 @@ DG::solve( tk::real newdt )
   if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
     d->setdt( newdt );
 
-  // Update Un
-  if (m_stage == 0) m_un = m_u;
-
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
@@ -1524,6 +1521,9 @@ DG::solve( tk::real newdt )
       myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
       d->Dt(), m_rhs, m_srcFlag );
   }
+
+  // Update Un
+  if (m_stage == 0) m_un = m_u;
 
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
