@@ -116,6 +116,7 @@ VertexBasedMultiMat_P1(
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
+  const std::vector< int >& srcFlag,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,

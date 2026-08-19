@@ -453,7 +453,8 @@ evalPolynomialSol(
   const std::vector< real >& B,
   const Fields& U,
   const Fields& P,
-  std::vector< tk::real >& state );
+  std::vector< tk::real >& state,
+  int srcFlag=0 );
 
 KOKKOS_INLINE_FUNCTION
 // NOTE TO FUTURE INTERNS:

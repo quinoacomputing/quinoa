@@ -64,6 +64,7 @@ volInt( std::size_t nmat,
         const Fields& P,
         const Fields& W,
         const std::vector< std::size_t >& ndofel,
+        const std::vector< int >& srcFlag,
         Fields& R,
         int intsharp=0 );
 
@@ -134,6 +135,7 @@ volInt_constP(
   const Fields& U,
   const Fields& P,
   const Fields& W,
+  const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp=0,
   VolIntDeviceViews* dev=nullptr, bool prestaged=false //added 

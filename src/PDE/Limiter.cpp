@@ -515,6 +515,7 @@ VertexBasedMultiMat_P1(
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
   const std::vector< std::size_t >& solidx,
+  const std::vector< int >& srcFlag,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nmat,
@@ -532,6 +533,7 @@ VertexBasedMultiMat_P1(
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] flux Riemann flux function to use
 //! \param[in] solidx Solid material index indicator
+//! \param[in] srcFlag Whether the energy source was added
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order vector of primitives which gets limited
 //! \param[in] nmat Number of materials in this PDE system
@@ -635,7 +637,7 @@ VertexBasedMultiMat_P1(
       for (std::size_t k=0; k<nmat; ++k)
         alAvg[k] = U(e, volfracDofIdx(nmat,k,rdof,0));
       auto intInd = interfaceIndicator(nmat, alAvg, matInt);
-      if ((intsharp > 0) && intInd) {
+      if ((intsharp > 0) && intInd && srcFlag[e] == 0) {
         for (std::size_t k=0; k<nmat; ++k) {
           if (matInt[k]) {
             phic[volfracIdx(nmat,k)] = 1.0;

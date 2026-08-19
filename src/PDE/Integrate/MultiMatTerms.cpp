@@ -71,6 +71,7 @@ nonConservativeInt( const bool pref,
                     const Fields& P,
                     const std::vector< std::vector< tk::real > >& riemannDeriv,
                     const std::vector< std::size_t >& ndofel,
+                    const std::vector< int >& srcFlag,
                     Fields& R,
                     int intsharp )
 // *****************************************************************************
@@ -95,6 +96,7 @@ nonConservativeInt( const bool pref,
 //! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
 //!   computed from the Riemann solver for use in the non-conservative terms
 //! \param[in] ndofel Vector of local number of degrees of freedome
+//! \param[in] srcFlag Whether a source was added to each element
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface reconstruction indicator
 // *****************************************************************************
@@ -185,7 +187,8 @@ nonConservativeInt( const bool pref,
 
       evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
-        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P,
+        state, srcFlag[e]);
 
       // get bulk properties
       tk::real rhob(0.0);
@@ -845,6 +848,7 @@ pressureRelaxationInt( const bool pref,
                        const Fields& P,
                        const std::vector< std::size_t >& ndofel,
                        const tk::real ct,
+                       const std::vector< int >& srcFlag,
                        Fields& R,
                        int intsharp )
 // *****************************************************************************
@@ -869,6 +873,7 @@ pressureRelaxationInt( const bool pref,
 //! \param[in] P Vector of primitive quantities at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedome
 //! \param[in] ct Pressure relaxation time-scale for this system
+//! \param[in] srcFlag Whether a source was added to each element
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface reconstruction indicator
 // *****************************************************************************
@@ -939,7 +944,8 @@ pressureRelaxationInt( const bool pref,
 
       evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
         rdof, nmat, e, dof_el, inpoel, coord, geoElem,
-        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P,
+        state, srcFlag[e]);
 
       // get bulk pressures and bulk modulii
       real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
