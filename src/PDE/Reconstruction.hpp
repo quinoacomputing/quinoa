@@ -456,7 +456,14 @@ evalPolynomialSol(
   std::vector< tk::real >& state );
 
 KOKKOS_INLINE_FUNCTION
-void evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
+// NOTE TO FUTURE INTERNS:
+// I removed mat_blk from this device fn's param list
+// mat_blk was never derefed here but capturing std::vector<EOS> into
+// device lambda closure is not trivially copyable and costs host heap alloc
+// per launch. If enforcePhysicalConstraints is reinstated/implemented then
+// the EOS needs to be first mirrored into device-addressable POD
+// That should be addressed by the union_EOS branch which has open pull req now
+void evalPolynomialSol( //const std::vector< inciter::EOS >& mat_blk,
                         int intsharp,
                         std::size_t ncomp,
                         std::size_t nprim,

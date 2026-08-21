@@ -53,24 +53,6 @@ nonConservativeInt( const bool pref,
 // See KokkosDevice.hpp -> tk::KokkosDeviceViews for more detail
 using nonConsvIntDeviceViews = KokkosDeviceViews;
 
-// Old implementation of nonConsvInt_constP
-/*
-void
-nonConservativeInt_constP(
-                   std::size_t nmat,
-                   const std::vector< inciter::EOS >& mat_blk,
-                   const std::size_t ndof,
-                   const std::size_t rdof,
-                   const std::size_t nelem,
-                   const std::vector< std::size_t >& inpoel,
-                   const UnsMesh::Coords& coord,
-                   const Fields& geoElem,
-                   const Fields& U,
-                   const Fields& P,
-                   const std::vector< std::vector< tk::real > >& riemannDeriv,
-                   Fields& R,
-                   int intsharp );
-*/
 // Kokkos implementation of nonConsvInt_constP
 void
 nonConservativeInt_constP( std::size_t nmat,
@@ -86,7 +68,7 @@ nonConservativeInt_constP( std::size_t nmat,
                            const std::vector< std::vector< tk::real > >& riemannDeriv,
                            Fields& R,
                            int intsharp, 
-                           nonConsvIntDeviceViews* dev = nullptr );
+                           nonConsvIntDeviceViews* dev = nullptr, bool prestaged = false );
 
 // Kokkos device version of updateRhsNonCons
 KOKKOS_INLINE_FUNCTION
@@ -144,6 +126,24 @@ pressureRelaxationInt( const bool pref,
                        Fields& R,
                        int intsharp );
 
+//! Compute pressure relaxation integrals for const-order DG (not p-adaptive)
+void
+pressureRelaxationInt_constP( std::size_t nmat,
+                              const std::vector< tk::EOSDevice >& eosd,
+                              const std::size_t ndof,
+                              const std::size_t rdof,
+                              const std::size_t nelem,
+                              const std::vector< std::size_t >& inpoel,
+                              const UnsMesh::Coords& coord,
+                              const Fields& geoElem,
+                              const Fields& U,
+                              const Fields& P,
+                              const tk::real ct,
+                              Fields& R,
+                              int intsharp,
+                              KokkosDeviceViews* dev = nullptr,
+                              bool prestaged = false );
+
 //! Update the rhs by adding the pressure relaxation integrals
 void
 updateRhsPre(
@@ -199,24 +199,24 @@ fluxTerms(
 
 //! Kokkos version of fluxTerms for experimental purposes
 //! to avoid using function pointers
+//! Streams one component's flux triple at a time into sink rather than filling
+//! a large [NCOMP_MAX][3] array for the caller to walk afterwards
+//! sink(c, f0, f1, f2) must apply the component-c contribution to R
+//! Note FluxSink is a template param and NOT a std::function
+template< typename FluxSink >
 KOKKOS_INLINE_FUNCTION
 void fluxTerms_multimat_kokkos(
   std::size_t ncomp,
   std::size_t nmat,
   Kokkos::View<const size_t*, memory_space>  solidx,
-  const std::vector< inciter::EOS >& /*mat_blk*/,
+  //const std::vector< inciter::EOS >& /*mat_blk*/,
   Kokkos::Array<tk::real, NSTATE_MAX>& ugp, // this is state essentially
   Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, NMAT_MAX>& g, 
   Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, NMAT_MAX>& asig,
   Kokkos::Array<tk::real, NMAT_MAX>& al,
-  Kokkos::Array<Kokkos::Array<tk::real, 3>, NCOMP_MAX> & fl, 
+  //Kokkos::Array<Kokkos::Array<tk::real, 3>, NCOMP_MAX> & fl, 
+  FluxSink&& sink,
   Kokkos::Array<tk::real, NMAT_MAX> & apk)
-  //Kokkos::Array<tk::real, 50>& ugp, // this is state essentially
-  //Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& g, 
-  //Kokkos::Array<Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>, 2>& asig,
-  //Kokkos::Array<tk::real, 2>& al,
-  //Kokkos::Array<Kokkos::Array<tk::real, 12>, 3> & fl, 
-  //Kokkos::Array<tk::real, 2> & apk)
 {
   using inciter::volfracIdx;
   using inciter::densityIdx;
@@ -253,38 +253,31 @@ void fluxTerms_multimat_kokkos(
           sig[i][j] += asig[k][i][j];
     }
 
-     // conservative part of momentum flux
-    fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u - sig[0][0];
-    fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u - sig[0][1];
-    fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u - sig[0][2];
-
-    fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v - sig[1][0];
-    fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v - sig[1][1];
-    fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v - sig[1][2];
-
-    fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w - sig[2][0];
-    fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w - sig[2][1];
-    fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w - sig[2][2];
+    // conservative part of momentum flux
+    for (std::size_t idir=0; idir<3; ++idir)
+      sink( momentumIdx(nmat,idir),
+            ugp[momentumIdx(nmat, idir)] * u - sig[0][idir],
+            ugp[momentumIdx(nmat, idir)] * v - sig[1][idir],
+            ugp[momentumIdx(nmat, idir)] * w - sig[2][idir] );
 
     for (std::size_t k=0; k<nmat; ++k)
     {
       // conservative part of volume-fraction flux
-      fl[volfracIdx(nmat, k)][0] = 0.0;
-      fl[volfracIdx(nmat, k)][1] = 0.0;
-      fl[volfracIdx(nmat, k)][2] = 0.0;
+      // skipped because it's zero
 
       // conservative part of material continuity flux
-      fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
-      fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
-      fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+      sink( densityIdx(nmat,k), u*ugp[densityIdx(nmat, k)], 
+                                v*ugp[densityIdx(nmat, k)],
+                                w*ugp[densityIdx(nmat, k)] );
 
       // conservative part of material total-energy flux
-      fl[energyIdx(nmat, k)][0] = u * ugp[energyIdx(nmat, k)]
-        - u * asig[k][0][0] - v * asig[k][1][0] - w * asig[k][2][0];
-      fl[energyIdx(nmat, k)][1] = v * ugp[energyIdx(nmat, k)]
-        - u * asig[k][0][1] - v * asig[k][1][1] - w * asig[k][2][1];
-      fl[energyIdx(nmat, k)][2] = w * ugp[energyIdx(nmat, k)]
-        - u * asig[k][0][2] - v * asig[k][1][2] - w * asig[k][2][2];
+      sink( energyIdx(nmat, k),
+            u * ugp[energyIdx(nmat, k)]
+              - u * asig[k][0][0] - v * asig[k][1][0] - w * asig[k][2][0],
+            v * ugp[energyIdx(nmat, k)]
+              - u * asig[k][0][1] - v * asig[k][1][1] - w * asig[k][2][1],
+            w * ugp[energyIdx(nmat, k)]
+              - u * asig[k][0][2] - v * asig[k][1][2] - w * asig[k][2][2] );
 
       // conservative part of material inverse deformation gradient
       // g_ij: \partial (g_il u_l) / \partial (x_j)
@@ -292,11 +285,12 @@ void fluxTerms_multimat_kokkos(
       {
         for (std::size_t i=0; i<3; ++i)
         {
+          // No need to loop over j index so we can hoist this one
+          const auto gu = u*g[k][i][0] + v*g[k][i][1] + w*g[k][i][2];
           for (std::size_t j=0; j<3; ++j)
           {
-            fl[deformIdx(nmat,solidx(k),i,j)][j] = u*g[k][i][0] + v*g[k][i][1] + w*g[k][i][2];
+            sink( deformIdx(nmat, solidx(k), i, j), j==0?gu:0.0, j=1?gu:0.0, j=2?gu:0.0 );
           }
-          // other components are zero
         }
       }
     }
@@ -310,36 +304,27 @@ void fluxTerms_multimat_kokkos(
       p += apk[k];
     }
 
-     // conservative part of momentum flux
-    fl[momentumIdx(nmat, 0)][0] = ugp[momentumIdx(nmat, 0)] * u + p;
-    fl[momentumIdx(nmat, 1)][0] = ugp[momentumIdx(nmat, 1)] * u;
-    fl[momentumIdx(nmat, 2)][0] = ugp[momentumIdx(nmat, 2)] * u;
-
-    fl[momentumIdx(nmat, 0)][1] = ugp[momentumIdx(nmat, 0)] * v;
-    fl[momentumIdx(nmat, 1)][1] = ugp[momentumIdx(nmat, 1)] * v + p;
-    fl[momentumIdx(nmat, 2)][1] = ugp[momentumIdx(nmat, 2)] * v;
-
-    fl[momentumIdx(nmat, 0)][2] = ugp[momentumIdx(nmat, 0)] * w;
-    fl[momentumIdx(nmat, 1)][2] = ugp[momentumIdx(nmat, 1)] * w;
-    fl[momentumIdx(nmat, 2)][2] = ugp[momentumIdx(nmat, 2)] * w + p;
+    // conservative part of momentum flux
+    // pressure contribution only on the diagonal (idir==direction)
+    for (std::size_t idir=0; idir<3; ++idir)
+      sink( momentumIdx(nmat, idir),
+            ugp[momentumIdx(nmat, idir)] * u + (idir==0 ? p : 0.0),
+            ugp[momentumIdx(nmat, idir)] * v + (idir==1 ? p : 0.0),
+            ugp[momentumIdx(nmat, idir)] * w + (idir==2 ? p : 0.0) );
 
     for (std::size_t k=0; k<nmat; ++k)
     {
       // conservative part of volume-fraction flux
-      fl[volfracIdx(nmat, k)][0] = 0.0;
-      fl[volfracIdx(nmat, k)][1] = 0.0;
-      fl[volfracIdx(nmat, k)][2] = 0.0;
+      // skipped because it's zero
 
       // conservative part of material continuity flux
-      fl[densityIdx(nmat, k)][0] = u * ugp[densityIdx(nmat, k)];
-      fl[densityIdx(nmat, k)][1] = v * ugp[densityIdx(nmat, k)];
-      fl[densityIdx(nmat, k)][2] = w * ugp[densityIdx(nmat, k)];
+      sink( densityIdx(nmat, k), u * ugp[densityIdx(nmat, k)],
+                                 v * ugp[densityIdx(nmat, k)],
+                                 w * ugp[densityIdx(nmat, k)] );
 
       // conservative part of material total-energy flux
       auto hmat = ugp[energyIdx(nmat, k)] + apk[k];
-      fl[energyIdx(nmat, k)][0] = u * hmat;
-      fl[energyIdx(nmat, k)][1] = v * hmat;
-      fl[energyIdx(nmat, k)][2] = w * hmat;
+      sink( energyIdx(nmat, k), u*hmat, v*hmat, w*hmat );
     }
   }
 }

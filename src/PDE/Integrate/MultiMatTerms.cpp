@@ -303,7 +303,7 @@ nonConservativeInt_constP(
   const std::vector<std::vector<tk::real>>& riemannDeriv,
   Fields& R,
   int intsharp,
-  nonConsvIntDeviceViews* dev ) //added this
+  nonConsvIntDeviceViews* dev, bool prestaged ) //added this
 // *****************************************************************************
 //  Compute volume integrals for multi-material DG (const-order, not p-adaptive)
 //! \details This is called for multi-material DG, computing volume integrals of
@@ -335,6 +335,10 @@ nonConservativeInt_constP(
   using inciter::velocityIdx;
   using inciter::deformIdx;
   //using inciter::newSolidsAccFn;
+  
+  using inciter::volfracDofIdx;
+  using inciter::energyDofIdx;
+  using inciter::deformDofIdx;
 
   const auto& solidx =
     inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -405,20 +409,24 @@ nonConservativeInt_constP(
   if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
-  // U,P change per call so always upload
-  size_t P_size = P.getSize();
-  ensureDeviceCapacity(dv.P, "nconsv_P_d_view", P_size);
-  auto P_h_view = changeToView(P.getPointer(), P_size);
-  Kokkos::deep_copy(dv.P, P_h_view);
+  // Up, P, R change per call so always upload
+  // Staged thru pagelock memory and queued on default exec space instance (async copies)
+  // Kernel runs on the same instance (stream) so its ordered after without needing to fence
+  auto exec = Kokkos::DefaultExecutionSpace();
 
-  size_t U_size = U.getSize();
-  ensureDeviceCapacity(dv.U, "nconsv_U_d_view", U_size);
-  auto U_h_view = changeToView(U.getPointer(), U_size);
-  Kokkos::deep_copy(dv.U, U_h_view);
+  const std::size_t R_size = R.getSize();
+  if(!prestaged){
+    uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "nconsv_R_d_view" );
 
-  // RiemannDeriv
-  // Stage into contiguous rowmajor buffer before H2D copy
-  // How to index: riemannDeriv[row][e] -> rd_d_view(row*rd_ncol + e)
+    const std::size_t P_size = P.getSize();
+    uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "nconsv_P_d_view" );
+
+    const std::size_t U_size = U.getSize();
+    uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "nconsv_U_d_view" );
+  }
+
+  // RiemannDeriv only consumed here, nothing on the host runs between surf ints and this kernel
+  // So, there's nothing to hide it behind and we want to stage it locally
   const std::size_t rd_nrow = riemannDeriv.size();
   const std::size_t rd_ncol = rd_nrow ? riemannDeriv[0].size() : 0;
   const std::size_t rd_size = rd_nrow*rd_ncol;
@@ -428,26 +436,7 @@ nonConservativeInt_constP(
       rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
     }
   }
-  auto rd_h_view = changeToView(rd_flat.data(), rd_size);
-  ensureDeviceCapacity(dv.riemannDeriv, "nconsv_riemannDeriv_d_view", rd_size);
-  Kokkos::deep_copy(dv.riemannDeriv, rd_h_view);
-
-  // R accumulator, needs to grab data from host (cannot zero out!)
-  const std::size_t R_size = R.getSize();
-  ensureDeviceCapacity(dv.R, "nconsv_R_d_view", R_size);
-  auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
-  Kokkos::deep_copy(dv.R, R_h_view);
-
-  /*
-  size_t R_size = R.getSize();
-  ensureDeviceCapacity(dv.R, "nconsv_R_d_view", R_size);
-  auto R_h_view = changeToView(R.getPointerNonConst(), R_size);
-  //Kokkos::deep_copy(dv.R, R_h_view);
-#ifdef VOLINT_R_PRESEEDED
-  Kokkos::deep_copy(dv.R, R_h_view);
-#else
-  Kokkos::deep_copy(dv.R, 0.0);        
-  */
+  uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size, "nconsv_riemannDeriv_d_view" );
 
   // Shallow copies of view handle
   // Does not touch device memory, just gives kernel below local names and captures plain views by value into KOKKOS_LAMBDA
@@ -502,7 +491,7 @@ nonConservativeInt_constP(
       //auto wt = wgp[igp] * geoElem(e, 0);
       auto wt = wgp[igp] * geoElem_d_view(e*geo_nprop);
 
-      evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
+      evalPolynomialSol(/*mat_blk,*/ intsharp, ncomp, nprim,
         //rdof, nmat, e, rdof, inpoel, coord, geoElem,
         //{{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
         rdof,nmat,e,rdof,m_nprop,p_nprop,geo_nprop,
@@ -539,25 +528,19 @@ nonConservativeInt_constP(
           dap[idir] += rd_d_view((mark+idir)*rd_ncol + e);
       }
 
-      /*
-      // compute non-conservative terms
-      std::vector< std::vector< tk::real > > ncf
-        (ncomp, std::vector<tk::real>(ndof,0.0));
-
-      for (std::size_t idir=0; idir<3; ++idir)
-        for(std::size_t idof=0; idof<ndof; ++idof)
-          ncf[momentumIdx(nmat, idir)][idof] = 0.0;
-      */
-      // zero-initialize and compute nonconsv term
-      Kokkos::Array<Kokkos::Array<real, NDOF_MAX>, NCOMP_MAX> ncf = {};
+      // Accumulate nonconsv terms straight into R instead of building an ncf array first
+      // updateRhsNonCons_device only read ncf[c][0] for all c and ncf[~][idof] for idof>=1
+      // Never wrote momentum rows, set density rows to zero, energy/deform RHS have no idof dependence
+      // In other words the stuff was repeated across all NDOF_MAX columns and was wasting space
+      Kokkos::Array<real, NDOF_MAX> ncfA = {}; //volfrac per idof
 
       for (std::size_t k=0; k<nmat; ++k)
       {
         // evaluate non-conservative term for energy equation
         std::size_t mark(3*k);
         if (solidx_d_view(k) > 0) mark = 3*nmat+ndof+3*(solidx_d_view(k)-1);
-        //if (solidx[k] > 0) mark = 3*nmat+ndof+3*(solidx[k]-1);
 
+        /*
         for(std::size_t idof=0; idof<ndof; ++idof)
         {
           ncf[densityIdx(nmat, k)][idof] = 0.0;
@@ -567,10 +550,23 @@ nonConservativeInt_constP(
             //                                      - riemannDeriv[mark+idir][e] );
                                                   - rd_d_view((mark+idir)*rd_ncol + e) );
         }
+        */
+        // idof-independent means accumulating once in a scalar is fine
+        // idof-independence for idof>=1 is the B[idof] factor
+        real ncfE = 0.0;
+        for (std::size_t idir=0; idir<3; ++idir)
+          ncfE -= vel[idir] * ( ymat[k]*dap[idir] - rd_d_view((mark+idir)*rd_ncol + e) );
+
+        // Density rows are all zero and momentum rows never get written! So there are no R contributions from these
+        R_d_view(e*r_nprop + energyDofIdx(nmat,k,ndof,0)) += wt*ncfE;
+        for (std::size_t idof=1; idof<ndof; ++idof)
+          R_d_view(e*r_nprop + energyDofIdx(nmat,k,ndof,idof)) += wt*ncfE*B[idof];
 
         // evaluate non-conservative terms for g equation
-        //if (solidx[k] > 0) {
-        //  std::size_t nsld = inciter::numSolids(nmat, solidx);
+        // These are also idof-independent and only idof==0 dof was ever read
+        // Uh, if "High order non-conservative g terms" are ever implemented then this needs to be redone
+        // That's why this code is kept here, it's otherwise dead
+        /*
         if (solidx_d_view(k) > 0) {
           for (std::size_t idof=0; idof<ndof; ++idof)
             for (std::size_t i=0; i<3; ++i)
@@ -585,38 +581,61 @@ nonConservativeInt_constP(
                   //  vel[l] * riemannDeriv[mark][e];
                 }
         }
+        */
+        if (solidx_d_view(k) > 0)
+        {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+            {
+              real ncfG = 0.0;
+              for (std::size_t l=0; l<3; ++l)
+              {
+                std::size_t gmark = 3*nmat + ndof + 3*nsld
+                                  + inciter::newSolidsAccFn(k,i,j,l);
+                ncfG -= vel[l]*rd_d_view(gmark*rd_ncol+e);
+              }
+              R_d_view(e*r_nprop + deformDofIdx(nmat,solidx_d_view(k),i,j,ndof,0)) += wt*ncfG;
+            }
+        }
 
         // Evaluate non-conservative term for volume fraction equation.
         // (See original notes on the constant-Riemann-velocity assumption and
         // the special DGP2 discretization.)
-        if (ndof <= 4 || intsharp == 1) {
+        // This is the only row that genuinely varies with idof
+        for (std::size_t idof=0; idof<ndof; ++idof) 
+          ncfA[idof] = 0.0;
+        if (ndof <= 4 || intsharp == 1) 
+        {
           for(std::size_t idof=0; idof<ndof; ++idof)
-            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
-                                           * rd_d_view((3*nmat+idof)*rd_ncol+e);
-            //                               * riemannDeriv[3*nmat+idof][e];
-        } else if (intsharp == 0) {     // If DGP2 without THINC
+            ncfA[idof] = state[volfracIdx(nmat, k)]*rd_d_view((3*nmat+idof)*rd_ncol+e);
+        }
+        // If DGP2 without THINC 
+        else if (intsharp == 0) 
+        { 
           // DGP2 is discretized differently than DGP1/FV to guarantee 3rd order
           // convergence for testcases with uniform and constant velocity.
-
-          // P0 contributions for all equations
           for(std::size_t idof=0; idof<ndof; ++idof)
-            ncf[volfracIdx(nmat, k)][idof] = state[volfracIdx(nmat, k)]
-          //                                 * riemannDeriv[3*nmat][e] * B[idof];
-                                           * rd_d_view((3*nmat)*rd_ncol + e) * B[idof];
+            ncfA[idof] = state[volfracIdx(nmat,k)]*rd_d_view((3*nmat)*rd_ncol + e)*B[idof];
+
           // High order contributions
           for(std::size_t idof=1; idof<ndof; ++idof)
             for(std::size_t idir=0; idir<3; ++idir)
-              ncf[volfracIdx(nmat, k)][idof] += state[volfracIdx(nmat, k)]
-                                              * vel[idir] * dBdx[idir][idof];
+              ncfA[idof] += state[volfracIdx(nmat, k)]*vel[idir]*dBdx[idir][idof];
         }
+        
+        for (std::size_t idof=0; idof<ndof; ++idof)
+          R_d_view(e*r_nprop + volfracDofIdx(nmat,k,ndof,idof)) += wt*ncfA[idof];
       }
-
-      tk::updateRhsNonCons_device(ncomp,nmat,ndof,ndof,wt,r_nprop,e,B,ncf,R_d_view);
-      //updateRhsNonCons( ncomp, nmat, ndof, ndof, wt, e, B, dBdx, ncf, R );
     }
   }); //end Kokkos::parallel_for
 
-  Kokkos::deep_copy(R_h_view, R_d_view);
+  //Kokkos::deep_copy(R_h_view, R_d_view);
+
+  // Queued on same instance as kernel so ordered after it
+  // Fence before copying out of pinned buffer
+  if (!prestaged)
+    downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "nconsv_R_d_view" ); 
+ 
   Kokkos::Profiling::popRegion();
 }
 
@@ -969,6 +988,255 @@ pressureRelaxationInt( const bool pref,
       updateRhsPre( ncomp, ndof, ndofel[e], wt, e, B, s_prelax, R );
     }
   }
+}
+
+void
+pressureRelaxationInt_constP(
+  std::size_t nmat,
+  const std::vector< tk::EOSDevice >& eosd,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::size_t nelem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  const tk::real ct,
+  Fields& R,
+  int intsharp,
+  nonConsvIntDeviceViews* dev, bool prestaged ) //added this
+// *****************************************************************************
+//  Compute volume integrals for multi-material DG (const-order, not p-adaptive)
+//! \details This is called for multi-material DG, computing volume integrals of
+//!   terms in the volume fraction and energy equations, which do not exist in
+//!   the single-material flow formulation (for `CompFlow` DG). For further
+//!   details see Pelanti, M., & Shyue, K. M. (2019).
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] nelem Total number of elements
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] geoElem Element geometry array
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitive quantities at recent time step
+//! \param[in] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms
+//! \param[in,out] R Right-hand side vector added to
+//! \param[in] intsharp Interface reconstruction indicator
+// *****************************************************************************
+{
+  Kokkos::Profiling::pushRegion("pressureRelaxInt");
+
+  using inciter::volfracIdx;
+  using inciter::densityIdx;
+  using inciter::energyIdx;
+  using inciter::velocityIdx;
+  using inciter::deformIdx;
+  using inciter::pressureIdx;
+  
+  using inciter::volfracDofIdx;
+  using inciter::energyDofIdx;
+  using inciter::deformDofIdx;
+
+  const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
+
+  // Interface-compression parameter read on host
+  // g_inputdeck is not addressable from the device
+  auto bparam = inciter::g_inputdeck.get<tag::multimat,tag::intsharp_param>();
+
+  const std::size_t ncomp = U.nprop()/rdof;
+  const std::size_t nprim = P.nprop()/rdof;
+
+  const std::size_t m_nprop = U.nprop();
+  const std::size_t p_nprop = P.nprop();
+  const std::size_t r_nprop = R.nprop();
+  const std::size_t geo_nprop = geoElem.nprop();
+
+  // Fail loudly on the hoest if the config overruns fixed-size device scratch arrays
+  // Otherwise we are corrupting thread-private memory
+  checkKokkosCaps( nmat, ndof, rdof, ncomp, nprim );
+
+  // Need to evaluate numSolids() here on host before capturing it into the kernel
+  const std::size_t nsld = inciter::numSolids(nmat, solidx);
+
+  // Quadrature points
+  // We only need to compute this once for constant P
+  const auto ng = tk::NGvol(ndof);
+
+  // Persistent device buffers
+  // Prevents redundant cudaMallocs and cudaFrees per call
+  nonConsvIntDeviceViews local_dev;
+  nonConsvIntDeviceViews& dv = dev ? *dev : local_dev;
+
+  // Variables go here
+  // First check whether device already holds this partition's mesh data at current meshgen state
+  // Refer to tk::meshResident() for more details
+  const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
+
+  // Solidx
+  auto solidx_h_view = changeToView(solidx.data(), nmat);
+  if (ensureDeviceCapacity(dv.solidx, "nconsv_solidx_d_view", nmat) || !mesh_ok)
+    Kokkos::deep_copy(dv.solidx, solidx_h_view);
+
+  // Inpoel
+  const std::size_t inpoel_size = inpoel.size();
+  auto inpoel_h_view = changeToView(inpoel.data(), inpoel_size);
+  if (ensureDeviceCapacity(dv.inpoel, "nconsv_inpoel_d_view", inpoel_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.inpoel, inpoel_h_view);
+
+  // Transfer coord (nodal coordinates)
+  size_t coordx_size = coord[0].size();
+  auto cx_h_view = changeToView(coord[0].data(), coordx_size);
+  if (ensureDeviceCapacity(dv.cx, "nconsv_cx_d_view", coordx_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.cx, cx_h_view);
+
+  size_t coordy_size = coord[1].size();
+  auto cy_h_view = changeToView(coord[1].data(), coordy_size);
+  if (ensureDeviceCapacity(dv.cy, "nconsv_cy_d_view", coordy_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.cy, cy_h_view);
+  
+  size_t coordz_size = coord[2].size();
+  auto cz_h_view = changeToView(coord[2].data(), coordz_size);
+  if (ensureDeviceCapacity(dv.cz, "nconsv_cz_d_view", coordz_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.cz, cz_h_view);
+
+  // geoElem and EOS transfer
+  size_t geoElem_size = geoElem.getSize();
+  auto geoElem_h_view = changeToView(geoElem.getPointer(), geoElem_size);
+  if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
+    Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
+
+  auto eos_h_view = changeToView( eosd.data(), nmat );
+  if (ensureDeviceCapacity(dv.eos, "eos_d_view", nmat))
+    Kokkos::deep_copy(dv.eos, eos_h_view);
+
+  // Up, P, R change per call so always upload
+  // Staged thru pagelock memory and queued on default exec space instance (async copies)
+  // Kernel runs on the same instance (stream) so its ordered after without needing to fence
+  auto exec = Kokkos::DefaultExecutionSpace();
+
+  const std::size_t R_size = R.getSize();
+  if(!prestaged){
+    uploadStaged( exec, dv.R, dv.stage_R, R.getPointer(), R_size, "nconsv_R_d_view" );
+
+    const std::size_t P_size = P.getSize();
+    uploadStaged( exec, dv.P, dv.stage_P, P.getPointer(), P_size, "nconsv_P_d_view" );
+
+    const std::size_t U_size = U.getSize();
+    uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "nconsv_U_d_view" );
+  }
+
+  // Shallow copies of view handle
+  // Does not touch device memory, just gives kernel below local names and captures plain views by value into KOKKOS_LAMBDA
+  // If volIntDeviceViews struct (or a ref to it) is captured it will be invalid on device
+  auto solidx_d_view = dv.solidx;
+  auto inpoel_d_view = dv.inpoel;
+  auto cx_d_view = dv.cx;
+  auto cy_d_view = dv.cy;
+  auto cz_d_view = dv.cz;
+  auto geoElem_d_view = dv.geoElem;
+  auto P_d_view = dv.P;
+  auto U_d_view = dv.U;
+  auto R_d_view = dv.R;
+  auto eos_d_view = dv.eos;
+
+  // Quadrature points can be hoisted out
+  // Because P is constant
+  Kokkos::Array<Kokkos::Array<real,NQUAD_MAX>, 3> coordgp = {};
+  Kokkos::Array<real,NQUAD_MAX> wgp = {};
+  GaussQuadratureTet(ng,coordgp,wgp);
+
+  // compute volume integrals
+  Kokkos::parallel_for("pRelax_kernel", range_policy(0, nelem), KOKKOS_LAMBDA(const size_t e)
+  {
+    // element size, geoElem column 4
+    const auto dx = geoElem_d_view(e*geo_nprop + 4)/2.0;
+ 
+    Kokkos::Array<real, NSTATE_MAX> state = {};
+    Kokkos::Array<real, NDOF_MAX> B = {};
+    Kokkos::Array<real, NMAT_MAX> apmat = {};
+    Kokkos::Array<real, NMAT_MAX> kmat = {};
+    Kokkos::Array<int,  NMAT_MAX> do_relax = {};
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      eval_basis( rdof, coordgp[0][igp], coordgp[1][igp], coordgp[2][igp], B );
+
+      const auto wt = wgp[igp] * geoElem_d_view(e*geo_nprop);
+
+      evalPolynomialSol( intsharp, ncomp, nprim,
+        rdof, nmat, e, rdof, m_nprop, p_nprop, geo_nprop,
+        bparam, solidx_d_view, inpoel_d_view,
+        cx_d_view, cy_d_view, cz_d_view, geoElem_d_view,
+        {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B,
+        U_d_view, P_d_view, state );
+ 
+      // get bulk pressures and bulk modulii
+      real pb(0.0), nume(0.0), deno(0.0), trelax(0.0);
+      bool is_relax(false);
+
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        const real arhomat  = state[densityIdx(nmat, k)];
+        const real alphamat = state[volfracIdx(nmat, k)];
+        apmat[k] = state[ncomp+pressureIdx(nmat, k)];
+        do_relax[k] = 1;
+
+        bool include_solid(true);
+        if (solidx_d_view(k) > 0 && apmat[k] < 1e3*alphamat) include_solid = false;
+
+        if (include_solid && alphamat >= inciter::volfracPRelaxLim()) {
+          // device mirror of mat_blk[k].compute<EOS::soundspeed>(...)
+          // NOTE: the host version Throws on a non-finite result; that check is
+          // not available on device and is deliberately omitted here.
+          const real amat = soundspeedDevice( eos_d_view(k), arhomat,
+                                              apmat[k], alphamat );
+          kmat[k] = arhomat * amat * amat;
+          pb += apmat[k];
+
+          // relaxation parameters
+          trelax = std::fmax( trelax, ct*dx/amat );
+          nume += alphamat * apmat[k] / kmat[k];
+          deno += alphamat * alphamat / kmat[k];
+
+          is_relax = true;
+        }
+        else do_relax[k] = 0;
+      }
+
+      real p_relax(0.0);
+      if (is_relax) p_relax = nume/deno;
+
+      // Accumulate straight into R. The host version built an ncomp-sized
+      // s_prelax array, but only the volfrac and energy rows are ever non-zero
+      // and updateRhsPre then added wt*s_prelax[c]*B[idof] for every c. Same
+      // sparsity as ncf, so skip the array.
+      for (std::size_t k=0; k<nmat; ++k)
+      {
+        if (do_relax[k] != 1) continue;
+        const auto s_alpha = (apmat[k] - p_relax*state[volfracIdx(nmat, k)])
+          * (state[volfracIdx(nmat, k)]/kmat[k]) / trelax;
+        for (std::size_t idof=0; idof<ndof; ++idof) {
+          R_d_view(e*r_nprop + volfracDofIdx(nmat,k,ndof,idof))
+            += wt * s_alpha * B[idof];
+          R_d_view(e*r_nprop + energyDofIdx(nmat,k,ndof,idof))
+            += wt * (-pb*s_alpha) * B[idof];
+        }
+      }
+    }
+  });
+
+  //Kokkos::deep_copy(R_h_view, R_d_view);
+
+  // Queued on same instance as kernel so ordered after it
+  // Fence before copying out of pinned buffer
+  if (!prestaged)
+    downloadStaged( exec, R.getPointerNonConst(), dv.stage_R, R_d_view, R_size, "nconsv_R_d_view" ); 
+ 
+  Kokkos::Profiling::popRegion();
 }
 
 void

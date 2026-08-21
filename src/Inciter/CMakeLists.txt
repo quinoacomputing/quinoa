@@ -108,6 +108,12 @@ add_dependencies( "Inciter" "inciterCharmModule" )
 add_dependencies( "transporterCharmModule" "partitionerCharmModule" )
 add_dependencies( "transporterCharmModule" "m2mtransferCharmModule" )
 
+# ale.ci declares 'extern module conjugategradients'; discretization.ci
+# declares both linear-solver modules.
+add_dependencies( "aleCharmModule" "conjugategradientsCharmModule" )
+add_dependencies( "discretizationCharmModule" "conjugategradientsCharmModule" )
+add_dependencies( "discretizationCharmModule" "bicgCharmModule" )
+
 # Add extra dependency of Discretization charm module on MeshWriter charm
 # module. This is so meshwriter.decl.h and meshwriter.def.h are generated
 # before Discretization which needs meshwriter's type information.

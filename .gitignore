@@ -1,5 +1,6 @@
 *~
 *sw?
 /build
+/builddir
 /install
-rebuild_quinoa.sh
+NOTE.md

@@ -1,6 +1,8 @@
 #ifndef KokkosDevice_h
 #define KokkosDevice_h
 
+#include <cstring>
+
 #include "Types.hpp"
 #include "Exception.hpp"
 #include "Fields.hpp"
@@ -30,6 +32,20 @@ constexpr std::size_t NALSOL_MAX = NMAT_MAX*NDOF_MAX;
 using execution_space = Kokkos::DefaultExecutionSpace;
 using memory_space = Kokkos::DefaultExecutionSpace::memory_space;
 
+// Page-locked host memory
+// Copies out of pageable host mem are staged through a driver-internal pinned
+// buffer in chunks and are always sync; out of pinned mem they run at full PCIe
+// rate and can be issued async
+#if defined( KOKKOS_ENABLE_CUDA )
+using host_pinned_space = Kokkos::CudaHostPinnedSpace;
+#elif defined( KOKKOS_ENABLE_HIP )
+using host_pinned_space = Kokkos::HIPHostPinnedSpace;
+#else
+using host_pinned_space = Kokkos::HostSpace;
+#endif
+// NOTE: tk::real, not real - this is outside namespace tk
+using pinned_view = Kokkos::View< tk::real*, host_pinned_space >;
+
 namespace tk {
 	// Verify config fits device kernel scratch capacity
 	// Throws error if any limit is exceeded
@@ -45,10 +61,61 @@ namespace tk {
 		ErrChk( nmat <= NMAT_MAX, "Max. " + std::to_string(NMAT_MAX) + " materials, got " + std::to_string(nmat)+".");
 		ErrChk( ndof <= NDOF_MAX && rdof <= NDOF_MAX, "Max. " + std::to_string(NDOF_MAX) + " DOFs, got {ndof,rdof}={" + std::to_string(ndof)+","+std::to_string(rdof)+"}.");
 		ErrChk( ncomp <= NCOMP_MAX, "Max. " + std::to_string(NCOMP_MAX) + " components, got " + std::to_string(ncomp)+".");
-		ErrChk( ncomp*nprim <= NSTATE_MAX, "Max. " + std::to_string(NSTATE_MAX) + " state entries, got " + std::to_string(ncomp*nprim)+".");
+		// NOTE: state[] holds ncomp+nprim entries (eval_state writes prims at
+		// offset ncomp), so this must be a sum, not a product
+		ErrChk( ncomp+nprim <= NSTATE_MAX, "Max. " + std::to_string(NSTATE_MAX) + " state entries, got " + std::to_string(ncomp+nprim)+".");
 		ErrChk( nmat*rdof <= NALSOL_MAX, "Max. " + std::to_string(NALSOL_MAX) + " THINC entries, got " + std::to_string(nmat*rdof)+".");
 		ErrChk( NGvol(ndof) <= NQUAD_MAX, "Max. " + std::to_string(NQUAD_MAX) + " quadrature points supported.");
 	}
+
+        // POD mirror of the per-material EOS constants needed by device kernel
+        // Note this is NOT a general EOS port, the union_EOS branch is not device-compatible yet and needs work
+        // This thing only contains the scalars needed by soundspeed()
+        // inciter::EOS is not trivially copyable yet and cannot be captured into device lambda
+        // So I use this to port the pressureRelaxation without needing to invest in finishing the union_EOS
+        // This is still built on the host from the inputdeck fields used by initializeMaterialEOS(), uploaded ONCE only
+        struct EOSDevice {
+          enum Type : int { StiffenedGas=0, SmallShearSolid=1, GodunovRomenski=2 };
+          int type = StiffenedGas;
+          real gamma = 0.0;
+          real pstiff = 0.0;
+          real mu = 0.0;
+          real rho0 = 0.0;
+          real K0 = 0.0;
+          real alpha = 0.0;
+        }; //eosd
+
+        // This is the device equivalent of mat_blk[k].compute<EOS::soundspeed>(arho,apr,alpha,k)
+        // Host versions Throw and std::cout on a nonfinite result but neither works on device so I dropped the check here
+        KOKKOS_INLINE_FUNCTION
+        real soundspeedDevice( const EOSDevice& m, real arho, real apr, real alpha )
+        {
+          const auto al_eff = std::fmax( 1.0e-14, alpha );
+          
+          if (m.type == EOSDevice::StiffenedGas) {
+            const auto p_eff = std::fmax( 1.0e-15, apr + al_eff*m.pstiff );
+            return std::sqrt( m.gamma*p_eff/arho );
+          }
+          else if (m.type == EOSDevice::SmallShearSolid) {
+            // Barton 2019 approximated elastic contribution
+            auto a = (4.0/3.0) * m.mu * al_eff / arho;
+            const auto p_eff = std::fmax( 1.0e-15, apr + al_eff*m.pstiff );
+            a += m.gamma * p_eff / arho;
+            return std::sqrt(a);
+          }
+          else { //GodunovRomenski
+            const auto rho = arho/al_eff;
+            const auto rrho0a = std::pow( rho/m.rho0, m.alpha );
+            // pressure_coldcompr(arho, al_eff)
+            const auto p_cc = al_eff*(m.K0/m.alpha*(rrho0a*rho/m.rho0)*(rrho0a-1.0));
+            // DpccDrho(rho)
+            const auto dpdrho = m.K0/(m.rho0*m.alpha)
+                              * ((2.0*m.alpha+1.0)*(rrho0a*rrho0a) - (m.alpha+1.0)*rrho0a);
+            auto a = std::fmax( 1.0e-15, dpdrho + (m.gamma+1.0)*(apr - p_cc)/arho );
+            a += (4.0/3.0)*al_eff*m.mu/arho;
+            return std::sqrt(a);
+          }
+        }//ssd
 
 
 	// Persistent device-resident buffers for const-P DG kernels
@@ -69,6 +136,18 @@ namespace tk {
 		Kokkos::View< real*, memory_space > P;
 		Kokkos::View< real*, memory_space > R;
 		Kokkos::View< real*, memory_space > riemannDeriv;
+
+		// Page-locked staging for the per-call transfers
+		// Mesh views stay pageable: they upload once, so staging them would tie up
+		// pinned mem for copies that no longer happen every call
+		pinned_view stage_U;
+		pinned_view stage_P;
+		pinned_view stage_R;
+		pinned_view stage_rd;
+
+                // Per-material EOS constants
+                // Time and partition invariant so only upload once when first allocated
+                Kokkos::View< EOSDevice*, memory_space > eos;
 
 		// Host-provenance of mesh data resident on device
 		const std::size_t* src_inpoel = nullptr;
@@ -142,6 +221,57 @@ namespace tk {
 		}
 		return false;
 	} //edc
+
+	// Ensures pinned staging view has requested extent
+	template< typename T >
+	bool
+	ensurePinnedCapacity( Kokkos::View< T*, host_pinned_space >& view,
+	                      const std::string& label,
+	                      std::size_t n )
+	{
+		if(view.extent(0) != n){
+			view = Kokkos::View< T*, host_pinned_space >(
+				Kokkos::view_alloc( label, Kokkos::WithoutInitializing ), n );
+			return true;
+		}
+		return false;
+	} //epc
+
+	// Copy a host buffer into pinned mem and queue an async H2D copy
+	// exec must be the instance the consuming kernel runs on, else fence
+	// The memcpy is the price of not owning the source alloc. Still a win over a
+	// pageable cudaMemcpy, which does the same staging internally in chunks and
+	// blocks the caller throughout. A pinned allocator on tk::Fields removes it
+	template< typename ExecSpace >
+	void
+	uploadStaged( const ExecSpace& exec,
+	              Kokkos::View< real*, memory_space >& dst,
+	              pinned_view& stage,
+	              const real* src,
+	              std::size_t n,
+	              const std::string& label )
+	{
+		ensureDeviceCapacity( dst, label, n );
+		ensurePinnedCapacity( stage, label + "_pinned", n );
+		std::memcpy( stage.data(), src, n*sizeof(real) );
+		Kokkos::deep_copy( exec, dst, stage );
+	} //us
+
+	// Queue an async D2H into pinned mem, fence, then copy out to the host
+	template< typename ExecSpace >
+	void
+	downloadStaged( const ExecSpace& exec,
+	                real* dst,
+	                pinned_view& stage,
+	                const Kokkos::View< real*, memory_space >& src,
+	                std::size_t n,
+	                const std::string& label )
+	{
+		ensurePinnedCapacity( stage, label + "_pinned", n );
+		Kokkos::deep_copy( exec, stage, src );
+		exec.fence();
+		std::memcpy( dst, stage.data(), n*sizeof(real) );
+	} //ds
 } //tk
 
 #endif // KokkosDevice_h
