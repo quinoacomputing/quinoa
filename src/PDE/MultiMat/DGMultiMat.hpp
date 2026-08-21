@@ -657,7 +657,7 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
-            auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
+            auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
                alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)
@@ -1594,7 +1594,7 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
-            auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/U(e, densityDofIdx(nmat, k, rdof, 0));
+            auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
               alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)
