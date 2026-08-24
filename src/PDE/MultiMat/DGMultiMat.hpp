@@ -833,21 +833,28 @@ class MultiMat {
           }
         }
 
-        // Clean up damage in mixed/trace cells
+        // Clean up damage in trace materials only
         // In Eulerian codes, damage gets "painted" on the mesh as material advects.
-        // Cells that were once pure-solid but are now mixed retain their damage history
-        // even though most of the solid has advected away. Reset damage in these cells.
+        // Only clean up when material is truly trace AND damage ratio is unphysical.
+        // This allows damage accumulation in mixed cells (needed for wall separation)
+        // while preventing numerical blow-up in trace materials.
         for (std::size_t k=0; k<nmat; ++k)
         {
           if (solidx[k] > 0)
           {
             tk::real alpha_k = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
+            tk::real damage_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
 
-            // If material is no longer significantly present, reset damage
-            // Use same threshold as smoothstep to be consistent
-            if (alpha_k < 0.95)
+            // Only clean up if:
+            // 1. Material is truly trace (alpha < 0.01, not just mixed)
+            // 2. OR damage ratio is unphysical (>1.5 or NaN/Inf)
+            bool is_trace = alpha_k < 0.01;
+            tk::real damage_ratio = damage_k / std::max(1.0e-12, arho_k);
+            bool is_unphysical = !std::isfinite(damage_ratio) || damage_ratio > 1.5;
+
+            if (is_trace || is_unphysical)
             {
-              tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
               // Reset damage to minimum value (not zero, for numerical stability)
               U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 1.0e-06 * arho_k;
             }
