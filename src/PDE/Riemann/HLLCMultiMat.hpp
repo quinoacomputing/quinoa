@@ -104,10 +104,16 @@ struct HLLCMultiMat {
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnl.push_back(tk::rotateTensor(gl[k], fn));
+      // Safe damage calculation: damage/density with protection
+      auto rhol_k = u[0][densityIdx(nmat, k)];
+      auto damagel_k = u[0][damageIdx(nmat, nsld, solidx[k])];
+      auto damage_ratiol = (std::fabs(rhol_k) > 1.0e-12 && std::isfinite(rhol_k) && std::isfinite(damagel_k))
+                           ? std::max(0.0, std::min(1.0, damagel_k/rhol_k))
+                           : 0.0;
       auto amatl = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], apl[k],
+        rhol_k, apl[k],
         u[0][volfracIdx(nmat, k)], k, gnl[k],
-        u[0][damageIdx(nmat, nsld, solidx[k])]/u[0][densityIdx(nmat, k)] );
+        damage_ratiol );
 
       // Right state
       apr[k] = u[1][ncomp+pressureIdx(nmat, k)];
@@ -131,17 +137,30 @@ struct HLLCMultiMat {
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnr.push_back(tk::rotateTensor(gr[k], fn));
+      // Safe damage calculation: damage/density with protection
+      auto rhor_k = u[1][densityIdx(nmat, k)];
+      auto damager_k = u[1][damageIdx(nmat, nsld, solidx[k])];
+      auto damage_ratior = (std::fabs(rhor_k) > 1.0e-12 && std::isfinite(rhor_k) && std::isfinite(damager_k))
+                           ? std::max(0.0, std::min(1.0, damager_k/rhor_k))
+                           : 0.0;
       auto amatr = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], apr[k],
+        rhor_k, apr[k],
         u[1][volfracIdx(nmat, k)], k, gnr[k],
-        u[1][damageIdx(nmat, nsld, solidx[k])]/u[1][densityIdx(nmat, k)] );
+        damage_ratior );
 
       // Mixture speed of sound
-      acl += u[0][densityIdx(nmat, k)] * amatl * amatl;
-      acr += u[1][densityIdx(nmat, k)] * amatr * amatr;
+      if (std::isfinite(amatl)) {
+        acl += u[0][densityIdx(nmat, k)] * amatl * amatl;
+      }
+      if (std::isfinite(amatr)) {
+        acr += u[1][densityIdx(nmat, k)] * amatr * amatr;
+      }
     }
-    acl = std::sqrt(acl/rhol);
-    acr = std::sqrt(acr/rhor);
+    // Safe mixture sound speed with division protection
+    rhol = std::max(1.0e-12, rhol);
+    rhor = std::max(1.0e-12, rhor);
+    acl = std::sqrt(std::max(0.0, acl/rhol));
+    acr = std::sqrt(std::max(0.0, acr/rhor));
 
     // Rotated velocities from advective velocities
     auto vnl = tk::rotateVector({ul, vl, wl}, fn);
@@ -154,9 +173,13 @@ struct HLLCMultiMat {
     // Signal velocities
     auto Sl = std::min((vnl[0]-acl), (vnr[0]-acr));
     auto Sr = std::max((vnl[0]+acl), (vnr[0]+acr));
-    auto Sm = ( rhor*vnr[0]*(Sr-vnr[0]) - rhol*vnl[0]*(Sl-vnl[0])
-                - signnl[0][0] + signnr[0][0] )
-              /( rhor*(Sr-vnr[0]) - rhol*(Sl-vnl[0]) );
+    // Safe Sm calculation with division protection
+    auto Sm_numer = rhor*vnr[0]*(Sr-vnr[0]) - rhol*vnl[0]*(Sl-vnl[0])
+                    - signnl[0][0] + signnr[0][0];
+    auto Sm_denom = rhor*(Sr-vnr[0]) - rhol*(Sl-vnl[0]);
+    auto Sm = (std::fabs(Sm_denom) > 1.0e-12 && std::isfinite(Sm_numer) && std::isfinite(Sm_denom))
+              ? Sm_numer / Sm_denom
+              : 0.5 * (vnl[0] + vnr[0]);  // Fallback to average velocity
 
     // Middle-zone (star) variables
     // -------------------------------------------------------------------------
@@ -193,22 +216,23 @@ struct HLLCMultiMat {
 
       for (std::size_t i=1; i<3; ++i)
       {
-        asignnlStar[k][i][0] =
-          ( (Sm-Sl)*u[0][densityIdx(nmat,k)]*asignnr[k][i][0]
-          - (Sm-Sr)*u[1][densityIdx(nmat,k)]*asignnl[k][i][0]
-          + (Sm-Sl)*u[0][densityIdx(nmat,k)]
-          * (Sm-Sr)*u[1][densityIdx(nmat,k)]
-          * (vnl[i]-vnr[i]) ) /
-          ( (Sm-Sl)*u[0][densityIdx(nmat,k)]
-          - (Sm-Sr)*u[1][densityIdx(nmat,k)]);
-        asignnrStar[k][i][0] =
-          ( (Sm-Sl)*u[0][densityIdx(nmat,k)]*asignnr[k][i][0]
-          - (Sm-Sr)*u[1][densityIdx(nmat,k)]*asignnl[k][i][0]
-          + (Sm-Sl)*u[0][densityIdx(nmat,k)]
-          * (Sm-Sr)*u[1][densityIdx(nmat,k)]
-          * (vnl[i]-vnr[i]) ) /
-          ( (Sm-Sl)*u[0][densityIdx(nmat,k)]
-          - (Sm-Sr)*u[1][densityIdx(nmat,k)]);
+        // Safe star state shear stress calculation with division protection
+        auto star_numer = (Sm-Sl)*u[0][densityIdx(nmat,k)]*asignnr[k][i][0]
+                        - (Sm-Sr)*u[1][densityIdx(nmat,k)]*asignnl[k][i][0]
+                        + (Sm-Sl)*u[0][densityIdx(nmat,k)]
+                        * (Sm-Sr)*u[1][densityIdx(nmat,k)]
+                        * (vnl[i]-vnr[i]);
+        auto star_denom = (Sm-Sl)*u[0][densityIdx(nmat,k)]
+                        - (Sm-Sr)*u[1][densityIdx(nmat,k)];
+
+        if (std::fabs(star_denom) > 1.0e-12 && std::isfinite(star_numer) && std::isfinite(star_denom)) {
+          asignnlStar[k][i][0] = star_numer / star_denom;
+          asignnrStar[k][i][0] = star_numer / star_denom;
+        } else {
+          // Fallback to original values if division is unsafe
+          asignnlStar[k][i][0] = asignnl[k][i][0];
+          asignnrStar[k][i][0] = asignnr[k][i][0];
+        }
       }
       // Symmetry
       asignnlStar[k][0][1] = asignnlStar[k][1][0];
