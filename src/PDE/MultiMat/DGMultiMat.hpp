@@ -899,7 +899,8 @@ class MultiMat {
                   tk::real arhoE_k = U(e, energyDofIdx(nmat, k, rdof, 0));
 
                   // Compute mass transfer (partial density)
-                  tk::real d_arho = dalpha * (arho_k / alpha_k);
+                  // Protect against division by very small alpha_k
+                  tk::real d_arho = dalpha * (arho_k / std::max(1.0e-12, alpha_k));
 
                 // Transfer volume fraction
                 U(e, volfracDofIdx(nmat, k, rdof, 0)) -= dalpha;
@@ -909,10 +910,16 @@ class MultiMat {
                 U(e, densityDofIdx(nmat, k, rdof, 0)) -= d_arho;
                 U(e, densityDofIdx(nmat, kfluid, rdof, 0)) += d_arho;
 
+                // Ensure densities remain positive
+                U(e, densityDofIdx(nmat, k, rdof, 0)) =
+                  std::max(1.0e-14, U(e, densityDofIdx(nmat, k, rdof, 0)));
+                U(e, densityDofIdx(nmat, kfluid, rdof, 0)) =
+                  std::max(1.0e-14, U(e, densityDofIdx(nmat, kfluid, rdof, 0)));
+
                 // Transfer damage (stored as ρD, partial damage density)
                 // Reduce proportionally to maintain D = ρD/ρ for remaining solid
                 tk::real arhoD_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
-                tk::real d_arhoD = dalpha * (arhoD_k / alpha_k);
+                tk::real d_arhoD = dalpha * (arhoD_k / std::max(1.0e-12, alpha_k));
                 U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) -= d_arhoD;
                 // Note: fluid doesn't have damage variable, so the damage state is
                 // lost when failed solid transforms to fluid
@@ -927,7 +934,7 @@ class MultiMat {
                 // conserved. No explicit momentum transfer needed.
 
                 // Transfer energy proportionally
-                tk::real d_arhoE = dalpha * (arhoE_k / alpha_k);
+                tk::real d_arhoE = dalpha * (arhoE_k / std::max(1.0e-12, alpha_k));
                 U(e, energyDofIdx(nmat, k, rdof, 0)) -= d_arhoE;
                 U(e, energyDofIdx(nmat, kfluid, rdof, 0)) += d_arhoE;
               }
