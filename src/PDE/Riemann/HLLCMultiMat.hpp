@@ -65,6 +65,16 @@ struct HLLCMultiMat {
     auto vr = u[1][ncomp+velocityIdx(nmat, 1)];
     auto wr = u[1][ncomp+velocityIdx(nmat, 2)];
 
+    // Firewall: sanitize velocities and densities
+    if (!std::isfinite(ul)) ul = 0.0;
+    if (!std::isfinite(vl)) vl = 0.0;
+    if (!std::isfinite(wl)) wl = 0.0;
+    if (!std::isfinite(ur)) ur = 0.0;
+    if (!std::isfinite(vr)) vr = 0.0;
+    if (!std::isfinite(wr)) wr = 0.0;
+    if (!std::isfinite(rhol) || rhol <= 0.0) rhol = 1.0e-12;
+    if (!std::isfinite(rhor) || rhor <= 0.0) rhor = 1.0e-12;
+
     // Outer states
     // -------------------------------------------------------------------------
     [[maybe_unused]] tk::real pl(0.0), pr(0.0);
@@ -84,6 +94,8 @@ struct HLLCMultiMat {
     for (std::size_t k=0; k<nmat; ++k) {
       // Left state
       apl[k] = u[0][ncomp+pressureIdx(nmat, k)];
+      // Sanitize pressure
+      if (!std::isfinite(apl[k])) apl[k] = 0.0;
       pl += apl[k];
 
       // inv deformation gradient and Cauchy stress tensors
@@ -93,14 +105,20 @@ struct HLLCMultiMat {
 
       // normal stress (traction) vector
       aTnl.push_back(tk::matvec(asigl, fn));
-      for (std::size_t i=0; i<3; ++i)
+      // Sanitize traction vector components
+      for (std::size_t i=0; i<3; ++i) {
+        if (!std::isfinite(aTnl[k][i])) aTnl[k][i] = 0.0;
         Tnl[i] += aTnl[k][i];
+      }
 
       // rotate stress vector
       asignnl.push_back(tk::rotateTensor(asigl, fn));
+      // Sanitize rotated stress tensor
       for (std::size_t i=0; i<3; ++i)
-        for (std::size_t j=0; j<3; ++j)
+        for (std::size_t j=0; j<3; ++j) {
+          if (!std::isfinite(asignnl[k][i][j])) asignnl[k][i][j] = 0.0;
           signnl[i][j] += asignnl[k][i][j];
+        }
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnl.push_back(tk::rotateTensor(gl[k], fn));
@@ -117,6 +135,8 @@ struct HLLCMultiMat {
 
       // Right state
       apr[k] = u[1][ncomp+pressureIdx(nmat, k)];
+      // Sanitize pressure
+      if (!std::isfinite(apr[k])) apr[k] = 0.0;
       pr += apr[k];
 
       // inv deformation gradient and Cauchy stress tensors
@@ -126,14 +146,20 @@ struct HLLCMultiMat {
 
       // normal stress (traction) vector
       aTnr.push_back(tk::matvec(asigr, fn));
-      for (std::size_t i=0; i<3; ++i)
+      // Sanitize traction vector components
+      for (std::size_t i=0; i<3; ++i) {
+        if (!std::isfinite(aTnr[k][i])) aTnr[k][i] = 0.0;
         Tnr[i] += aTnr[k][i];
+      }
 
       // rotate stress vector
       asignnr.push_back(tk::rotateTensor(asigr, fn));
+      // Sanitize rotated stress tensor
       for (std::size_t i=0; i<3; ++i)
-        for (std::size_t j=0; j<3; ++j)
+        for (std::size_t j=0; j<3; ++j) {
+          if (!std::isfinite(asignnr[k][i][j])) asignnr[k][i][j] = 0.0;
           signnr[i][j] += asignnr[k][i][j];
+        }
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnr.push_back(tk::rotateTensor(gr[k], fn));
