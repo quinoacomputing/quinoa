@@ -264,22 +264,35 @@ struct HLLCMultiMat {
       }
     }
 
-    auto w_l = (vnl[0]-Sl)/(Sm-Sl);
-    auto w_r = (vnr[0]-Sr)/(Sm-Sr);
+    // Safe weight calculations with division protection
+    auto w_l_denom = Sm - Sl;
+    auto w_r_denom = Sm - Sr;
+    auto w_l = (std::fabs(w_l_denom) > 1.0e-12 && std::isfinite(w_l_denom))
+               ? (vnl[0]-Sl)/w_l_denom : 1.0;
+    auto w_r = (std::fabs(w_r_denom) > 1.0e-12 && std::isfinite(w_r_denom))
+               ? (vnr[0]-Sr)/w_r_denom : 1.0;
 
     std::array< tk::real, 3 > vnlStar, vnrStar;
-    // u*_L
+    // u*_L with safe divisions
     vnlStar[0] = Sm;
-    vnlStar[1] = vnl[1]
-      + (signnlStar[1][0] - signnl[1][0]) / (w_l*rhol*(vnl[0]-Sl));
-    vnlStar[2] = vnl[2]
-      + (signnlStar[2][0] - signnl[2][0]) / (w_l*rhol*(vnl[0]-Sl));
-    // u*_R
+    auto denom_l = w_l*rhol*(vnl[0]-Sl);
+    if (std::fabs(denom_l) > 1.0e-12 && std::isfinite(denom_l)) {
+      vnlStar[1] = vnl[1] + (signnlStar[1][0] - signnl[1][0]) / denom_l;
+      vnlStar[2] = vnl[2] + (signnlStar[2][0] - signnl[2][0]) / denom_l;
+    } else {
+      vnlStar[1] = vnl[1];
+      vnlStar[2] = vnl[2];
+    }
+    // u*_R with safe divisions
     vnrStar[0] = Sm;
-    vnrStar[1] = vnr[1]
-      + (signnrStar[1][0] - signnr[1][0]) / (w_r*rhor*(vnr[0]-Sr));
-    vnrStar[2] = vnr[2]
-      + (signnrStar[2][0] - signnr[2][0]) / (w_r*rhor*(vnr[0]-Sr));
+    auto denom_r = w_r*rhor*(vnr[0]-Sr);
+    if (std::fabs(denom_r) > 1.0e-12 && std::isfinite(denom_r)) {
+      vnrStar[1] = vnr[1] + (signnrStar[1][0] - signnr[1][0]) / denom_r;
+      vnrStar[2] = vnr[2] + (signnrStar[2][0] - signnr[2][0]) / denom_r;
+    } else {
+      vnrStar[1] = vnr[1];
+      vnrStar[2] = vnr[2];
+    }
 
     auto vlStar = tk::unrotateVector(vnlStar, fn);
     auto vrStar = tk::unrotateVector(vnrStar, fn);
@@ -295,20 +308,27 @@ struct HLLCMultiMat {
     std::vector< std::array< std::array< tk::real, 3 >, 3 > >
       gnlStar(nmat, tempArray), gnrStar(nmat, tempArray),
       glStar(nmat, tempArray), grStar(nmat, tempArray);
+
+    // Pre-compute safe inverse of wave speed differences
+    auto inv_Sm_Sl = (std::fabs(Sm-Sl) > 1.0e-12 && std::isfinite(Sm-Sl))
+                     ? 1.0/(Sm-Sl) : 0.0;
+    auto inv_Sm_Sr = (std::fabs(Sm-Sr) > 1.0e-12 && std::isfinite(Sm-Sr))
+                     ? 1.0/(Sm-Sr) : 0.0;
+
     for (std::size_t k=0; k<nmat; ++k) {
       // Left
       gnlStar[k] = gnl[k];
       if (solidx[k] > 0)
       {
         gnlStar[k][0][0] = w_l * gnl[k][0][0]
-          + gnl[k][0][1]*(vnl[1]-vnlStar[1])/(Sm-Sl)
-          + gnl[k][0][2]*(vnl[2]-vnlStar[2])/(Sm-Sl);
+          + gnl[k][0][1]*(vnl[1]-vnlStar[1])*inv_Sm_Sl
+          + gnl[k][0][2]*(vnl[2]-vnlStar[2])*inv_Sm_Sl;
         gnlStar[k][1][0] = w_l * gnl[k][1][0]
-          + gnl[k][1][1]*(vnl[1]-vnlStar[1])/(Sm-Sl)
-          + gnl[k][1][2]*(vnl[2]-vnlStar[2])/(Sm-Sl);
+          + gnl[k][1][1]*(vnl[1]-vnlStar[1])*inv_Sm_Sl
+          + gnl[k][1][2]*(vnl[2]-vnlStar[2])*inv_Sm_Sl;
         gnlStar[k][2][0] = w_l * gnl[k][2][0]
-          + gnl[k][2][1]*(vnl[1]-vnlStar[1])/(Sm-Sl)
-          + gnl[k][2][2]*(vnl[2]-vnlStar[2])/(Sm-Sl);
+          + gnl[k][2][1]*(vnl[1]-vnlStar[1])*inv_Sm_Sl
+          + gnl[k][2][2]*(vnl[2]-vnlStar[2])*inv_Sm_Sl;
         // rotate g back to original frame of reference
         glStar.push_back(tk::unrotateTensor(gnlStar[k], fn));
         // damage
@@ -325,7 +345,7 @@ struct HLLCMultiMat {
             + asignnlStar[k][0][0]*unStar
             + asignnlStar[k][1][0]*vnlStar[1]
             + asignnlStar[k][2][0]*vnlStar[2]
-          ) / (Sm-Sl);
+          ) * inv_Sm_Sl;
       rholStar += uStar[0][densityIdx(nmat, k)];
 
       // Right
@@ -333,14 +353,14 @@ struct HLLCMultiMat {
       if (solidx[k] > 0)
       {
         gnrStar[k][0][0] = w_r * gnr[k][0][0]
-          + gnr[k][0][1]*(vnr[1]-vnrStar[1])/(Sm-Sr)
-          + gnr[k][0][2]*(vnr[2]-vnrStar[2])/(Sm-Sr);
+          + gnr[k][0][1]*(vnr[1]-vnrStar[1])*inv_Sm_Sr
+          + gnr[k][0][2]*(vnr[2]-vnrStar[2])*inv_Sm_Sr;
         gnrStar[k][1][0] = w_r * gnr[k][1][0]
-          + gnr[k][1][1]*(vnr[1]-vnrStar[1])/(Sm-Sr)
-          + gnr[k][1][2]*(vnr[2]-vnrStar[2])/(Sm-Sr);
+          + gnr[k][1][1]*(vnr[1]-vnrStar[1])*inv_Sm_Sr
+          + gnr[k][1][2]*(vnr[2]-vnrStar[2])*inv_Sm_Sr;
         gnrStar[k][2][0] = w_r * gnr[k][2][0]
-          + gnr[k][2][1]*(vnr[1]-vnrStar[1])/(Sm-Sr)
-          + gnr[k][2][2]*(vnr[2]-vnrStar[2])/(Sm-Sr);
+          + gnr[k][2][1]*(vnr[1]-vnrStar[1])*inv_Sm_Sr
+          + gnr[k][2][2]*(vnr[2]-vnrStar[2])*inv_Sm_Sr;
         // rotate g back to original frame of reference
         grStar.push_back(tk::unrotateTensor(gnrStar[k], fn));
         // damage
@@ -357,7 +377,7 @@ struct HLLCMultiMat {
             + asignnrStar[k][0][0]*unStar
             + asignnrStar[k][1][0]*vnrStar[1]
             + asignnrStar[k][2][0]*vnrStar[2]
-          ) / (Sm-Sr);
+          ) * inv_Sm_Sr;
       rhorStar += uStar[1][densityIdx(nmat, k)];
     }
     for (std::size_t idir=0; idir<3; ++idir) {
