@@ -543,6 +543,12 @@ SmallShearSolid::soundspeed(
 
   */
 
+  // For trace amounts of material (alpha < 1e-6), return a safe sound speed
+  // The density field is not reliable at these tiny volume fractions
+  if (alpha < 1.0e-6 || !std::isfinite(arho)) {
+    return 100.0;  // Return a reasonable sound speed for trace material
+  }
+
   // Approximated elastic contribution, from Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
