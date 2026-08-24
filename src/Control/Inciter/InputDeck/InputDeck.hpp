@@ -2289,6 +2289,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         In this problem, one fluid is initialized with two velocity profiles 
         on either side of an interface.)"});
 
+      keywords.insert({"couette_flow",
+        "Select the Couette flow problem ",
+        R"(This keyword selects Couette flow in the mixing-layer domain. The
+        streamwise velocity varies linearly from 0 m/s at y=-0.1 to 10 m/s at
+        y=0.1. The same profile is imposed on surfaces configured with a
+        Dirichlet boundary condition.)"});
+
       // -----------------------------------------------------------------------
 
       // Initialize help: fill own keywords

@@ -546,7 +546,7 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 
   // x-momentum (mathematically, l=2 but l = 1 in zero-based indexing)
   A[1][0] = { { 
-    { -nu_m*(4.0/3.0)*u_m, -nu_m*(2.0/3.0)*v_m, -nu_m*(2.0/3.0)*w_m }, 
+    { -nu_m*(4.0/3.0)*u_m, nu_m*(2.0/3.0)*v_m, nu_m*(2.0/3.0)*w_m }, 
     { -nu_m*v_m,           -nu_m*u_m,                    0.0        }, 
     { -nu_m*w_m,               0.0,                  -nu_m*u_m      } } };
 

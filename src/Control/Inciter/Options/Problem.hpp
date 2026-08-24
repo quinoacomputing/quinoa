@@ -45,7 +45,8 @@ enum class ProblemType : uint8_t { USER_DEFINED,
                                    EQUILINTERFACE_ADVECT,
                                    SINEWAVE_PACKET,
                                    RICHTMYER_MESHKOV,
-                                   MIXING_LAYER };
+                                   MIXING_LAYER,
+                                   COUETTE_FLOW };
 
 //! Pack/Unpack ProblemType: forward overload to generic enum class packer
 inline void operator|( PUP::er& p, ProblemType& e ) { PUP::pup( p, e ); }
@@ -85,7 +86,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { ProblemType::EQUILINTERFACE_ADVECT, "equilinterface_advect" },
           { ProblemType::RICHTMYER_MESHKOV, "richtmyer_meshkov" },
           { ProblemType::SINEWAVE_PACKET, "sinewave_packet" },
-          { ProblemType::MIXING_LAYER, "mixing_layer" }
+          { ProblemType::MIXING_LAYER, "mixing_layer" },
+          { ProblemType::COUETTE_FLOW, "couette_flow" }
         },
         //! keywords -> Enums
         { { "user_defined", ProblemType::USER_DEFINED },
@@ -112,7 +114,8 @@ class Problem : public tk::Toggle< ProblemType > {
           { "equilinterface_advect", ProblemType::EQUILINTERFACE_ADVECT },
           { "richtmyer_meshkov", ProblemType::RICHTMYER_MESHKOV },
           { "sinewave_packet", ProblemType::SINEWAVE_PACKET },
-          { "mixing_layer", ProblemType::MIXING_LAYER }
+          { "mixing_layer", ProblemType::MIXING_LAYER },
+          { "couette_flow", ProblemType::COUETTE_FLOW }
         } )
     {}
 };

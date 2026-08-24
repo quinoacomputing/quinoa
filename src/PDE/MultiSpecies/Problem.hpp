@@ -45,6 +45,7 @@
 
 #include "Problem/UserDefined.hpp"
 #include "Problem/MixingLayer.hpp"
+#include "Problem/CouetteFlow.hpp"
 
 namespace inciter {
 
@@ -52,6 +53,7 @@ namespace inciter {
 using MultiSpeciesProblems =
   brigand::list< MultiSpeciesProblemUserDefined
                , MultiSpeciesProblemMixingLayer
+               , MultiSpeciesProblemCouetteFlow
                >;
 
 } // inciter::
