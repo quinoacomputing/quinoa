@@ -159,8 +159,9 @@ struct HLLCMultiMat {
     // Safe mixture sound speed with division protection
     rhol = std::max(1.0e-12, rhol);
     rhor = std::max(1.0e-12, rhor);
-    acl = std::sqrt(std::max(0.0, acl/rhol));
-    acr = std::sqrt(std::max(0.0, acr/rhor));
+    // Ensure acl and acr are finite before division
+    acl = (std::isfinite(acl) && acl > 0.0) ? std::sqrt(acl/rhol) : 0.0;
+    acr = (std::isfinite(acr) && acr > 0.0) ? std::sqrt(acr/rhor) : 0.0;
 
     // Rotated velocities from advective velocities
     auto vnl = tk::rotateVector({ul, vl, wl}, fn);
@@ -380,17 +381,13 @@ struct HLLCMultiMat {
           ) * inv_Sm_Sr;
       rhorStar += uStar[1][densityIdx(nmat, k)];
     }
-    // Safe momentum star state calculation with division protection
-    auto inv_Sl_Sm = (std::fabs(Sl-Sm) > 1.0e-12 && std::isfinite(Sl-Sm))
-                     ? 1.0/(Sl-Sm) : 0.0;
-    auto inv_Sr_Sm = (std::fabs(Sr-Sm) > 1.0e-12 && std::isfinite(Sr-Sm))
-                     ? 1.0/(Sr-Sm) : 0.0;
-
+    // Safe momentum star state: reuse existing safe inversions
+    // Note: 1/(Sl-Sm) = -1/(Sm-Sl) = -inv_Sm_Sl, same for Sr
     for (std::size_t idir=0; idir<3; ++idir) {
       uStar[0][momentumIdx(nmat, idir)] = w_l*u[0][momentumIdx(nmat, idir)]
-        - (TnlStar[idir] - Tnl[idir])*inv_Sl_Sm;
+        + (TnlStar[idir] - Tnl[idir])*inv_Sm_Sl;
       uStar[1][momentumIdx(nmat, idir)] = w_r*u[1][momentumIdx(nmat, idir)]
-        - (TnrStar[idir] - Tnr[idir])*inv_Sr_Sm;
+        + (TnrStar[idir] - Tnr[idir])*inv_Sm_Sr;
     }
 
     // Numerical fluxes
@@ -420,10 +417,10 @@ struct HLLCMultiMat {
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt((aTnl[k][0]*aTnl[k][0]
-                                +aTnl[k][1]*aTnl[k][1]
-                                +aTnl[k][2]*aTnl[k][2])));
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto mag_sq = aTnl[k][0]*aTnl[k][0] + aTnl[k][1]*aTnl[k][1] + aTnl[k][2]*aTnl[k][2];
+        flx.push_back(std::isfinite(mag_sq) && mag_sq >= 0.0 ? std::sqrt(mag_sq) : 0.0);
+      }
       // Store Riemann velocity
       flx.push_back((vnl[0]+wn));
       for (std::size_t k=0; k<nmat; ++k) {
@@ -475,10 +472,10 @@ struct HLLCMultiMat {
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnlStar[k][0]*aTnlStar[k][0]
-                               +aTnlStar[k][1]*aTnlStar[k][1]
-                               +aTnlStar[k][2]*aTnlStar[k][2]));
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto mag_sq = aTnlStar[k][0]*aTnlStar[k][0] + aTnlStar[k][1]*aTnlStar[k][1] + aTnlStar[k][2]*aTnlStar[k][2];
+        flx.push_back(std::isfinite(mag_sq) && mag_sq >= 0.0 ? std::sqrt(mag_sq) : 0.0);
+      }
       // Store Riemann velocity
       flx.push_back(Sm+wn);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -530,10 +527,10 @@ struct HLLCMultiMat {
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnrStar[k][0]*aTnrStar[k][0]
-                               +aTnrStar[k][1]*aTnrStar[k][1]
-                               +aTnrStar[k][2]*aTnrStar[k][2]));
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto mag_sq = aTnrStar[k][0]*aTnrStar[k][0] + aTnrStar[k][1]*aTnrStar[k][1] + aTnrStar[k][2]*aTnrStar[k][2];
+        flx.push_back(std::isfinite(mag_sq) && mag_sq >= 0.0 ? std::sqrt(mag_sq) : 0.0);
+      }
       // Store Riemann velocity
       flx.push_back(Sm+wn);
       for (std::size_t k=0; k<nmat; ++k) {
@@ -577,10 +574,10 @@ struct HLLCMultiMat {
 
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
-      for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnr[k][0]*aTnr[k][0]
-                               +aTnr[k][1]*aTnr[k][1]
-                               +aTnr[k][2]*aTnr[k][2]));
+      for (std::size_t k=0; k<nmat; ++k) {
+        auto mag_sq = aTnr[k][0]*aTnr[k][0] + aTnr[k][1]*aTnr[k][1] + aTnr[k][2]*aTnr[k][2];
+        flx.push_back(std::isfinite(mag_sq) && mag_sq >= 0.0 ? std::sqrt(mag_sq) : 0.0);
+      }
       // Store Riemann velocity
       flx.push_back(vnr[0]+wn);
       for (std::size_t k=0; k<nmat; ++k) {
