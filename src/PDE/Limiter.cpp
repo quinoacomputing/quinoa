@@ -1551,8 +1551,13 @@ VertexBasedLimiting(
     for (std::size_t i=0; i<VarList.size(); ++i)
     {
       auto mark = VarList[i]*rdof;
-      uMin[i] = U(e, mark);
-      uMax[i] = U(e, mark);
+      auto val = U(e, mark);
+      // Guard against non-finite initial values
+      if (!std::isfinite(val)) {
+        val = 0.0;  // Use safe default if cell average is non-finite
+      }
+      uMin[i] = val;
+      uMax[i] = val;
     }
     auto p = inpoel[4*e+lp];
     const auto& pesup = tk::cref_find(esup, p);
@@ -1564,8 +1569,12 @@ VertexBasedLimiting(
       for (std::size_t i=0; i<VarList.size(); ++i)
       {
         auto mark = VarList[i]*rdof;
-        uMin[i] = std::min(uMin[i], U(er, mark));
-        uMax[i] = std::max(uMax[i], U(er, mark));
+        auto val = U(er, mark);
+        // Only use finite values in min/max to avoid SIGFPE
+        if (std::isfinite(val)) {
+          uMin[i] = std::min(uMin[i], val);
+          uMax[i] = std::max(uMax[i], val);
+        }
       }
     }
 
@@ -1627,7 +1636,14 @@ VertexBasedLimiting(
       }
 
     // ----- Step-3: take the minimum of the nodal-limiter functions
-      phi[c] = std::min( phi[c], phi_gp );
+      // Guard against NaN propagation in min operation
+      if (std::isfinite(phi_gp) && std::isfinite(phi[c])) {
+        phi[c] = std::min( phi[c], phi_gp );
+      }
+      else if (std::isfinite(phi_gp)) {
+        phi[c] = phi_gp;  // Use phi_gp if phi[c] is not finite
+      }
+      // else keep phi[c] as is (if phi_gp is not finite, don't update)
     }
   }
 }
