@@ -380,11 +380,17 @@ struct HLLCMultiMat {
           ) * inv_Sm_Sr;
       rhorStar += uStar[1][densityIdx(nmat, k)];
     }
+    // Safe momentum star state calculation with division protection
+    auto inv_Sl_Sm = (std::fabs(Sl-Sm) > 1.0e-12 && std::isfinite(Sl-Sm))
+                     ? 1.0/(Sl-Sm) : 0.0;
+    auto inv_Sr_Sm = (std::fabs(Sr-Sm) > 1.0e-12 && std::isfinite(Sr-Sm))
+                     ? 1.0/(Sr-Sm) : 0.0;
+
     for (std::size_t idir=0; idir<3; ++idir) {
       uStar[0][momentumIdx(nmat, idir)] = w_l*u[0][momentumIdx(nmat, idir)]
-        - (TnlStar[idir] - Tnl[idir])/(Sl-Sm);
+        - (TnlStar[idir] - Tnl[idir])*inv_Sl_Sm;
       uStar[1][momentumIdx(nmat, idir)] = w_r*u[1][momentumIdx(nmat, idir)]
-        - (TnrStar[idir] - Tnr[idir])/(Sr-Sm);
+        - (TnrStar[idir] - Tnr[idir])*inv_Sr_Sm;
     }
 
     // Numerical fluxes
