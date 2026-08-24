@@ -948,18 +948,17 @@ class MultiMat {
       // This prevents numerical instabilities in trace-amount cells
       for (std::size_t e=0; e<nelem; ++e) {
         for (std::size_t k=0; k<nmat; ++k) {
-          for (std::size_t rdof=0; rdof<nrdof; ++rdof) {
-            auto& arho = U(e, densityDofIdx(nmat, k, rdof, 0));
-            auto& arhoE = U(e, energyDofIdx(nmat, k, rdof, 0));
+          // Only sanitize the cell-average (DOF 0)
+          auto& arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+          auto& arhoE = U(e, energyDofIdx(nmat, k, rdof, 0));
 
-            // Replace NaN densities with minimum value
-            if (!std::isfinite(arho) || arho < 0.0) {
-              arho = 1.0e-14;
-            }
-            // Replace NaN energies
-            if (!std::isfinite(arhoE) || arhoE < 0.0) {
-              arhoE = 1.0e-14;
-            }
+          // Replace NaN densities with minimum value
+          if (!std::isfinite(arho) || arho < 0.0) {
+            arho = 1.0e-14;
+          }
+          // Replace NaN energies
+          if (!std::isfinite(arhoE) || arhoE < 0.0) {
+            arhoE = 1.0e-14;
           }
         }
       }
