@@ -719,14 +719,42 @@ SmallShearSolid::elasticEnergy(
 //!   the elastic shear distortion for further use
 // *************************************************************************
 {
+  // Guard against non-finite damage values
+  if (!std::isfinite(damage)) {
+    eps2 = 0.0;
+    return 0.0;
+  }
+
+  // Clamp damage to physical bounds [0,1]
+  damage = std::max(0.0, std::min(1.0, damage));
+
   // compute volume-preserving part of Right Cauchy-Green strain tensor
   auto Ct = tk::getIsochorRightCauchyGreen(defgrad);
+
+  // Check if strain tensor is finite
+  if (!std::isfinite(Ct[0][0]) || !std::isfinite(Ct[1][1]) || !std::isfinite(Ct[2][2])) {
+    eps2 = 0.0;
+    return 0.0;
+  }
 
   // compute elastic shear distortion
   eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
 
-  // compute elastic energy
-  auto rhoEe = std::max(1.0e-06, (1.0-damage)) * m_mu * eps2;
+  // Guard against non-finite eps2
+  if (!std::isfinite(eps2)) {
+    eps2 = 0.0;
+    return 0.0;
+  }
+
+  // compute elastic energy with safe damage factor
+  // Use max to ensure we don't get exact zero which could cause issues
+  auto damage_factor = std::max(1.0e-06, (1.0-damage));
+  auto rhoEe = damage_factor * m_mu * eps2;
+
+  // Final check for finite result
+  if (!std::isfinite(rhoEe)) {
+    return 0.0;
+  }
 
   return rhoEe;
 }
