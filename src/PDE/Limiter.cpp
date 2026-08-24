@@ -1583,13 +1583,36 @@ VertexBasedLimiting(
       auto uNeg = state[c] - u0;
 
       auto tol = 1.0e-06*std::max(std::fabs(u0), 1e-14);
+      // Additional safety: ensure denominator magnitude is never too small
+      const auto min_denom = 1.0e-12;
+
       if (uNeg > tol)
       {
-        phi_gp = std::min( 1.0, (uMax[i]-u0)/uNeg );
+        // Ensure denominator is large enough to avoid SIGFPE
+        if (std::fabs(uNeg) > min_denom) {
+          auto numer = uMax[i] - u0;
+          // Check for valid numerator and finite result
+          if (std::isfinite(numer) && std::isfinite(uNeg)) {
+            auto ratio = numer/uNeg;
+            if (std::isfinite(ratio)) {
+              phi_gp = std::min( 1.0, ratio );
+            }
+          }
+        }
       }
       else if (uNeg < -tol)
       {
-        phi_gp = std::min( 1.0, (uMin[i]-u0)/uNeg );
+        // Ensure denominator is large enough to avoid SIGFPE
+        if (std::fabs(uNeg) > min_denom) {
+          auto numer = uMin[i] - u0;
+          // Check for valid numerator and finite result
+          if (std::isfinite(numer) && std::isfinite(uNeg)) {
+            auto ratio = numer/uNeg;
+            if (std::isfinite(ratio)) {
+              phi_gp = std::min( 1.0, ratio );
+            }
+          }
+        }
       }
       else
       {
