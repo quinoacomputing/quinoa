@@ -17,6 +17,7 @@
 #define HLLCMultiMat_h
 
 #include <vector>
+#include <iostream>
 
 #include "Fields.hpp"
 #include "FunctionPrototypes.hpp"
@@ -119,8 +120,6 @@ struct HLLCMultiMat {
         if (nan_traction_count <= 20) {
           std::cout << "NaN traction LEFT: k=" << k
                     << " pressure=" << apl[k]
-                    << " damage_ratio=" << damage_ratiol
-                    << " rhol_k=" << rhol_k
                     << " count=" << nan_traction_count << std::endl;
         }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
@@ -149,8 +148,6 @@ struct HLLCMultiMat {
         if (nan_stress_count <= 20) {
           std::cout << "NaN stress LEFT: k=" << k
                     << " pressure=" << apl[k]
-                    << " damage_ratio=" << damage_ratiol
-                    << " rhol_k=" << rhol_k
                     << " count=" << nan_stress_count << std::endl;
         }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
@@ -202,8 +199,6 @@ struct HLLCMultiMat {
         if (nan_traction_count_r <= 20) {
           std::cout << "NaN traction RIGHT: k=" << k
                     << " pressure=" << apr[k]
-                    << " damage_ratio=" << damage_ratior
-                    << " rhor_k=" << rhor_k
                     << " count=" << nan_traction_count_r << std::endl;
         }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
@@ -232,8 +227,6 @@ struct HLLCMultiMat {
         if (nan_stress_count_r <= 20) {
           std::cout << "NaN stress RIGHT: k=" << k
                     << " pressure=" << apr[k]
-                    << " damage_ratio=" << damage_ratior
-                    << " rhor_k=" << rhor_k
                     << " count=" << nan_stress_count_r << std::endl;
         }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
