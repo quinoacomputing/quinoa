@@ -114,6 +114,15 @@ struct HLLCMultiMat {
         }
       }
       if (has_nan) {
+        static int nan_traction_count = 0;
+        nan_traction_count++;
+        if (nan_traction_count <= 20) {
+          std::cout << "NaN traction LEFT: k=" << k
+                    << " pressure=" << apl[k]
+                    << " damage_ratio=" << damage_ratiol
+                    << " rhol_k=" << rhol_k
+                    << " count=" << nan_traction_count << std::endl;
+        }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
         for (std::size_t i=0; i<3; ++i)
           aTnl[k][i] = -apl[k] * fn[i];
@@ -135,6 +144,15 @@ struct HLLCMultiMat {
         if (has_nan_stress) break;
       }
       if (has_nan_stress) {
+        static int nan_stress_count = 0;
+        nan_stress_count++;
+        if (nan_stress_count <= 20) {
+          std::cout << "NaN stress LEFT: k=" << k
+                    << " pressure=" << apl[k]
+                    << " damage_ratio=" << damage_ratiol
+                    << " rhol_k=" << rhol_k
+                    << " count=" << nan_stress_count << std::endl;
+        }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
@@ -179,6 +197,15 @@ struct HLLCMultiMat {
         }
       }
       if (has_nan) {
+        static int nan_traction_count_r = 0;
+        nan_traction_count_r++;
+        if (nan_traction_count_r <= 20) {
+          std::cout << "NaN traction RIGHT: k=" << k
+                    << " pressure=" << apr[k]
+                    << " damage_ratio=" << damage_ratior
+                    << " rhor_k=" << rhor_k
+                    << " count=" << nan_traction_count_r << std::endl;
+        }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
         for (std::size_t i=0; i<3; ++i)
           aTnr[k][i] = -apr[k] * fn[i];
@@ -200,6 +227,15 @@ struct HLLCMultiMat {
         if (has_nan_stress) break;
       }
       if (has_nan_stress) {
+        static int nan_stress_count_r = 0;
+        nan_stress_count_r++;
+        if (nan_stress_count_r <= 20) {
+          std::cout << "NaN stress RIGHT: k=" << k
+                    << " pressure=" << apr[k]
+                    << " damage_ratio=" << damage_ratior
+                    << " rhor_k=" << rhor_k
+                    << " count=" << nan_stress_count_r << std::endl;
+        }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
