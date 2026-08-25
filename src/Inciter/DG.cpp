@@ -1496,13 +1496,26 @@ DG::solve( tk::real newdt )
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
 
-  // physical time at time-stage for computing exact source terms
+  // Physical time at time-stage for computing exact source terms.
+  // The stage time must match the abscissae of the tableau actually in use:
+  // the explicit RK3 (Shu-Osher) uses c = {0, 1, 1/2}, while the IMEX
+  // (Cavaglieri-Bewley) explicit part uses c = {0, c2, c3}.
   tk::real physT(d->T());
-  if (m_stage == 1) {
-    physT += d->Dt();
+  if (imex_runge_kutta) {
+    if (m_stage == 1) {
+      physT += c2*d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += c3*d->Dt();
+    }
   }
-  else if (m_stage == 2) {
-    physT += 0.5*d->Dt();
+  else {
+    if (m_stage == 1) {
+      physT += d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += 0.5*d->Dt();
+    }
   }
 
   if (imex_runge_kutta) {
@@ -1514,13 +1527,17 @@ DG::solve( tk::real newdt )
     }
   }
 
-  if (!imex_runge_kutta || m_stage < m_nstage-1) {
-    if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
-    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
-      d->Dt(), m_rhs, m_srcFlag );
-  }
+  // Evaluate the explicit (hyperbolic) RHS on the current solution. For IMEX,
+  // the two-register combination at the final stage requires
+  // m_rhsprev = R_ex(u^0) and m_rhs = R_ex(u^1) simultaneously (see the b2/b3
+  // row of expl_rkcoef and imex_integrate()). We therefore advance the register
+  // pair every stage: copy m_rhsprev = m_rhs (the previous stage's RHS) and then
+  // recompute m_rhs on the current m_u.
+  if (imex_runge_kutta) m_rhsprev = m_rhs;
+  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+    myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
+    d->Dt(), m_rhs, m_srcFlag );
 
   // Update Un
   if (m_stage == 0) m_un = m_u;
