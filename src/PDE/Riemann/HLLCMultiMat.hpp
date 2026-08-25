@@ -126,7 +126,7 @@ struct HLLCMultiMat {
       auto rhol_k = u[0][densityIdx(nmat, k)];
       auto damagel_k = u[0][damageIdx(nmat, nsld, solidx[k])];
       auto damage_ratiol = (std::fabs(rhol_k) > 1.0e-12 && std::isfinite(rhol_k) && std::isfinite(damagel_k))
-                           ? std::max(0.0, std::min(1.0, damagel_k/rhol_k))
+                           ? std::max(0.0, damagel_k/rhol_k)  // Allow damage > 1 for highly fractured regions
                            : 0.0;
       auto amatl = mat_blk[k].compute< EOS::soundspeed >(
         rhol_k, apl[k],
@@ -167,7 +167,7 @@ struct HLLCMultiMat {
       auto rhor_k = u[1][densityIdx(nmat, k)];
       auto damager_k = u[1][damageIdx(nmat, nsld, solidx[k])];
       auto damage_ratior = (std::fabs(rhor_k) > 1.0e-12 && std::isfinite(rhor_k) && std::isfinite(damager_k))
-                           ? std::max(0.0, std::min(1.0, damager_k/rhor_k))
+                           ? std::max(0.0, damager_k/rhor_k)  // Allow damage > 1 for highly fractured regions
                            : 0.0;
       auto amatr = mat_blk[k].compute< EOS::soundspeed >(
         rhor_k, apr[k],
@@ -445,7 +445,8 @@ struct HLLCMultiMat {
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k) {
         auto mag_sq = aTnl[k][0]*aTnl[k][0] + aTnl[k][1]*aTnl[k][1] + aTnl[k][2]*aTnl[k][2];
-        flx.push_back(std::isfinite(mag_sq) && mag_sq >= 0.0 ? std::sqrt(mag_sq) : 0.0);
+        // Only protect against NaN/negative, allow large finite values
+        flx.push_back((std::isfinite(mag_sq) && mag_sq >= 0.0) ? std::sqrt(mag_sq) : 1.0e-12);
       }
       // Store Riemann velocity
       flx.push_back((vnl[0]+wn));
@@ -500,7 +501,7 @@ struct HLLCMultiMat {
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k) {
         auto mag_sq = aTnlStar[k][0]*aTnlStar[k][0] + aTnlStar[k][1]*aTnlStar[k][1] + aTnlStar[k][2]*aTnlStar[k][2];
-        flx.push_back(std::isfinite(mag_sq) && mag_sq >= 0.0 ? std::sqrt(mag_sq) : 0.0);
+        flx.push_back((std::isfinite(mag_sq) && mag_sq >= 0.0) ? std::sqrt(mag_sq) : 1.0e-12);
       }
       // Store Riemann velocity
       flx.push_back(Sm+wn);
@@ -555,7 +556,7 @@ struct HLLCMultiMat {
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k) {
         auto mag_sq = aTnrStar[k][0]*aTnrStar[k][0] + aTnrStar[k][1]*aTnrStar[k][1] + aTnrStar[k][2]*aTnrStar[k][2];
-        flx.push_back(std::isfinite(mag_sq) && mag_sq >= 0.0 ? std::sqrt(mag_sq) : 0.0);
+        flx.push_back((std::isfinite(mag_sq) && mag_sq >= 0.0) ? std::sqrt(mag_sq) : 1.0e-12);
       }
       // Store Riemann velocity
       flx.push_back(Sm+wn);
@@ -602,7 +603,7 @@ struct HLLCMultiMat {
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k) {
         auto mag_sq = aTnr[k][0]*aTnr[k][0] + aTnr[k][1]*aTnr[k][1] + aTnr[k][2]*aTnr[k][2];
-        flx.push_back(std::isfinite(mag_sq) && mag_sq >= 0.0 ? std::sqrt(mag_sq) : 0.0);
+        flx.push_back((std::isfinite(mag_sq) && mag_sq >= 0.0) ? std::sqrt(mag_sq) : 1.0e-12);
       }
       // Store Riemann velocity
       flx.push_back(vnr[0]+wn);
