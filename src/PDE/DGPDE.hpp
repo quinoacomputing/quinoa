@@ -192,6 +192,15 @@ class DGPDE {
                                std::vector< tk::real >& plasticDeformation) const
     { self->computePlasticDeformation( nelem, unk, pri, plasticDeformation); }
 
+    //! Public interface to returning the relevant sound speed in each cell
+    void
+    soundspeed(
+      std::size_t nielem,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      std::vector< tk::real >& ss ) const
+    { return self->soundspeed( nielem, U, P, ss ); }
+
     //! Public interface to updating the interface cells for the diff eq
     void updateInterfaceCells( tk::Fields& unk,
                                std::size_t nielem,
@@ -457,6 +466,11 @@ class DGPDE {
                                               tk::Fields& pri,
                                               std::vector< tk::real >& plasticDeformation)
                                          const = 0;
+      virtual void soundspeed(
+        std::size_t,
+        const tk::Fields&,
+        const tk::Fields&,
+        std::vector< tk::real >& ) const = 0;
       virtual void updateInterfaceCells( tk::Fields&,
                                          std::size_t,
                                          std::vector< std::size_t >&,
@@ -638,6 +652,12 @@ class DGPDE {
                                       std::vector< tk::real >& plasticDeformation)
                                  const override
       { data.computePlasticDeformation( nelem, unk, pri, plasticDeformation ); }
+      void soundspeed(
+        std::size_t nielem,
+        const tk::Fields& U,
+        const tk::Fields& P,
+        std::vector< tk::real >& ss )
+       const override { return data.soundspeed( nielem, U, P, ss ); }
       void updateInterfaceCells( tk::Fields& unk,
                                  std::size_t nielem,
                                  std::vector< std::size_t >& ndofel,

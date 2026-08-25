@@ -261,6 +261,17 @@ class MultiSpecies {
       plasticDeformation.resize(0);
     }
 
+    //! Compute relevant sound speed for output. No-op.
+    //! \param[in,out] ss Sound speed vector
+    void soundspeed(
+      std::size_t /*nielem*/,
+      const tk::Fields& /*U*/,
+      const tk::Fields& /*P*/,
+      std::vector< tk::real >& ss ) const
+    {
+      ss.resize(0);
+    }
+
     //! Update the interface cells to first order dofs. No-op.
     // //! \param[in] unk Array of unknowns
     // //! \param[in] nielem Number of internal elements
