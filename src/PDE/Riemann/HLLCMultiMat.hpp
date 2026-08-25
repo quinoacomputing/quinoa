@@ -123,8 +123,10 @@ struct HLLCMultiMat {
                     << " count=" << nan_traction_count << std::endl;
         }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
+        // Clamp pressure to reasonable range to avoid gigapascal forces
+        tk::real p_clamped = std::max(-1.0e8, std::min(1.0e8, apl[k]));  // ±100 MPa
         for (std::size_t i=0; i<3; ++i)
-          aTnl[k][i] = -apl[k] * fn[i];
+          aTnl[k][i] = -p_clamped * fn[i];
       }
       for (std::size_t i=0; i<3; ++i)
         Tnl[i] += aTnl[k][i];
@@ -151,9 +153,11 @@ struct HLLCMultiMat {
                     << " count=" << nan_stress_count << std::endl;
         }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
+        // Clamp pressure to reasonable range to avoid gigapascal forces
+        tk::real p_clamped = std::max(-1.0e8, std::min(1.0e8, apl[k]));  // ±100 MPa
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            asignnl[k][i][j] = (i == j) ? -apl[k] : 0.0;
+            asignnl[k][i][j] = (i == j) ? -p_clamped : 0.0;
       }
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
@@ -202,8 +206,10 @@ struct HLLCMultiMat {
                     << " count=" << nan_traction_count_r << std::endl;
         }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
+        // Clamp pressure to reasonable range to avoid gigapascal forces
+        tk::real p_clamped = std::max(-1.0e8, std::min(1.0e8, apr[k]));  // ±100 MPa
         for (std::size_t i=0; i<3; ++i)
-          aTnr[k][i] = -apr[k] * fn[i];
+          aTnr[k][i] = -p_clamped * fn[i];
       }
       for (std::size_t i=0; i<3; ++i)
         Tnr[i] += aTnr[k][i];
@@ -230,9 +236,11 @@ struct HLLCMultiMat {
                     << " count=" << nan_stress_count_r << std::endl;
         }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
+        // Clamp pressure to reasonable range to avoid gigapascal forces
+        tk::real p_clamped = std::max(-1.0e8, std::min(1.0e8, apr[k]));  // ±100 MPa
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
-            asignnr[k][i][j] = (i == j) ? -apr[k] : 0.0;
+            asignnr[k][i][j] = (i == j) ? -p_clamped : 0.0;
       }
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
