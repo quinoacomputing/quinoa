@@ -105,11 +105,41 @@ struct HLLCMultiMat {
 
       // normal stress (traction) vector
       aTnl.push_back(tk::matvec(asigl, fn));
+      // Sanitize with pressure-based fallback (preserves pressure force)
+      bool has_nan = false;
+      for (std::size_t i=0; i<3; ++i) {
+        if (!std::isfinite(aTnl[k][i])) {
+          has_nan = true;
+          break;
+        }
+      }
+      if (has_nan) {
+        // Use hydrostatic approximation: traction ≈ -pressure * normal
+        for (std::size_t i=0; i<3; ++i)
+          aTnl[k][i] = -apl[k] * fn[i];
+      }
       for (std::size_t i=0; i<3; ++i)
         Tnl[i] += aTnl[k][i];
 
       // rotate stress vector
       asignnl.push_back(tk::rotateTensor(asigl, fn));
+      // Sanitize rotated stress: if any component is NaN, use hydrostatic approximation
+      bool has_nan_stress = false;
+      for (std::size_t i=0; i<3; ++i) {
+        for (std::size_t j=0; j<3; ++j) {
+          if (!std::isfinite(asignnl[k][i][j])) {
+            has_nan_stress = true;
+            break;
+          }
+        }
+        if (has_nan_stress) break;
+      }
+      if (has_nan_stress) {
+        // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            asignnl[k][i][j] = (i == j) ? -apl[k] : 0.0;
+      }
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
           signnl[i][j] += asignnl[k][i][j];
@@ -140,11 +170,41 @@ struct HLLCMultiMat {
 
       // normal stress (traction) vector
       aTnr.push_back(tk::matvec(asigr, fn));
+      // Sanitize with pressure-based fallback (preserves pressure force)
+      has_nan = false;
+      for (std::size_t i=0; i<3; ++i) {
+        if (!std::isfinite(aTnr[k][i])) {
+          has_nan = true;
+          break;
+        }
+      }
+      if (has_nan) {
+        // Use hydrostatic approximation: traction ≈ -pressure * normal
+        for (std::size_t i=0; i<3; ++i)
+          aTnr[k][i] = -apr[k] * fn[i];
+      }
       for (std::size_t i=0; i<3; ++i)
         Tnr[i] += aTnr[k][i];
 
       // rotate stress vector
       asignnr.push_back(tk::rotateTensor(asigr, fn));
+      // Sanitize rotated stress: if any component is NaN, use hydrostatic approximation
+      has_nan_stress = false;
+      for (std::size_t i=0; i<3; ++i) {
+        for (std::size_t j=0; j<3; ++j) {
+          if (!std::isfinite(asignnr[k][i][j])) {
+            has_nan_stress = true;
+            break;
+          }
+        }
+        if (has_nan_stress) break;
+      }
+      if (has_nan_stress) {
+        // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            asignnr[k][i][j] = (i == j) ? -apr[k] : 0.0;
+      }
       for (std::size_t i=0; i<3; ++i)
         for (std::size_t j=0; j<3; ++j)
           signnr[i][j] += asignnr[k][i][j];
