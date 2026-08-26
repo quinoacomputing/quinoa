@@ -101,7 +101,33 @@ struct HLLCMultiMat {
 
       // inv deformation gradient and Cauchy stress tensors
       gl.push_back(getDeformGrad(nmat, k, u[0]));
+
+      // Compute deformation gradient determinant for diagnostics
+      auto& g = gl[k];
+      tk::real det_F = g[0][0]*(g[1][1]*g[2][2] - g[1][2]*g[2][1])
+                     - g[0][1]*(g[1][0]*g[2][2] - g[1][2]*g[2][0])
+                     + g[0][2]*(g[1][0]*g[2][1] - g[1][1]*g[2][0]);
+
+      // Get state variables for diagnostics
+      tk::real alpha_l = u[0][volfracIdx(nmat, k)];
+      tk::real rho_l = u[0][densityIdx(nmat, k)];
+      tk::real damage_l = (solidx[k] > 0) ? u[0][damageIdx(nmat, nsld, solidx[k])] : 0.0;
+      tk::real damage_ratio_l = (rho_l > 1.0e-12) ? damage_l / rho_l : 0.0;
+
       asigl = getCauchyStress(nmat, k, ncomp, u[0]);
+
+      // Check if stress itself is NaN (before we subtract pressure)
+      bool stress_is_nan = false;
+      for (std::size_t i=0; i<3; ++i) {
+        for (std::size_t j=0; j<3; ++j) {
+          if (!std::isfinite(asigl[i][j])) {
+            stress_is_nan = true;
+            break;
+          }
+        }
+        if (stress_is_nan) break;
+      }
+
       for (std::size_t i=0; i<3; ++i) asigl[i][i] -= apl[k];
 
       // normal stress (traction) vector
@@ -117,10 +143,16 @@ struct HLLCMultiMat {
       if (has_nan) {
         static int nan_traction_count = 0;
         nan_traction_count++;
-        if (nan_traction_count <= 20) {
-          std::cout << "NaN traction LEFT: k=" << k
-                    << " pressure=" << apl[k]
-                    << " count=" << nan_traction_count << std::endl;
+        if (nan_traction_count <= 50) {
+          std::cout << "=== NaN DIAGNOSTIC LEFT k=" << k << " ===" << std::endl;
+          std::cout << "  pressure=" << apl[k] << std::endl;
+          std::cout << "  alpha=" << alpha_l << std::endl;
+          std::cout << "  rho=" << rho_l << std::endl;
+          std::cout << "  damage=" << damage_l << std::endl;
+          std::cout << "  damage_ratio=" << damage_ratio_l << std::endl;
+          std::cout << "  det(F)=" << det_F << std::endl;
+          std::cout << "  stress_was_nan=" << (stress_is_nan ? "YES" : "NO") << std::endl;
+          std::cout << "  count=" << nan_traction_count << std::endl;
         }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
         // Clamp pressure to reasonable range to avoid gigapascal forces
@@ -147,10 +179,13 @@ struct HLLCMultiMat {
       if (has_nan_stress) {
         static int nan_stress_count = 0;
         nan_stress_count++;
-        if (nan_stress_count <= 20) {
-          std::cout << "NaN stress LEFT: k=" << k
-                    << " pressure=" << apl[k]
-                    << " count=" << nan_stress_count << std::endl;
+        if (nan_stress_count <= 50) {
+          std::cout << "=== NaN ROTATED STRESS LEFT k=" << k << " ===" << std::endl;
+          std::cout << "  pressure=" << apl[k] << std::endl;
+          std::cout << "  alpha=" << alpha_l << std::endl;
+          std::cout << "  damage_ratio=" << damage_ratio_l << std::endl;
+          std::cout << "  det(F)=" << det_F << std::endl;
+          std::cout << "  count=" << nan_stress_count << std::endl;
         }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
         // Clamp pressure to reasonable range to avoid gigapascal forces
@@ -184,7 +219,33 @@ struct HLLCMultiMat {
 
       // inv deformation gradient and Cauchy stress tensors
       gr.push_back(getDeformGrad(nmat, k, u[1]));
+
+      // Compute deformation gradient determinant for diagnostics
+      auto& g_r = gr[k];
+      tk::real det_F_r = g_r[0][0]*(g_r[1][1]*g_r[2][2] - g_r[1][2]*g_r[2][1])
+                       - g_r[0][1]*(g_r[1][0]*g_r[2][2] - g_r[1][2]*g_r[2][0])
+                       + g_r[0][2]*(g_r[1][0]*g_r[2][1] - g_r[1][1]*g_r[2][0]);
+
+      // Get state variables for diagnostics
+      tk::real alpha_r = u[1][volfracIdx(nmat, k)];
+      tk::real rho_r = u[1][densityIdx(nmat, k)];
+      tk::real damage_r = (solidx[k] > 0) ? u[1][damageIdx(nmat, nsld, solidx[k])] : 0.0;
+      tk::real damage_ratio_r = (rho_r > 1.0e-12) ? damage_r / rho_r : 0.0;
+
       asigr = getCauchyStress(nmat, k, ncomp, u[1]);
+
+      // Check if stress itself is NaN (before we subtract pressure)
+      bool stress_is_nan_r = false;
+      for (std::size_t i=0; i<3; ++i) {
+        for (std::size_t j=0; j<3; ++j) {
+          if (!std::isfinite(asigr[i][j])) {
+            stress_is_nan_r = true;
+            break;
+          }
+        }
+        if (stress_is_nan_r) break;
+      }
+
       for (std::size_t i=0; i<3; ++i) asigr[i][i] -= apr[k];
 
       // normal stress (traction) vector
@@ -200,10 +261,16 @@ struct HLLCMultiMat {
       if (has_nan) {
         static int nan_traction_count_r = 0;
         nan_traction_count_r++;
-        if (nan_traction_count_r <= 20) {
-          std::cout << "NaN traction RIGHT: k=" << k
-                    << " pressure=" << apr[k]
-                    << " count=" << nan_traction_count_r << std::endl;
+        if (nan_traction_count_r <= 50) {
+          std::cout << "=== NaN DIAGNOSTIC RIGHT k=" << k << " ===" << std::endl;
+          std::cout << "  pressure=" << apr[k] << std::endl;
+          std::cout << "  alpha=" << alpha_r << std::endl;
+          std::cout << "  rho=" << rho_r << std::endl;
+          std::cout << "  damage=" << damage_r << std::endl;
+          std::cout << "  damage_ratio=" << damage_ratio_r << std::endl;
+          std::cout << "  det(F)=" << det_F_r << std::endl;
+          std::cout << "  stress_was_nan=" << (stress_is_nan_r ? "YES" : "NO") << std::endl;
+          std::cout << "  count=" << nan_traction_count_r << std::endl;
         }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
         // Clamp pressure to reasonable range to avoid gigapascal forces
@@ -230,10 +297,13 @@ struct HLLCMultiMat {
       if (has_nan_stress) {
         static int nan_stress_count_r = 0;
         nan_stress_count_r++;
-        if (nan_stress_count_r <= 20) {
-          std::cout << "NaN stress RIGHT: k=" << k
-                    << " pressure=" << apr[k]
-                    << " count=" << nan_stress_count_r << std::endl;
+        if (nan_stress_count_r <= 50) {
+          std::cout << "=== NaN ROTATED STRESS RIGHT k=" << k << " ===" << std::endl;
+          std::cout << "  pressure=" << apr[k] << std::endl;
+          std::cout << "  alpha=" << alpha_r << std::endl;
+          std::cout << "  damage_ratio=" << damage_ratio_r << std::endl;
+          std::cout << "  det(F)=" << det_F_r << std::endl;
+          std::cout << "  count=" << nan_stress_count_r << std::endl;
         }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
         // Clamp pressure to reasonable range to avoid gigapascal forces
