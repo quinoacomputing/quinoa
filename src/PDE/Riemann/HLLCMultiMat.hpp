@@ -126,7 +126,25 @@ struct HLLCMultiMat {
         }
       } else {
         // Normal material: full constitutive model
+        // But first, bound det(F) to prevent extreme deformation
+        auto g_bounded = g;
+        if (det_F < 0.05 || det_F > 20.0 || !std::isfinite(det_F)) {
+          // Deformation too extreme - scale to bring det(F) into bounds
+          tk::real det_target = (det_F < 0.05 || !std::isfinite(det_F)) ? 0.05 : 20.0;
+          tk::real scale = std::pow(det_target / std::max(1.0e-12, std::fabs(det_F)), 1.0/3.0);
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              g_bounded[i][j] = scale * g[i][j];
+        }
+
+        // Temporarily replace gl[k] with bounded version for stress calculation
+        auto g_original = gl[k];
+        gl[k] = g_bounded;
+
         asigl = getCauchyStress(nmat, k, ncomp, u[0]);
+
+        // Restore original (unbounded version stays in gl for other uses)
+        gl[k] = g_original;
 
         // Check if stress itself is NaN (before we subtract pressure)
         for (std::size_t i=0; i<3; ++i) {
@@ -256,7 +274,25 @@ struct HLLCMultiMat {
         }
       } else {
         // Normal material: full constitutive model
+        // But first, bound det(F) to prevent extreme deformation
+        auto g_bounded_r = g_r;
+        if (det_F_r < 0.05 || det_F_r > 20.0 || !std::isfinite(det_F_r)) {
+          // Deformation too extreme - scale to bring det(F) into bounds
+          tk::real det_target = (det_F_r < 0.05 || !std::isfinite(det_F_r)) ? 0.05 : 20.0;
+          tk::real scale = std::pow(det_target / std::max(1.0e-12, std::fabs(det_F_r)), 1.0/3.0);
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              g_bounded_r[i][j] = scale * g_r[i][j];
+        }
+
+        // Temporarily replace gr[k] with bounded version for stress calculation
+        auto g_original_r = gr[k];
+        gr[k] = g_bounded_r;
+
         asigr = getCauchyStress(nmat, k, ncomp, u[1]);
+
+        // Restore original (unbounded version stays in gr for other uses)
+        gr[k] = g_original_r;
 
         // Check if stress itself is NaN (before we subtract pressure)
         for (std::size_t i=0; i<3; ++i) {
