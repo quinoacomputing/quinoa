@@ -1921,6 +1921,13 @@ DG::writeFields(
     plasticDeformation[child] = 0.0;
   if (plasticDeformation.size() > 0) elemfields.push_back( plasticDeformation );
 
+  // Add sound speed vector
+  std::vector< tk::real > soundspd(nelem, 0.0);
+  g_dgpde[d->MeshId()].soundspeed(nelem, m_u, m_p, soundspd);
+  for (const auto& [child,parent] : addedTets)
+    soundspd[child] = soundspd[parent];
+  if (soundspd.size() > 0) elemfields.push_back( soundspd );
+
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
   auto nodefieldnames = numericFieldNames( tk::Centering::NODE );
@@ -1939,6 +1946,9 @@ DG::writeFields(
 
   if (plasticDeformation.size() > 0)
     elemfieldnames.push_back( "plastic_deformation" );
+
+  if (soundspd.size() > 0)
+    elemfieldnames.push_back( "sound speed" );
 
   //! Lambda to put in a field for output if not empty
   auto add_node_field = [&]( const auto& name, const auto& field ){

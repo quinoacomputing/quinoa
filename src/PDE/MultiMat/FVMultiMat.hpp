@@ -750,55 +750,8 @@ class MultiMat {
       const tk::Fields& P,
       std::vector< tk::real >& ss) const
     {
-      Assert( ss.size() == nielem, "Size of sound speed vector incorrect " );
-
-      const auto ndof = g_inputdeck.get< tag::ndof >();
-      const auto rdof = g_inputdeck.get< tag::rdof >();
-      const auto use_mass_avg =
-        g_inputdeck.get< tag::multimat, tag::dt_sos_massavg >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      std::size_t ncomp = U.nprop()/rdof;
-      std::size_t nprim = P.nprop()/rdof;
-
-      std::vector< tk::real > ugp(ncomp, 0.0), pgp(nprim, 0.0);
-
-      for (std::size_t e=0; e<nielem; ++e) {
-        // basis function at centroid
-        std::vector< tk::real > B(rdof, 0.0);
-        B[0] = 1.0;
-
-        // get conserved quantities
-        eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
-        // get primitive quantities
-        eval_state(nprim, rdof, ndof, e, P, B, pgp.data());
-
-        // acoustic speed (this should be consistent with time-step calculation)
-        ss[e] = 0.0;
-        tk::real mixtureDensity = 0.0;
-        for (std::size_t k=0; k<nmat; ++k)
-        {
-          if (use_mass_avg > 0)
-          {
-            // mass averaging SoS
-            ss[e] += ugp[densityIdx(nmat,k)]*
-              m_mat_blk[k].template compute< EOS::soundspeed >(
-              ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-              ugp[volfracIdx(nmat, k)], k );
-
-            mixtureDensity += ugp[densityIdx(nmat,k)];
-          }
-          else
-          {
-            if (ugp[volfracIdx(nmat, k)] > 1.0e-04)
-            {
-              ss[e] = std::max( ss[e], m_mat_blk[k].template compute< EOS::soundspeed >(
-                ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
-                ugp[volfracIdx(nmat, k)], k ) );
-            }
-          }
-        }
-        if (use_mass_avg > 0) ss[e] /= mixtureDensity;
-      }
+      inciter::soundSpeedMultiMat( m_mat_blk, nielem, nmat, U, P, ss );
     }
 
   private:

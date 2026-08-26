@@ -188,6 +188,17 @@ class Transport {
       plasticDeformation.resize(0);
     }
 
+    //! Compute relevant sound speed for output. No-op.
+    //! \param[in,out] ss Sound speed vector
+    void soundspeed(
+      std::size_t /*nielem*/,
+      const tk::Fields& /*U*/,
+      const tk::Fields& /*P*/,
+      std::vector< tk::real >& ss ) const
+    {
+      ss.resize(0);
+    }
+
     //! Update the interface cells to first order dofs
     //! \details This function resets the high-order terms in interface cells,
     //!   and is currently not used in transport.

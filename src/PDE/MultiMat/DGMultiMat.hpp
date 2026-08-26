@@ -353,6 +353,21 @@ class MultiMat {
       }
     }
 
+    //! Compute relevant sound speed for output
+    //! \param[in] nielem Number of internal elements
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive vector at recent time step
+    //! \param[in,out] ss Sound speed vector
+    void soundspeed(
+      std::size_t nielem,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      std::vector< tk::real >& ss) const
+    {
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      inciter::soundSpeedMultiMat( m_mat_blk, nielem, nmat, U, P, ss );
+    }
+
     //! Update the interface cells to first order dofs
     //! \param[in] unk Array of unknowns
     //! \param[in] nielem Number of internal elements
