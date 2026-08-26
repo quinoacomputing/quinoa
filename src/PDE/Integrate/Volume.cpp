@@ -145,6 +145,7 @@ tk::volInt( std::size_t nmat,
             const Fields& P,
             const Fields& W,
             const std::vector< std::size_t >& ndofel,
+            const std::vector< int >& srcFlag,
             Fields& R,
             int intsharp )
 // *****************************************************************************
@@ -165,6 +166,7 @@ tk::volInt( std::size_t nmat,
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] W Mesh velocity vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] srcFlag Whether a source was added to each element
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
@@ -236,7 +238,8 @@ tk::volInt( std::size_t nmat,
       {
         evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, ndofel[e], inpoel, coord, geoElem,
-          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
+          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P,
+          state, srcFlag[e]);
 
         // evaluate prescribed velocity (if any)
         auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
@@ -388,6 +391,7 @@ tk::volInt_constP(
   const Fields& U,
   const Fields& P,
   const Fields& W,
+  const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp )
 // *****************************************************************************
@@ -407,6 +411,7 @@ tk::volInt_constP(
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] W Mesh velocity vector at recent time step
+//! \param[in] srcFlag Whether a source was added to each element
 //! \param[in,out] R Right-hand side vector added to
 //! \param[in] intsharp Interface compression tag, an optional argument, with
 //!   default 0, so that it is unused for single-material and transport.
@@ -474,7 +479,8 @@ tk::volInt_constP(
       {
         evalPolynomialSol(mat_blk, intsharp, ncomp, nprim,
           rdof, nmat, e, rdof, inpoel, coord, geoElem,
-          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P, state);
+          {{coordgp[0][igp], coordgp[1][igp], coordgp[2][igp]}}, B, U, P,
+          state, srcFlag[e]);
 
         // evaluate prescribed velocity (if any)
         auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
@@ -575,6 +581,9 @@ tk::volIntViscousMultiSpecies(
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     volIntViscous( viscousRhs, mat_blk, ndof, rdof, nelem,
       inpoel, coord, geoElem, U, P, ndofel, R );
+  }
+  else if (ndof ==1) {
+     //Do nothing but don't exit as nothing was here in DGMultiSpecies.cpp before adding this call for DGP1
   }
   else
     Throw( "Viscous operators only implemented for scheme = 'dgp1'." );

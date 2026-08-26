@@ -1274,9 +1274,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to select the Jones, Wilkins, Lee equation of
         state.)"});
 
-      keywords.insert({"smallshearsolid",
-        "Select the SMALLSHEARSOLID equation of state",
-        R"(This keyword is used to select the small shear strain equation of state
+      keywords.insert({"neohookeansolid",
+        "Select the NEOHOOKEANSOLID equation of state",
+        R"(This keyword is used to select the Neo-Hookean equation of state
         for solids. This EOS uses a small-shear approximation for the elastic
         contribution, and a stiffened gas EOS for the hydrodynamic contribution of
         the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized

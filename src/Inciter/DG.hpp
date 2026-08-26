@@ -271,6 +271,7 @@ class DG : public CBase_DG {
       p | m_pNodefieldsc;
       p | m_outmesh;
       p | m_boxelems;
+      p | m_srcFlag;
       p | m_shockmarker;
       p | m_nodevel;
       p | m_bnode;
@@ -384,6 +385,8 @@ class DG : public CBase_DG {
     Ghosts::OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
+    //! Vector indicating if a source was added to element
+    std::vector< int > m_srcFlag;
     //! Shock detection marker for field output
     std::vector< std::size_t > m_shockmarker;
     //! Velocity at nodes for ALE

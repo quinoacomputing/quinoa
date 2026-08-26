@@ -1457,7 +1457,7 @@ LuaParser::registerMaterials(
   }
   // Small-shear solid materials
   else if (mati_deck.get< tag::eos >() ==
-    inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+    inciter::ctr::MaterialType::NEOHOOKEANSOLID) {
     // gamma
     checkStoreMatProp(sol_mat[imat+1], "gamma", ntype,
       mati_deck.get< tag::gamma >());

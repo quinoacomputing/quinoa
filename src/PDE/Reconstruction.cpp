@@ -863,7 +863,8 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    const std::vector< real >& B,
                    const Fields& U,
                    const Fields& P,
-                   std::vector< tk::real >& state )
+                   std::vector< tk::real >& state,
+                   int srcFlag )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] mat_blk EOS material block
@@ -881,6 +882,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 //! \param[in] B Basis function at given quadrature point
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
+//! \param[in] srcFlag Whether the energy source was added to element e
 //! \param[in,out] state Vector of solution states at quadrature point
 // *****************************************************************************
 {
@@ -897,7 +899,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
   }
 
-  if (intsharp > 0)
+  if (intsharp > 0 && srcFlag == 0)
   {
     std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 

@@ -156,6 +156,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
+  m_srcFlag(m_u.nunk(), 0),
   m_shockmarker(m_u.nunk(), 1),
   m_nodevel( {{ std::vector<tk::real>(Disc()->Lid().size(), 0.0),
                 std::vector<tk::real>(Disc()->Lid().size(), 0.0),
@@ -270,6 +271,7 @@ DG::resizeSolVectors()
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
+  m_srcFlag.resize( myGhosts()->m_nunk );
   for (std::size_t i=0; i<3; ++i)
     m_nodevel[i].resize( Disc()->Coord()[0].size() );
   m_dte.resize( myGhosts()->m_nunk );
@@ -894,7 +896,7 @@ DG::lim()
     g_dgpde[d->MeshId()].limit( d->T(), pref, myGhosts()->m_geoFace,
               myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_esup,
               myGhosts()->m_inpoel, myGhosts()->m_coord, m_ndof, d->Gid(),
-              d->Bid(), m_mtInv, m_u, m_p, m_shockmarker );
+              d->Bid(), m_mtInv, m_srcFlag, m_u, m_p, m_shockmarker );
 
     if (g_inputdeck.get< tag::limsol_projection >())
       g_dgpde[d->MeshId()].CPL(m_p, myGhosts()->m_geoElem,
@@ -1371,7 +1373,7 @@ DG::dt()
         g_dgpde[d->MeshId()].dt( myGhosts()->m_coord, myGhosts()->m_inpoel,
           myGhosts()->m_fd,
           myGhosts()->m_geoFace, myGhosts()->m_geoElem, m_ndof, m_u, m_p,
-          myGhosts()->m_fd.Esuel().size()/4, m_dte );
+          myGhosts()->m_fd.Esuel().size()/4, m_srcFlag, m_dte );
       if (eqdt < mindt) mindt = eqdt;
 
       // time-step suppression for unsteady problems
@@ -1490,20 +1492,30 @@ DG::solve( tk::real newdt )
   if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
     d->setdt( newdt );
 
-  // Update Un
-  if (m_stage == 0) m_un = m_u;
-
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
 
-  // physical time at time-stage for computing exact source terms
+  // Physical time at time-stage for computing exact source terms.
+  // The stage time must match the abscissae of the tableau actually in use:
+  // the explicit RK3 (Shu-Osher) uses c = {0, 1, 1/2}, while the IMEX
+  // (Cavaglieri-Bewley) explicit part uses c = {0, c2, c3}.
   tk::real physT(d->T());
-  if (m_stage == 1) {
-    physT += d->Dt();
+  if (imex_runge_kutta) {
+    if (m_stage == 1) {
+      physT += c2*d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += c3*d->Dt();
+    }
   }
-  else if (m_stage == 2) {
-    physT += 0.5*d->Dt();
+  else {
+    if (m_stage == 1) {
+      physT += d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += 0.5*d->Dt();
+    }
   }
 
   if (imex_runge_kutta) {
@@ -1515,12 +1527,20 @@ DG::solve( tk::real newdt )
     }
   }
 
-  if (!imex_runge_kutta || m_stage < m_nstage-1) {
-    if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
-    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, d->meshvel(), m_ndof, d->Dt(), m_rhs );
-  }
+  // Evaluate the explicit (hyperbolic) RHS on the current solution. For IMEX,
+  // the two-register combination at the final stage requires
+  // m_rhsprev = R_ex(u^0) and m_rhs = R_ex(u^1) simultaneously (see the b2/b3
+  // row of expl_rkcoef and imex_integrate()). We therefore advance the register
+  // pair every stage: copy m_rhsprev = m_rhs (the previous stage's RHS) and then
+  // recompute m_rhs on the current m_u.
+  if (imex_runge_kutta) m_rhsprev = m_rhs;
+  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+    myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
+    d->Dt(), m_rhs, m_srcFlag );
+
+  // Update Un
+  if (m_stage == 0) m_un = m_u;
 
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
@@ -1712,6 +1732,7 @@ DG::resizePostAMR(
   m_rhsprev.resize( nelem );
   m_stiffrhs.resize( nelem );
   m_stiffrhsprev.resize( nelem );
+  m_srcFlag.resize( nelem );
   for (std::size_t i=0; i<3; ++i) m_nodevel[i].resize( coord[0].size() );
 
   myGhosts()->m_fd = FaceData( myGhosts()->m_inpoel, bface,
@@ -1883,6 +1904,20 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
+  // Add source flag array to element-centered field output
+  std::vector< tk::real > srcFlag( begin(m_srcFlag), end(m_srcFlag) );
+  // Here m_srcFlag has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells.
+  // For the purpose of output, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the srcFlag vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
+  srcFlag.resize( nelem );
+  for (const auto& [child,parent] : addedTets)
+    srcFlag[child] = static_cast< tk::real >( m_srcFlag[parent] );
+  elemfields.push_back( srcFlag );
+
   // Compute plastic deformation averaged for all materials
   std::vector< tk::real > plasticDeformation(nelem);
   g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, m_p, plasticDeformation);
@@ -1903,6 +1938,8 @@ DG::writeFields(
   }
 
   elemfieldnames.push_back( "shock_marker" );
+
+  elemfieldnames.push_back( "src_flag" );
 
   if (plasticDeformation.size() > 0)
     elemfieldnames.push_back( "plastic_deformation" );

@@ -254,12 +254,13 @@ class DGPDE {
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& mtInv,
+                const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
     {
       self->limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel,
-                   gid, bid, mtInv, U, P, shockmarker );
+                   gid, bid, mtInv, srcFlag, U, P, shockmarker );
     }
 
     //! Public interface to update the conservative variable solution
@@ -299,15 +300,18 @@ class DGPDE {
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::unordered_set< std::size_t > >& boxelems,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                elemblkid,
               const tk::Fields& U,
               const tk::Fields& P,
               const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              std::vector< int >& srcFlag ) const
     {
-      self->rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                 W, ndofel, dt, R );
+      self->rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord,
+                 elemblkid, U, P, W, ndofel, dt, R, srcFlag );
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -337,9 +341,10 @@ class DGPDE {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
+                 const std::vector< int >& srcFlag,
                  std::vector< tk::real >& local_dte ) const
     { return self->dt( coord, inpoel, fd, geoFace, geoElem, ndofel, U,
-                       P, nielem, local_dte ); }
+                       P, nielem, srcFlag, local_dte ); }
 
     //! Public interface for elastic energy balance
     void balance_plastic_energy( std::size_t e,
@@ -504,6 +509,7 @@ class DGPDE {
                           const std::vector< std::size_t >&,
                           const std::unordered_map< std::size_t, std::size_t >&,
                           const std::vector< std::vector<tk::real> >&,
+                          const std::vector< int >&,
                           tk::Fields&,
                           tk::Fields&,
                           std::vector< std::size_t >& ) const = 0;
@@ -524,12 +530,15 @@ class DGPDE {
                         const std::vector< std::size_t >&,
                         const std::vector< std::unordered_set< std::size_t > >&,
                         const tk::UnsMesh::Coords&,
+                        const std::unordered_map< std::size_t,
+                          std::set< std::size_t > >&,
                         const tk::Fields&,
                         const tk::Fields&,
                         const tk::Fields&,
                         const std::vector< std::size_t >&,
                         const tk::real,
-                        tk::Fields& ) const = 0;
+                        tk::Fields&,
+                        std::vector< int >& ) const = 0;
       virtual void resetAdapSol( const inciter::FaceData&,
                                  tk::Fields&,
                                  tk::Fields&,
@@ -555,6 +564,7 @@ class DGPDE {
                            const tk::Fields&,
                            const tk::Fields&,
                            const std::size_t,
+                           const std::vector< int >&,
                            std::vector< tk::real >& ) const = 0;
       virtual void balance_plastic_energy( std::size_t,
                                            std::vector< tk::real >,
@@ -695,12 +705,13 @@ class DGPDE {
                   const std::vector< std::size_t >& gid,
                   const std::unordered_map< std::size_t, std::size_t >& bid,
                   const std::vector< std::vector<tk::real> >& mtInv,
+                  const std::vector< int >& srcFlag,
                   tk::Fields& U,
                   tk::Fields& P,
                   std::vector< std::size_t >& shockmarker ) const override
       {
         data.limit( t, pref, geoFace, geoElem, fd, esup, inpoel, coord, ndofel, gid,
-                    bid, mtInv, U, P, shockmarker );
+                    bid, mtInv, srcFlag, U, P, shockmarker );
       }
       void CPL( const tk::Fields& prim,
                 const tk::Fields& geoElem,
@@ -733,15 +744,18 @@ class DGPDE {
         const std::vector< std::size_t >& inpoel,
         const std::vector< std::unordered_set< std::size_t > >& boxelems,
         const tk::UnsMesh::Coords& coord,
+        const std::unordered_map< std::size_t, std::set< std::size_t > >&
+          elemblkid,
         const tk::Fields& U,
         const tk::Fields& P,
         const tk::Fields& W,
         const std::vector< std::size_t >& ndofel,
         const tk::real dt,
-        tk::Fields& R ) const override
+        tk::Fields& R,
+        std::vector< int >& srcFlag ) const override
       {
-        data.rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord, U, P,
-                  W, ndofel, dt, R );
+        data.rhs( t, pref, geoFace, geoElem, fd, inpoel, boxelems, coord,
+                  elemblkid, U, P, W, ndofel, dt, R, srcFlag );
       }
       void eval_ndof( std::size_t nunk,
                       const tk::UnsMesh::Coords& coord,
@@ -765,9 +779,10 @@ class DGPDE {
                    const tk::Fields& U,
                    const tk::Fields& P,
                    const std::size_t nielem,
+                   const std::vector< int >& srcFlag,
                    std::vector< tk::real >& local_dte ) const override
       { return data.dt( coord, inpoel, fd, geoFace, geoElem, ndofel,
-                        U, P, nielem, local_dte ); }
+                        U, P, nielem, srcFlag, local_dte ); }
       void balance_plastic_energy( std::size_t e,
                                    std::vector< tk::real > x_star,
                                    std::vector< tk::real > x,

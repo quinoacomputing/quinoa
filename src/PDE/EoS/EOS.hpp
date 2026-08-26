@@ -18,7 +18,7 @@
 #include "Inciter/Options/Material.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
-#include "EoS/SmallShearSolid.hpp"
+#include "EoS/NeoHookeanSolid.hpp"
 #include "EoS/LinearMieGruneisen.hpp"
 #include "EoS/WilkinsAluminum.hpp"
 #include "EoS/GodunovRomenski.hpp"
@@ -39,7 +39,7 @@ class EOS {
     //! Variant type listing all eos types modeling the same concept
     std::variant< StiffenedGas
                 , JWL
-                , SmallShearSolid
+                , NeoHookeanSolid
                 , LinearMieGruneisen
                 , WilkinsAluminum
                 , GodunovRomenski
