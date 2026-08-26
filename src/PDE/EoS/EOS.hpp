@@ -21,6 +21,7 @@
 #include "EoS/WilkinsAluminum.hpp"
 #include "EoS/GodunovRomenski.hpp"
 #include "EoS/ThermallyPerfectGas.hpp"
+#include "EoS/EOSDeviceFn.hpp"
 
 namespace inciter {
 
@@ -116,7 +117,7 @@ class EOS {
     //! \details This function issues a call to a member function of the
     //!   EOS vector and is thus equivalent to mat_blk[imat].Fn(...).
     template< typename Fn, typename... Args >
-    tk::real compute( Args&&... args ) const {
+    EOS_FN tk::real compute( Args&&... args ) const {
         if (type == EOSType::StiffenedGas) {
           if constexpr( std::is_same_v< Fn, density > )
             return m_material.stiffenedGas.density( std::forward< Args >( args )... );

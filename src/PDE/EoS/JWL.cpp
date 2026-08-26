@@ -161,7 +161,7 @@ JWL::CauchyStress(
 }
 
 tk::real
-JWL::soundspeed(
+JWL::soundspeedHost(
   tk::real arho,
   tk::real apr,
   tk::real alpha,

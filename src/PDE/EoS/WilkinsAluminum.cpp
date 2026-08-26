@@ -196,7 +196,7 @@ WilkinsAluminum::CauchyStress(
 }
 
 tk::real
-WilkinsAluminum::soundspeed(
+WilkinsAluminum::soundspeedHost(
   tk::real arho,
   tk::real apr,
   tk::real alpha,

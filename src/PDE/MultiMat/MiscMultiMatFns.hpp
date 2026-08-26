@@ -28,7 +28,7 @@ namespace inciter {
 void initializeMaterialEoS( std::vector< EOS >& mat_blk );
 
 //! Mirror the per-material EOS constants needed by device kernels
-void buildEOSDevice( std::vector< tk::EOSDevice >& eosd );
+void checkDeviceEOSSupport();
 
 //! Clean up the state of trace materials for multi-material PDE system
 bool

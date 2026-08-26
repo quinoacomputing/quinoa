@@ -117,7 +117,7 @@ ThermallyPerfectGas::CauchyStress(
 }
 
 [[noreturn]] tk::real
-ThermallyPerfectGas::soundspeed(
+ThermallyPerfectGas::soundspeedHost(
   tk::real ,
   tk::real ,
   tk::real,

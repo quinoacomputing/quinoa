@@ -23,6 +23,8 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
+#include "Riemann/HLLCMultiMatConstP.hpp"
+#include "Inciter/Options/Flux.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
@@ -750,7 +752,7 @@ surfInt_constP(
   const inciter::FaceData& fd,
   const Fields& geoFace,
   const Fields& geoElem,
-  const RiemannFluxFn& flux,
+  const RiemannFluxFn& /*flux*/,
   const VelFn& vel,
   const Fields& U,
   const Fields& P,
@@ -787,6 +789,9 @@ surfInt_constP(
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  ErrChk( inciter::g_inputdeck.get< tag::flux >() == inciter::ctr::FluxType::HLLC,
+          "surfInt_constP currently only supports HLLC Riemann solver" );
+
   const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
@@ -909,7 +914,7 @@ surfInt_constP(
       }
 
       // compute flux
-      auto fl = flux( mat_blk, fn, state, v, wn_igp );
+      auto fl = inciter::HLLCMultiMatConstP::flux( mat_blk, fn, state, v, wn_igp );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndof, ndof, wt, fn,

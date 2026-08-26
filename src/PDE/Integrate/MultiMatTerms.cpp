@@ -993,7 +993,8 @@ pressureRelaxationInt( const bool pref,
 void
 pressureRelaxationInt_constP(
   std::size_t nmat,
-  const std::vector< tk::EOSDevice >& eosd,
+  const std::vector< inciter::EOS >& mat_blk,
+  //const std::vector< tk::EOSDevice >& eosd,
   const std::size_t ndof,
   const std::size_t rdof,
   const std::size_t nelem,
@@ -1110,7 +1111,7 @@ pressureRelaxationInt_constP(
   if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
-  auto eos_h_view = changeToView( eosd.data(), nmat );
+  auto eos_h_view = changeToView( mat_blk.data(), nmat );
   if (ensureDeviceCapacity(dv.eos, "eos_d_view", nmat))
     Kokkos::deep_copy(dv.eos, eos_h_view);
 
@@ -1192,8 +1193,11 @@ pressureRelaxationInt_constP(
           // device mirror of mat_blk[k].compute<EOS::soundspeed>(...)
           // NOTE: the host version Throws on a non-finite result; that check is
           // not available on device and is deliberately omitted here.
+          /*
           const real amat = soundspeedDevice( eos_d_view(k), arhomat,
                                               apmat[k], alphamat );
+          */
+          const real amat = eos_d_view(k).compute< inciter::EOS::soundspeed >( arhomat, apmat[k], alphamat, k );
           kmat[k] = arhomat * amat * amat;
           pb += apmat[k];
 

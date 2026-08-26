@@ -46,6 +46,9 @@
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
 
+// For timing/clocking
+#include <chrono>
+
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -104,7 +107,7 @@ class MultiMat {
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
-      buildEOSDevice( m_eosDev );
+      checkDeviceEOSSupport();
     }
 
     // Copy constructor
@@ -120,7 +123,6 @@ class MultiMat {
       m_riemann(x.m_riemann),
       m_bc(x.m_bc),
       m_mat_blk(x.m_mat_blk),
-      m_eosDev(x.m_eosDev),
       m_dev()
     {}
 
@@ -135,7 +137,6 @@ class MultiMat {
       m_riemann(std::move(x.m_riemann)),
       m_bc(std::move(x.m_bc)),
       m_mat_blk(std::move(x.m_mat_blk)),
-      m_eosDev(std::move(x.m_eosDev)),
       m_dev(std::move(x.m_dev))
     {}
 
@@ -987,6 +988,17 @@ class MultiMat {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
+      // Timing
+      using _clk = std::chrono::steady_clock;
+      static double _acc[7] = {0,0,0,0,0,0,0};
+      static std::size_t _ncall = 0;
+      auto _t = _clk::now();
+      auto _lap = [&](int i){ 
+                             auto n = _clk::now();
+                             _acc[i] += std::chrono::duration<double,std::milli>(n-_t).count();
+                             _t = n;
+                            };
+
       // p-adaptive DG
       if (!pref) {
         // Prefetch U and P onto device now before host-side surface integrals
@@ -996,11 +1008,15 @@ class MultiMat {
         auto exec = Kokkos::DefaultExecutionSpace();
         tk::uploadStaged( exec, m_dev.U, m_dev.stage_U, U.getPointer(), U.getSize(), "U_d_view" );
         tk::uploadStaged( exec, m_dev.P, m_dev.stage_P, P.getPointer(), P.getSize(), "P_d_view" );
+        
+        // timing
+        _lap(0);
 
         // compute internal surface flux integrals
         tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
           coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
           dt, R, riemannDeriv, intsharp );
+        _lap(1);
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
@@ -1008,6 +1024,7 @@ class MultiMat {
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
             m_riemann, velfn, std::get<1>(b), U, P, W, R,
             riemannDeriv, intsharp );
+        _lap(2);
       }
       else {
         // compute volume integrals
@@ -1039,6 +1056,7 @@ class MultiMat {
         for (std::size_t e=0; e<U.nunk(); ++e)
           riemannDeriv[k][e] /= geoElem(e, 0);
       }
+      if(!pref) _lap(3);
 
       // compute volume integrals and volume integrals of non-conservative terms
       if (!pref) {
@@ -1049,6 +1067,7 @@ class MultiMat {
         // Previous implementation made volInt_constP download R, accumulate host surf ints, then
         // allowed nonConsInt_constP to upload and download again, which is inefficient
         tk::uploadStaged( exec, m_dev.R, m_dev.stage_R, R.getPointer(), R.getSize(), "R_d_view" );
+        _lap(4);
 
         // prestaged=true: U,P,R are already resident so rhs() owns the roundtrip and up/download not req
         tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem, flux, velfn,
@@ -1061,18 +1080,26 @@ class MultiMat {
         // Must run BEFORE download with prestaged=true it accumulates to device R
         if (g_inputdeck.get< tag::multimat, tag::prelax >()) {
           const auto ct_d = g_inputdeck.get< tag::multimat, tag::prelax_timescale >();
-          tk::pressureRelaxationInt_constP( nmat, m_eosDev, ndof, rdof, nelem, inpoel, coord, geoElem, U, P, ct_d,
+          tk::pressureRelaxationInt_constP( nmat, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem, U, P, ct_d,
                                             R, intsharp, &m_dev, true );
         }
+        _lap(5);
 
         // Single D2H of R, after the last kernel that touches it
         tk::downloadStaged( exec, R.getPointerNonConst(), m_dev.stage_R, m_dev.R, R.getSize(), "R_d_view" );
+        _lap(6);
 
         // And finally here's the source term on the host side
         // It's not device callable so this += lands on host R and needs to be post-download to avoid ovewrite
         // Guarded by a boolean so it only calls if necessary
         if constexpr (Problem::hasSrc)
           tk::srcInt_constP( nmat, t, m_mat_blk, ndof, U.nprop()/rdof, nelem, inpoel, coord, geoElem, Problem::src, R );
+
+        // print clock times
+        std::cout << "[rhs " << ++_ncall << "] upUP=" << _acc[0]
+                  << " surf=" << _acc[1] << " bnd=" << _acc[2]
+                  << " rdiv=" << _acc[3] << " upR=" << _acc[4]
+                  << " launch=" << _acc[5] << " d2h=" << _acc[6] << std::endl;
       }
       else {
         tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
@@ -1652,7 +1679,6 @@ class MultiMat {
     BCStateFn m_bc;
     //! EOS material block
     std::vector< EOS > m_mat_blk;
-    std::vector< tk::EOSDevice > m_eosDev;
 
     // Persistent device resident scratch buffer for constP kernels
     // This is the stuff we hoisted out from the _constP functions

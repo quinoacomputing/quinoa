@@ -14,6 +14,7 @@
 #define ThermallyPerfectGas_h
 
 #include "Data.hpp"
+#include "EoS/EOSDeviceFn.hpp"
 
 namespace inciter {
 
@@ -170,7 +171,25 @@ class ThermallyPerfectGas {
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
 
     //! Calculate speed of sound from the material density and material pressure
-    [[noreturn]] tk::real soundspeed( tk::real rho,
+    EOS_FN tk::real soundspeed( tk::real rho,
+                         tk::real pr,
+                         tk::real alpha=1.0,
+                         std::size_t imat=0,
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
+      const std::array< tk::real, 3 >& asigman={{}} ) const//;
+    {
+#if defined(__CUDA_ARCH__)
+      // Multimat never constructs a TPG so the host overload will throw
+      (void)rho; (void)pr; (void)alpha; (void)imat;
+      (void)adefgrad; (void)asigman;
+      tk::real z=0.0;
+      return z/z; //loud NaN will yell at us if reached
+#else
+      soundspeedHost( rho, pr, alpha, imat, adefgrad, asigman );
+#endif
+    }
+
+    [[noreturn]] tk::real soundspeedHost( tk::real rho,
                          tk::real pr,
                          tk::real alpha=1.0,
                          std::size_t imat=0,

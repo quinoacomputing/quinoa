@@ -17,6 +17,7 @@
 #define WilkinsAluminum_h
 
 #include "Data.hpp"
+#include "EoS/EOSDeviceFn.hpp"
 
 namespace inciter {
 
@@ -71,7 +72,24 @@ class WilkinsAluminum {
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;
 
     //! Calculate speed of sound from the material density and material pressure
-    tk::real soundspeed(
+    EOS_FN tk::real soundspeed(
+      tk::real arho,
+      tk::real apr,
+      tk::real alpha=1.0,
+      std::size_t imat=0,
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const//;
+    {
+#if defined(__CUDA_ARCH__)
+      // Not supported on device so throw an extremely loud error if reached
+      // buildEOSDevice refused JWL on host
+      (void)apr; (void)alpha; (void)imat; (void)adefgrad;
+      tk::real z=0.0;
+      return z/z; //NaN
+#else
+      return soundspeedHost( arho, apr, alpha, imat, adefgrad );
+#endif
+    }
+    tk::real soundspeedHost(
       tk::real arho,
       tk::real apr,
       tk::real alpha=1.0,
