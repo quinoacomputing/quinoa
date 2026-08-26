@@ -847,16 +847,17 @@ class MultiMat {
             tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
             tk::real damage_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
 
-            // Only clean up if:
-            // 1. Material is truly trace (alpha < 0.01, not just mixed)
-            // 2. AND damage is NaN/Inf (not based on magnitude - allow large damage in fracture)
+            // Clean up if:
+            // 1. Material is truly trace (alpha < 0.01) - prevents NaN from constitutive models
+            // 2. OR damage is NaN/Inf (pathological) - safety net
             bool is_trace = alpha_k < 0.01;
             tk::real damage_ratio = damage_k / std::max(1.0e-12, arho_k);
             bool is_pathological = !std::isfinite(damage_ratio);
 
-            // Only reset if BOTH trace AND pathological (NaN/Inf)
-            // This allows large but finite damage everywhere, including trace regions
-            if (is_trace && is_pathological)
+            // Reset if trace OR pathological
+            // Trace materials: prevents getCauchyStress from failing on ~zero volume fraction
+            // Pathological damage: safety net for NaN/Inf regardless of alpha
+            if (is_trace || is_pathological)
             {
               // Reset damage to minimum value (not zero, for numerical stability)
               U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 1.0e-06 * arho_k;
