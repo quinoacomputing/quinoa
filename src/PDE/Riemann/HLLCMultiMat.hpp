@@ -114,21 +114,33 @@ struct HLLCMultiMat {
       tk::real damage_l = (solidx[k] > 0) ? u[0][damageIdx(nmat, nsld, solidx[k])] : 0.0;
       tk::real damage_ratio_l = (rho_l > 1.0e-12) ? damage_l / rho_l : 0.0;
 
-      asigl = getCauchyStress(nmat, k, ncomp, u[0]);
-
-      // Check if stress itself is NaN (before we subtract pressure)
+      // For trace materials (alpha < 0.01), use hydrostatic stress only
+      // getCauchyStress() cannot handle trace volume fractions
       bool stress_is_nan = false;
-      for (std::size_t i=0; i<3; ++i) {
-        for (std::size_t j=0; j<3; ++j) {
-          if (!std::isfinite(asigl[i][j])) {
-            stress_is_nan = true;
-            break;
+      if (alpha_l < 0.01) {
+        // Trace material: hydrostatic approximation
+        for (std::size_t i=0; i<3; ++i) {
+          for (std::size_t j=0; j<3; ++j) {
+            asigl[i][j] = (i == j) ? -apl[k] : 0.0;
           }
         }
-        if (stress_is_nan) break;
-      }
+      } else {
+        // Normal material: full constitutive model
+        asigl = getCauchyStress(nmat, k, ncomp, u[0]);
 
-      for (std::size_t i=0; i<3; ++i) asigl[i][i] -= apl[k];
+        // Check if stress itself is NaN (before we subtract pressure)
+        for (std::size_t i=0; i<3; ++i) {
+          for (std::size_t j=0; j<3; ++j) {
+            if (!std::isfinite(asigl[i][j])) {
+              stress_is_nan = true;
+              break;
+            }
+          }
+          if (stress_is_nan) break;
+        }
+
+        for (std::size_t i=0; i<3; ++i) asigl[i][i] -= apl[k];
+      }
 
       // normal stress (traction) vector
       aTnl.push_back(tk::matvec(asigl, fn));
@@ -232,21 +244,33 @@ struct HLLCMultiMat {
       tk::real damage_r = (solidx[k] > 0) ? u[1][damageIdx(nmat, nsld, solidx[k])] : 0.0;
       tk::real damage_ratio_r = (rho_r > 1.0e-12) ? damage_r / rho_r : 0.0;
 
-      asigr = getCauchyStress(nmat, k, ncomp, u[1]);
-
-      // Check if stress itself is NaN (before we subtract pressure)
+      // For trace materials (alpha < 0.01), use hydrostatic stress only
+      // getCauchyStress() cannot handle trace volume fractions
       bool stress_is_nan_r = false;
-      for (std::size_t i=0; i<3; ++i) {
-        for (std::size_t j=0; j<3; ++j) {
-          if (!std::isfinite(asigr[i][j])) {
-            stress_is_nan_r = true;
-            break;
+      if (alpha_r < 0.01) {
+        // Trace material: hydrostatic approximation
+        for (std::size_t i=0; i<3; ++i) {
+          for (std::size_t j=0; j<3; ++j) {
+            asigr[i][j] = (i == j) ? -apr[k] : 0.0;
           }
         }
-        if (stress_is_nan_r) break;
-      }
+      } else {
+        // Normal material: full constitutive model
+        asigr = getCauchyStress(nmat, k, ncomp, u[1]);
 
-      for (std::size_t i=0; i<3; ++i) asigr[i][i] -= apr[k];
+        // Check if stress itself is NaN (before we subtract pressure)
+        for (std::size_t i=0; i<3; ++i) {
+          for (std::size_t j=0; j<3; ++j) {
+            if (!std::isfinite(asigr[i][j])) {
+              stress_is_nan_r = true;
+              break;
+            }
+          }
+          if (stress_is_nan_r) break;
+        }
+
+        for (std::size_t i=0; i<3; ++i) asigr[i][i] -= apr[k];
+      }
 
       // normal stress (traction) vector
       aTnr.push_back(tk::matvec(asigr, fn));
