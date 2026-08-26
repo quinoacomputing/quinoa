@@ -1015,7 +1015,7 @@ class MultiMat {
         // compute internal surface flux integrals
         tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
           coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-          dt, R, riemannDeriv, intsharp );
+          dt, R, riemannDeriv, intsharp, &m_dev, true );
         _lap(1);
 
         // compute boundary surface flux integrals

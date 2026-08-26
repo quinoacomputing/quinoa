@@ -48,6 +48,35 @@ eval_gp ( const std::size_t igp,
           const std::array< std::array< tk::real, 3>, 4 >& coord,
           const std::array< std::vector< tk::real >, 3 >& coordgp );
 
+//! Kokkos version of eval_gp face integral
+KOKKOS_INLINE_FUNCTION Kokkos::Array<tk::real, 3>
+eval_gp ( const std::size_t igp,
+              const Kokkos::Array<Kokkos::Array<tk::real, 3>, 3>& coordfa,
+              const Kokkos::Array<Kokkos::Array<tk::real, 14>, 3>& coordgp )
+// *****************************************************************************
+//  Compute the coordinates of quadrature points for face integral in physical
+//  space
+//! \param[in] igp Index of quadrature points
+//! \param[in] coordfa Array of nodal coordinates for face element
+//! \param[in] coordgp Array of coordinates for quadrature points in reference
+//!   space. Only rows 0 and 1 are read for a face.
+//! \return Array of coordinates for quadrature points in physical space
+//! \details Device twin of the std::array/std::vector overload above. Same
+//!   barycentric shape functions in the same order, so results are identical.
+// *****************************************************************************
+{
+  // Barycentric coordinates for the triangular face
+  auto shp1 = 1.0 - coordgp[0][igp] - coordgp[1][igp];
+  auto shp2 = coordgp[0][igp];
+  auto shp3 = coordgp[1][igp];
+
+  // Transformation of the quadrature point from the 2D reference/master
+  // element to physical space, to obtain its physical (x,y,z) coordinates.
+  return {{ coordfa[0][0]*shp1 + coordfa[1][0]*shp2 + coordfa[2][0]*shp3,
+            coordfa[0][1]*shp1 + coordfa[1][1]*shp2 + coordfa[2][1]*shp3,
+            coordfa[0][2]*shp1 + coordfa[1][2]*shp2 + coordfa[2][2]*shp3 }};
+}
+
 //! Kokkos version of eval_gp volume integral
 KOKKOS_INLINE_FUNCTION Kokkos::Array<tk::real, 3>
 eval_gp ( const std::size_t igp,

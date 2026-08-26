@@ -82,6 +82,11 @@ namespace tk {
 		Kokkos::View< real*, memory_space > cz;
 		Kokkos::View< real*, memory_space > geoElem;
 
+                // Face data for the surfInt_constP
+                Kokkos::View< int*, memory_space > esuf;
+                Kokkos::View< std::size_t*, memory_space > inpofa;
+                Kokkos::View< real*, memory_space > geoFace;
+
 		// Per-call
 		Kokkos::View< real*, memory_space > U;
 		Kokkos::View< real*, memory_space > P;
@@ -109,6 +114,12 @@ namespace tk {
 		std::size_t src_nelem = 0;
 		std::size_t src_npoin = 0;
 		std::size_t src_nmat = 0;
+
+                // Host-provenance of face data resident on device
+                const int* src_esuf = nullptr;
+                const std::size_t* src_inpofa = nullptr;
+                const real* src_geoFace = nullptr;
+                std::size_t src_nface = 0;
 		
 		// The below logic helps to capture the AMR and signal to reupload the data to the device
 		// Mesh generation source (resident-copied state)
@@ -156,6 +167,30 @@ namespace tk {
 		}
 		return hit;
 	} //mr
+
+        // Residency check for face data similar to the above one
+        // Its seperate to isolate it from the volume kernels callsites
+        // True if device already holds this partition's face data and H2D will be skipped
+        // Note nface = esuf.size()/2 because esuf holds 2x entries per face
+        inline bool
+        faceResident ( KokkosDeviceViews& d,
+                       const std::vector< int >& esuf,
+                       const std::vector< std::size_t >& inpofa,
+                       const Fields& geoFace )
+        {
+                const bool hit = d.src_gen == d.gen
+                              && d.src_esuf == esuf.data()
+                              && d.src_inpofa == inpofa.data()
+                              && d.src_geoFace == geoFace.getPointer()
+                              && d.src_nface == esuf.size()/2;
+                if (!hit) {
+                        d.src_esuf = esuf.data();
+                        d.src_inpofa = inpofa.data();
+                        d.src_geoFace = geoFace.getPointer();
+                        d.src_nface = esuf.size()/2;
+                }
+                return hit;
+        }//fr
 
 	// Ensures persistent device view has requested extent
 	// True if reallocated -> contents are uninitialized, needs reupload

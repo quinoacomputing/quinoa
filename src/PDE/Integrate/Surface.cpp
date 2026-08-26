@@ -739,6 +739,158 @@ update_rhs_fa( ncomp_t ncomp,
   }
 }
 
+// *****************************************************************************
+//! Update the rhs by adding surface integration term (const-order path)
+//! \details Copy of update_rhs_fa, templated on its container types so one body
+//!   serves the host loop and the device kernel. Two differences: solidx and
+//!   nsld are passed in rather than read from g_inputdeck (a lookup per
+//!   quadrature point, and unreachable from device code), and the logical
+//!   length of fl arrives as nflx, since a fixed-size buffer's size() is its
+//!   capacity. update_rhs_fa itself is untouched, so the p-adaptive path is
+//!   unaffected.
+// *****************************************************************************
+template< class FlT, class BT, class SolidxT, class RiemannDerivT >
+void
+update_rhs_fa_constP( ncomp_t ncomp,
+               std::size_t nmat,
+               const std::size_t ndof,
+               const std::size_t ndof_l,
+               const std::size_t ndof_r,
+               const tk::real wt,
+               const std::array< tk::real, 3 >& fn,
+               const std::size_t el,
+               const std::size_t er,
+               const FlT& fl,
+               const std::size_t nflx,
+               const BT& B_l,
+               const BT& B_r,
+               const SolidxT& solidx,
+               const std::size_t nsld,
+               Fields& R,
+               RiemannDerivT& riemannDeriv )
+// *****************************************************************************
+//  Update the rhs by adding the surface integration term
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] ndof_l Number of degrees of freedom for left element
+//! \param[in] ndof_r Number of degrees of freedom for right element
+//! \param[in] wt Weight of gauss quadrature point
+//! \param[in] fn Face/Surface normal
+//! \param[in] el Left element index
+//! \param[in] er Right element index
+//! \param[in] fl Surface flux
+//! \param[in] B_l Basis function for the left element
+//! \param[in] B_r Basis function for the right element
+//! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
+// *****************************************************************************
+{
+  // following lines commented until rdofel is made available.
+  //Assert( B_l.size() == ndof_l, "Size mismatch" );
+  //Assert( B_r.size() == ndof_r, "Size mismatch" );
+
+  using inciter::newSolidsAccFn;
+
+  for (ncomp_t c=0; c<ncomp; ++c)
+  {
+    auto mark = c*ndof;
+    R(el, mark) -= wt * fl[c];
+    R(er, mark) += wt * fl[c];
+
+    if(ndof_l > 1)          //DG(P1)
+    {
+      R(el, mark+1) -= wt * fl[c] * B_l[1];
+      R(el, mark+2) -= wt * fl[c] * B_l[2];
+      R(el, mark+3) -= wt * fl[c] * B_l[3];
+    }
+
+    if(ndof_r > 1)          //DG(P1)
+    {
+      R(er, mark+1) += wt * fl[c] * B_r[1];
+      R(er, mark+2) += wt * fl[c] * B_r[2];
+      R(er, mark+3) += wt * fl[c] * B_r[3];
+    }
+
+    if(ndof_l > 4)          //DG(P2)
+    {
+      R(el, mark+4) -= wt * fl[c] * B_l[4];
+      R(el, mark+5) -= wt * fl[c] * B_l[5];
+      R(el, mark+6) -= wt * fl[c] * B_l[6];
+      R(el, mark+7) -= wt * fl[c] * B_l[7];
+      R(el, mark+8) -= wt * fl[c] * B_l[8];
+      R(el, mark+9) -= wt * fl[c] * B_l[9];
+    }
+
+    if(ndof_r > 4)          //DG(P2)
+    {
+      R(er, mark+4) += wt * fl[c] * B_r[4];
+      R(er, mark+5) += wt * fl[c] * B_r[5];
+      R(er, mark+6) += wt * fl[c] * B_r[6];
+      R(er, mark+7) += wt * fl[c] * B_r[7];
+      R(er, mark+8) += wt * fl[c] * B_r[8];
+      R(er, mark+9) += wt * fl[c] * B_r[9];
+    }
+  }
+
+  // Prep for non-conservative terms in multimat
+  if (nflx > ncomp)
+  {
+    // Gradients of partial pressures
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      for (std::size_t idir=0; idir<3; ++idir)
+      {
+        riemannDeriv[3*k+idir][el] += wt * fl[ncomp+k] * fn[idir];
+        riemannDeriv[3*k+idir][er] -= wt * fl[ncomp+k] * fn[idir];
+      }
+    }
+
+    // Divergence of velocity multiples basis fucntion( d(uB) / dx )
+    for(std::size_t idof = 0; idof < ndof_l; idof++) {
+      riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
+    }
+    for(std::size_t idof = 0; idof < ndof_r; idof++) {
+      riemannDeriv[3*nmat+idof][er] -= wt * fl[ncomp+nmat] * B_r[idof];
+    }
+
+    // Divergence of asigma: d(asig_ij)/dx_j
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+      {
+        std::size_t mark = ncomp+nmat+1+3*(solidx[k]-1);
+
+        for (std::size_t i=0; i<3; ++i)
+        {
+          riemannDeriv[3*nmat+ndof+3*(solidx[k]-1)+i][el] -=
+            wt * fl[mark+i];
+          riemannDeriv[3*nmat+ndof+3*(solidx[k]-1)+i][er] +=
+            wt * fl[mark+i];
+        }
+      }
+
+    // Derivatives of g: d(g_il)/d(x_j)-d(g_ij)/d(x_l)
+    // for i=1,2,3; j=1,2,3; l=1,2,3. Total = 3x3x3 (per solid)
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t l=0; l<3; ++l)
+              if (j != l)
+              {
+                std::size_t mark1 = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+l;
+                std::size_t mark2 = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+j;
+                riemannDeriv[3*nmat+ndof+3*nsld+newSolidsAccFn(k,i,j,l)][el] -=
+                  wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]);
+                riemannDeriv[3*nmat+ndof+3*nsld+newSolidsAccFn(k,i,j,l)][er] +=
+                  wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]);
+              }
+  }
+}
+
 void
 surfInt_constP(
   std::size_t nmat,
@@ -747,7 +899,7 @@ surfInt_constP(
   const std::size_t ndof,
   const std::size_t rdof,
   const std::vector< std::size_t >& inpoel,
-  const std::vector< std::size_t >& /*solidx*/,
+  const std::vector< std::size_t >& solidx,
   const UnsMesh::Coords& coord,
   const inciter::FaceData& fd,
   const Fields& geoFace,
@@ -760,7 +912,9 @@ surfInt_constP(
   const tk::real /*dt*/,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
-  int intsharp )
+  int intsharp,
+  [[maybe_unused]] SurfIntDeviceViews* dev,
+  [[maybe_unused]] bool prestaged )
 // *****************************************************************************
 //  Compute internal surface flux integrals for const-order DG (not p-adaptive)
 //! \param[in] nmat Number of materials in this PDE system
@@ -828,6 +982,19 @@ surfInt_constP(
   std::array< std::vector< real >, 2 > state;
   state[0].resize(ncomp+nprim);
   state[1].resize(ncomp+nprim);
+
+  // Values formerly looked up per quadrature point inside flux() and update_rhs_fa()
+  // Hoisted since they are loop invariant and device path can't reach g_inputdeck
+  auto nsld = inciter::numSolids(nmat, solidx);
+  auto nstate = ncomp+nprim;
+
+  ErrChk( nmat <= inciter::HLLCMultiMatConstP::NMAT_MAX_FLUX,
+          "surfInt_constP supports max "+std::to_string(inciter::HLLCMultiMatConstP::NMAT_MAX_FLUX)+" materials" );
+  ErrChk( nstate <= inciter::HLLCMultiMatConstP::NSTATE_MAX_FLUX,
+          "surfInt_constP state vector supports max "+std::to_string(inciter::HLLCMultiMatConstP::NSTATE_MAX_FLUX)+" states" );
+
+  // Caller-owned flux buffer reused across every face and quadrature pt
+  Kokkos::Array< tk::real, inciter::HLLCMultiMatConstP::NFLX_MAX > flx;
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
@@ -903,7 +1070,7 @@ surfInt_constP(
         nmat, er, rdof, inpoel, coord, geoElem, ref_gp_r, B_r, U, P, state[1]);
 
       // evaluate prescribed velocity (if any)
-      auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
+      [[maybe_unused]] auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
       // mesh velocity at quadrature point
       tk::real wn_igp(0.0);
@@ -914,11 +1081,12 @@ surfInt_constP(
       }
 
       // compute flux
-      auto fl = inciter::HLLCMultiMatConstP::flux( mat_blk, fn, state, v, wn_igp );
+      auto nflx = inciter::HLLCMultiMatConstP::flux( mat_blk, fn, state, wn_igp,
+                                                     nmat, nsld, ncomp, nstate, solidx, flx );
 
       // Add the surface integration term to the rhs
-      update_rhs_fa( ncomp, nmat, ndof, ndof, ndof, wt, fn,
-                     el, er, fl, B_l, B_r, R, riemannDeriv );
+      update_rhs_fa_constP( ncomp, nmat, ndof, ndof, ndof, wt, fn,
+                            el, er, flx, nflx, B_l, B_r, solidx, nsld, R, riemannDeriv );
     }
   }
 }

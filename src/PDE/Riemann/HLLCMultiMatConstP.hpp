@@ -35,51 +35,46 @@ namespace inciter {
 //! ConstP HLLC approximate Riemann solver for solids
 struct HLLCMultiMatConstP {
 
+//! Caps for the fixed size scratch buffer matched to NMAT_MAX and NSTATE_MAX
+//! in the KokkosDevice.hpp file. We expose at struct scope so callers can size fix
+static constexpr std::size_t NMAT_MAX_FLUX=4;
+static constexpr std::size_t NSTATE_MAX_FLUX=82;
+static constexpr std::size_t NFLX_MAX=104;
+// 51+4+1+12+36 = 104
+// ncomp+nmat+1+3*nsld+9*nsld
+
 //! HLLC approximate Riemann solver flux function
   //! \param[in] fn Face/Surface normal
   //! \param[in] u Left and right unknown/state vector
   //! \param[in] wn Mesh velocity normal to face
   //! \return Riemann solution according to Harten-Lax-van Leer-Contact
   //! \note The function signature must follow tk::RiemannFluxFn
-  static tk::RiemannFluxFn::result_type
-  flux( const std::vector< EOS >& mat_blk,
-        const std::array< tk::real, 3 >& fn,
-        const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& = {},
-        const tk::real wn = 0 )
+  //! \note Templated on container types so one body serves both the host loop and the device kernel
+  //! \note Because it's a template the KOKKOS_INLINE_FUNCTION will not force eager device codegen on hostside
+  template< class MatBlkT, class FnT, class StateT, class SolidxT >
+  KOKKOS_INLINE_FUNCTION static std::size_t
+  flux( const MatBlkT& mat_blk,
+        const FnT& fn,
+        const StateT& u,
+        const tk::real wn,
+        std::size_t nmat,
+        std::size_t nsld,
+        std::size_t ncomp,
+        std::size_t nstate,
+        const SolidxT& solidx,
+        Kokkos::Array< tk::real, NFLX_MAX >& flx )
   {
-    // Cap for fixed-size per material
-    // Matched to the NMAT_MAX and NSTATE_MAX in KokkosDevice.hpp
-    // and we keep it local to free it of Kokkos dependency
-    constexpr std::size_t NMAT_MAX_FLUX=4;
-    constexpr std::size_t NSTATE_MAX_FLUX=50;
-
     using tk::Vec3Dev;
     using tk::Mat3Dev;
-
-    auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-
-    // Introduce a error check here to throw inconsistencies of size
-    ErrChk( nmat <= NMAT_MAX_FLUX, 
-            "HLLCMultiMatConstP::flux supports max "+std::to_string(NMAT_MAX_FLUX)+" materials" );
-
-    const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
-
-    auto nsld = numSolids(nmat, solidx);
-    auto ncomp = u[0].size()-(3+nmat+nsld*6);
-    auto nstate = u[0].size();
-
-    // Introduce another error check here to throw inconsistent nstate size
-    ErrChk( nstate <= NSTATE_MAX_FLUX,
-            "HLLCMultiMatConstP::flux state vector supports max "+std::to_string(NSTATE_MAX_FLUX)+" states" );
 
     // facenormal in device storage
     Vec3Dev fnd;
     for (std::size_t i=0; i<3; ++i)
       fnd[i] = fn[i];
 
-    std::vector< tk::real > flx(ncomp, 0);
-    flx.reserve( ncomp+nmat+1+3*nsld+9*nsld );
+    // flx is caller-owned so we have to zero consv block and append after it
+    for (std::size_t i=0; i<ncomp; ++i) flx[i] = 0.0;
+    std::size_t nflx = ncomp;
 
     // Primitive variables
     tk::real rhol(0.0), rhor(0.0);
@@ -130,7 +125,7 @@ struct HLLCMultiMatConstP {
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnl[k] = tk::rotateTensorDev(gl[k], fnd);
-      auto amatl = mat_blk[k].compute< EOS::soundspeed >(
+      auto amatl = mat_blk[k].template compute< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], apl[k],
         u[0][volfracIdx(nmat, k)], k );
 
@@ -156,7 +151,7 @@ struct HLLCMultiMatConstP {
 
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnr[k] = tk::rotateTensorDev(gr[k], fnd);
-      auto amatr = mat_blk[k].compute< EOS::soundspeed >(
+      auto amatr = mat_blk[k].template compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], apr[k],
         u[1][volfracIdx(nmat, k)], k );
 
@@ -382,22 +377,22 @@ struct HLLCMultiMatConstP {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt((aTnl[k][0]*aTnl[k][0]
+        flx[nflx++] = (std::sqrt((aTnl[k][0]*aTnl[k][0]
                                 +aTnl[k][1]*aTnl[k][1]
                                 +aTnl[k][2]*aTnl[k][2])));
       // Store Riemann velocity
-      flx.push_back((vnl[0]+wn));
+      flx[nflx++] = ((vnl[0]+wn));
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
-            flx.push_back(aTnl[k][i]);
+            flx[nflx++] = (aTnl[k][i]);
         }
       }
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
-              flx.push_back(gl[k][i][j]);
+              flx[nflx++] = (gl[k][i][j]);
         }
       }
 
@@ -434,22 +429,22 @@ struct HLLCMultiMatConstP {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnlStar[k][0]*aTnlStar[k][0]
+        flx[nflx++] = (std::sqrt(aTnlStar[k][0]*aTnlStar[k][0]
                                +aTnlStar[k][1]*aTnlStar[k][1]
                                +aTnlStar[k][2]*aTnlStar[k][2]));
       // Store Riemann velocity
-      flx.push_back(Sm+wn);
+      flx[nflx++] = (Sm+wn);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
-            flx.push_back(aTnlStar[k][i]);
+            flx[nflx++] = (aTnlStar[k][i]);
         }
       }
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
-              flx.push_back(glStar[k][i][j]);
+              flx[nflx++] = (glStar[k][i][j]);
         }
       }
 
@@ -486,22 +481,22 @@ struct HLLCMultiMatConstP {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnrStar[k][0]*aTnrStar[k][0]
+        flx[nflx++] = (std::sqrt(aTnrStar[k][0]*aTnrStar[k][0]
                                +aTnrStar[k][1]*aTnrStar[k][1]
                                +aTnrStar[k][2]*aTnrStar[k][2]));
       // Store Riemann velocity
-      flx.push_back(Sm+wn);
+      flx[nflx++] = (Sm+wn);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
-            flx.push_back(aTnrStar[k][i]);
+            flx[nflx++] = (aTnrStar[k][i]);
         }
       }
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
-              flx.push_back(grStar[k][i][j]);
+              flx[nflx++] = (grStar[k][i][j]);
         }
       }
 
@@ -532,31 +527,28 @@ struct HLLCMultiMatConstP {
       // Quantities for non-conservative terms
       // Store Riemann-advected partial pressures
       for (std::size_t k=0; k<nmat; ++k)
-        flx.push_back(std::sqrt(aTnr[k][0]*aTnr[k][0]
+        flx[nflx++] = (std::sqrt(aTnr[k][0]*aTnr[k][0]
                                +aTnr[k][1]*aTnr[k][1]
                                +aTnr[k][2]*aTnr[k][2]));
       // Store Riemann velocity
-      flx.push_back(vnr[0]+wn);
+      flx[nflx++] = (vnr[0]+wn);
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
-            flx.push_back(aTnr[k][i]);
+            flx[nflx++] = (aTnr[k][i]);
         }
       }
       for (std::size_t k=0; k<nmat; ++k) {
         if (solidx[k] > 0) {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
-              flx.push_back(gr[k][i][j]);
+              flx[nflx++] = (gr[k][i][j]);
         }
       }
 
     }
 
-    Assert( flx.size() == (ncomp+nmat+1+3*nsld+9*nsld), "Size of "
-            "multi-material flux vector incorrect" );
-
-    return flx;
+    return nflx;
   }
 
   ////! Flux type accessor
