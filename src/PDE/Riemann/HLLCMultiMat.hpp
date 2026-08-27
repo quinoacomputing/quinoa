@@ -114,10 +114,10 @@ struct HLLCMultiMat {
       tk::real damage_l = (solidx[k] > 0) ? u[0][damageIdx(nmat, nsld, solidx[k])] : 0.0;
       tk::real damage_ratio_l = (rho_l > 1.0e-12) ? damage_l / rho_l : 0.0;
 
-      // For trace materials (alpha < 0.01), use hydrostatic stress only
+      // For trace materials (alpha < 0.0001), use hydrostatic stress only
       // getCauchyStress() cannot handle trace volume fractions
       bool stress_is_nan = false;
-      if (alpha_l < 0.01) {
+      if (alpha_l < 0.0001) {
         // Trace material: hydrostatic approximation
         for (std::size_t i=0; i<3; ++i) {
           for (std::size_t j=0; j<3; ++j) {
@@ -263,10 +263,10 @@ struct HLLCMultiMat {
       tk::real damage_r = (solidx[k] > 0) ? u[1][damageIdx(nmat, nsld, solidx[k])] : 0.0;
       tk::real damage_ratio_r = (rho_r > 1.0e-12) ? damage_r / rho_r : 0.0;
 
-      // For trace materials (alpha < 0.01), use hydrostatic stress only
+      // For trace materials (alpha < 0.0001), use hydrostatic stress only
       // getCauchyStress() cannot handle trace volume fractions
       bool stress_is_nan_r = false;
-      if (alpha_r < 0.01) {
+      if (alpha_r < 0.0001) {
         // Trace material: hydrostatic approximation
         for (std::size_t i=0; i<3; ++i) {
           for (std::size_t j=0; j<3; ++j) {

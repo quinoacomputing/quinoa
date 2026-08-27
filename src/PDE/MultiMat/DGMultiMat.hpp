@@ -848,9 +848,9 @@ class MultiMat {
             tk::real damage_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
 
             // Clean up if:
-            // 1. Material is truly trace (alpha < 0.01) - prevents NaN from constitutive models
+            // 1. Material is truly trace (alpha < 0.0001) - prevents NaN from constitutive models
             // 2. OR damage is NaN/Inf (pathological) - safety net
-            bool is_trace = alpha_k < 0.01;
+            bool is_trace = alpha_k < 0.0001;
             tk::real damage_ratio = damage_k / std::max(1.0e-12, arho_k);
             bool is_pathological = !std::isfinite(damage_ratio);
 
