@@ -425,18 +425,22 @@ nonConservativeInt_constP(
     uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "nconsv_U_d_view" );
   }
 
-  // RiemannDeriv only consumed here, nothing on the host runs between surf ints and this kernel
-  // So, there's nothing to hide it behind and we want to stage it locally
+  // RiemannDeriv is uploaded by surfInt_constP when prestaged, since the device
+  // surface kernel writes it and the host copy is then stale. When not
+  // prestaged it is only consumed here, and nothing on the host runs between
+  // the surface integrals and this kernel, so stage it locally.
   const std::size_t rd_nrow = riemannDeriv.size();
   const std::size_t rd_ncol = rd_nrow ? riemannDeriv[0].size() : 0;
-  const std::size_t rd_size = rd_nrow*rd_ncol;
-  std::vector<tk::real> rd_flat(rd_size);
-  for (std::size_t row=0; row<rd_nrow; ++row){
-    for (std::size_t col=0; col<rd_ncol; ++col){
-      rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
+  if (!prestaged) {
+    const std::size_t rd_size = rd_nrow*rd_ncol;
+    std::vector<tk::real> rd_flat(rd_size);
+    for (std::size_t row=0; row<rd_nrow; ++row){
+      for (std::size_t col=0; col<rd_ncol; ++col){
+        rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
+      }
     }
+    uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size, "nconsv_riemannDeriv_d_view" );
   }
-  uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size, "nconsv_riemannDeriv_d_view" );
 
   // Shallow copies of view handle
   // Does not touch device memory, just gives kernel below local names and captures plain views by value into KOKKOS_LAMBDA
