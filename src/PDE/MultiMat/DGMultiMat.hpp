@@ -104,7 +104,7 @@ class MultiMat {
 
       // EoS initialization
       initializeMaterialEoS( m_mat_blk );
-      buildEOSDevice( m_eosDev );
+      checkDeviceEOSSupport();
     }
 
     // Copy constructor
@@ -120,7 +120,6 @@ class MultiMat {
       m_riemann(x.m_riemann),
       m_bc(x.m_bc),
       m_mat_blk(x.m_mat_blk),
-      m_eosDev(x.m_eosDev),
       m_dev()
     {}
 
@@ -135,7 +134,6 @@ class MultiMat {
       m_riemann(std::move(x.m_riemann)),
       m_bc(std::move(x.m_bc)),
       m_mat_blk(std::move(x.m_mat_blk)),
-      m_eosDev(std::move(x.m_eosDev)),
       m_dev(std::move(x.m_dev))
     {}
 
@@ -996,18 +994,26 @@ class MultiMat {
         auto exec = Kokkos::DefaultExecutionSpace();
         tk::uploadStaged( exec, m_dev.U, m_dev.stage_U, U.getPointer(), U.getSize(), "U_d_view" );
         tk::uploadStaged( exec, m_dev.P, m_dev.stage_P, P.getPointer(), P.getSize(), "P_d_view" );
-
-        // compute internal surface flux integrals
-        tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-          dt, R, riemannDeriv, intsharp );
-
-        // compute boundary surface flux integrals
+        
+        // Boundary faces run on the host and write both R and riemannDeriv, so
+        // they must precede the device internal-face kernel: R and riemannDeriv
+        // are uploaded with those contributions already in them, and the kernel
+        // atomically adds the internal faces on top.
         for (const auto& b : m_bc)
           tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
             m_riemann, velfn, std::get<1>(b), U, P, W, R,
             riemannDeriv, intsharp );
+
+        // R holds the boundary surface contributions; upload before the kernel.
+        // riemannDeriv is uploaded inside surfInt_constP.
+        tk::uploadStaged( exec, m_dev.R, m_dev.stage_R, R.getPointer(), R.getSize(), "R_d_view" );
+
+        // compute internal surface flux integrals on device. Also performs the
+        // riemannDeriv /= geoElem(e,0) division, so it stays device resident.
+        tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
+          coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+          dt, R, riemannDeriv, intsharp, &m_dev, true );
       }
       else {
         // compute volume integrals
@@ -1031,25 +1037,26 @@ class MultiMat {
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
               "Riemann derivative vector incorrect" );
 
-      // get derivatives from riemannDeriv
-      for (std::size_t k=0; k<riemannDeriv.size(); ++k)
-      {
-        Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
-                "for non-conservative terms has incorrect size" );
-        for (std::size_t e=0; e<U.nunk(); ++e)
-          riemannDeriv[k][e] /= geoElem(e, 0);
+      // get derivatives from riemannDeriv. The const-order path does this on
+      // the device at the end of surfInt_constP, so riemannDeriv never comes
+      // back to the host; doing it again here would divide twice.
+      if (pref) {
+        for (std::size_t k=0; k<riemannDeriv.size(); ++k)
+        {
+          Assert( riemannDeriv[k].size() == U.nunk(), "Riemann derivative vector "
+                  "for non-conservative terms has incorrect size" );
+          for (std::size_t e=0; e<U.nunk(); ++e)
+            riemannDeriv[k][e] /= geoElem(e, 0);
+        }
       }
 
       // compute volume integrals and volume integrals of non-conservative terms
       if (!pref) {
         auto exec = Kokkos::DefaultExecutionSpace();
 
-        // R currently holds internal and boundary surface contributions
-        // Upload ONCE here and let both accumulate into device copy, then download ONCE below
-        // Previous implementation made volInt_constP download R, accumulate host surf ints, then
-        // allowed nonConsInt_constP to upload and download again, which is inefficient
-        tk::uploadStaged( exec, m_dev.R, m_dev.stage_R, R.getPointer(), R.getSize(), "R_d_view" );
-
+        // R was uploaded above, before the internal-face kernel, and has been
+        // accumulated into on the device since; do NOT re-upload here or the
+        // kernel's contributions would be overwritten by the stale host copy.
         // prestaged=true: U,P,R are already resident so rhs() owns the roundtrip and up/download not req
         tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem, flux, velfn,
                            Problem::src, U, P, W, R, intsharp, &m_dev, true );
@@ -1061,7 +1068,7 @@ class MultiMat {
         // Must run BEFORE download with prestaged=true it accumulates to device R
         if (g_inputdeck.get< tag::multimat, tag::prelax >()) {
           const auto ct_d = g_inputdeck.get< tag::multimat, tag::prelax_timescale >();
-          tk::pressureRelaxationInt_constP( nmat, m_eosDev, ndof, rdof, nelem, inpoel, coord, geoElem, U, P, ct_d,
+          tk::pressureRelaxationInt_constP( nmat, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem, U, P, ct_d,
                                             R, intsharp, &m_dev, true );
         }
 
@@ -1652,7 +1659,6 @@ class MultiMat {
     BCStateFn m_bc;
     //! EOS material block
     std::vector< EOS > m_mat_blk;
-    std::vector< tk::EOSDevice > m_eosDev;
 
     // Persistent device resident scratch buffer for constP kernels
     // This is the stuff we hoisted out from the _constP functions

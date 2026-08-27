@@ -9,6 +9,7 @@
 #include "UnsMesh.hpp"
 #include "Integrate/Quadrature.hpp"
 #include "Kokkos_Core.hpp"
+#include "EoS/EOS.hpp"
 
 // Fields storage U(e*nprop+c) is in row major
 // Throw error if not detected
@@ -23,9 +24,9 @@ constexpr std::size_t NDOF_MAX=10;
 // Max. no. of materials supported by device kernels
 constexpr std::size_t NMAT_MAX=4;
 // Max. no. of conserved components is 3*nmat + 3 + 9*nsld
-constexpr std::size_t NCOMP_MAX=50;
+constexpr std::size_t NCOMP_MAX=51;
 // Max. size of combined consv+prim state vector at quad pt
-constexpr std::size_t NSTATE_MAX=50;
+constexpr std::size_t NSTATE_MAX=82;
 // Max. size of THINC vol-fraction work array is nmat*rdof
 constexpr std::size_t NALSOL_MAX = NMAT_MAX*NDOF_MAX;
 
@@ -68,56 +69,6 @@ namespace tk {
 		ErrChk( NGvol(ndof) <= NQUAD_MAX, "Max. " + std::to_string(NQUAD_MAX) + " quadrature points supported.");
 	}
 
-        // POD mirror of the per-material EOS constants needed by device kernel
-        // Note this is NOT a general EOS port, the union_EOS branch is not device-compatible yet and needs work
-        // This thing only contains the scalars needed by soundspeed()
-        // inciter::EOS is not trivially copyable yet and cannot be captured into device lambda
-        // So I use this to port the pressureRelaxation without needing to invest in finishing the union_EOS
-        // This is still built on the host from the inputdeck fields used by initializeMaterialEOS(), uploaded ONCE only
-        struct EOSDevice {
-          enum Type : int { StiffenedGas=0, SmallShearSolid=1, GodunovRomenski=2 };
-          int type = StiffenedGas;
-          real gamma = 0.0;
-          real pstiff = 0.0;
-          real mu = 0.0;
-          real rho0 = 0.0;
-          real K0 = 0.0;
-          real alpha = 0.0;
-        }; //eosd
-
-        // This is the device equivalent of mat_blk[k].compute<EOS::soundspeed>(arho,apr,alpha,k)
-        // Host versions Throw and std::cout on a nonfinite result but neither works on device so I dropped the check here
-        KOKKOS_INLINE_FUNCTION
-        real soundspeedDevice( const EOSDevice& m, real arho, real apr, real alpha )
-        {
-          const auto al_eff = std::fmax( 1.0e-14, alpha );
-          
-          if (m.type == EOSDevice::StiffenedGas) {
-            const auto p_eff = std::fmax( 1.0e-15, apr + al_eff*m.pstiff );
-            return std::sqrt( m.gamma*p_eff/arho );
-          }
-          else if (m.type == EOSDevice::SmallShearSolid) {
-            // Barton 2019 approximated elastic contribution
-            auto a = (4.0/3.0) * m.mu * al_eff / arho;
-            const auto p_eff = std::fmax( 1.0e-15, apr + al_eff*m.pstiff );
-            a += m.gamma * p_eff / arho;
-            return std::sqrt(a);
-          }
-          else { //GodunovRomenski
-            const auto rho = arho/al_eff;
-            const auto rrho0a = std::pow( rho/m.rho0, m.alpha );
-            // pressure_coldcompr(arho, al_eff)
-            const auto p_cc = al_eff*(m.K0/m.alpha*(rrho0a*rho/m.rho0)*(rrho0a-1.0));
-            // DpccDrho(rho)
-            const auto dpdrho = m.K0/(m.rho0*m.alpha)
-                              * ((2.0*m.alpha+1.0)*(rrho0a*rrho0a) - (m.alpha+1.0)*rrho0a);
-            auto a = std::fmax( 1.0e-15, dpdrho + (m.gamma+1.0)*(apr - p_cc)/arho );
-            a += (4.0/3.0)*al_eff*m.mu/arho;
-            return std::sqrt(a);
-          }
-        }//ssd
-
-
 	// Persistent device-resident buffers for const-P DG kernels
 	// Bundles all device views that would otherwise be allocated by kernels
 	// Any instance must be owned by something destroyed before Kokkos::finalize() and released on chare migration
@@ -130,6 +81,11 @@ namespace tk {
 		Kokkos::View< real*, memory_space > cy;
 		Kokkos::View< real*, memory_space > cz;
 		Kokkos::View< real*, memory_space > geoElem;
+
+                // Face data for the surfInt_constP
+                Kokkos::View< int*, memory_space > esuf;
+                Kokkos::View< std::size_t*, memory_space > inpofa;
+                Kokkos::View< real*, memory_space > geoFace;
 
 		// Per-call
 		Kokkos::View< real*, memory_space > U;
@@ -147,7 +103,10 @@ namespace tk {
 
                 // Per-material EOS constants
                 // Time and partition invariant so only upload once when first allocated
-                Kokkos::View< EOSDevice*, memory_space > eos;
+                Kokkos::View< char*, memory_space > eos;
+
+                // Set once a finalize hook is registered for this inst
+                bool hooked = false;
 
 		// Host-provenance of mesh data resident on device
 		const std::size_t* src_inpoel = nullptr;
@@ -158,6 +117,12 @@ namespace tk {
 		std::size_t src_nelem = 0;
 		std::size_t src_npoin = 0;
 		std::size_t src_nmat = 0;
+
+                // Host-provenance of face data resident on device
+                const int* src_esuf = nullptr;
+                const std::size_t* src_inpofa = nullptr;
+                const real* src_geoFace = nullptr;
+                std::size_t src_nface = 0;
 		
 		// The below logic helps to capture the AMR and signal to reupload the data to the device
 		// Mesh generation source (resident-copied state)
@@ -205,6 +170,44 @@ namespace tk {
 		}
 		return hit;
 	} //mr
+
+        // Residency check for face data similar to the above one
+        // Its seperate to isolate it from the volume kernels callsites
+        // True if device already holds this partition's face data and H2D will be skipped
+        // Note nface = esuf.size()/2 because esuf holds 2x entries per face
+        inline bool
+        faceResident ( KokkosDeviceViews& d,
+                       const std::vector< int >& esuf,
+                       const std::vector< std::size_t >& inpofa,
+                       const Fields& geoFace )
+        {
+                const bool hit = d.src_gen == d.gen
+                              && d.src_esuf == esuf.data()
+                              && d.src_inpofa == inpofa.data()
+                              && d.src_geoFace == geoFace.getPointer()
+                              && d.src_nface == esuf.size()/2;
+                if (!hit) {
+                        d.src_esuf = esuf.data();
+                        d.src_inpofa = inpofa.data();
+                        d.src_geoFace = geoFace.getPointer();
+                        d.src_nface = esuf.size()/2;
+                }
+                return hit;
+        }//fr
+
+        // Register finalize hook so that the instance release its device buffer
+        // before Kokkos tears down the cuda context (this is idempotent)
+        inline void
+        ensureFinalizeHook( KokkosDeviceViews& d )
+        {
+          if (!d.hooked) {
+            d.hooked = true;
+            auto* p = &d;
+            Kokkos::push_finalize_hook([p](){ 
+              p->release(); 
+            });
+          }
+        }//efh
 
 	// Ensures persistent device view has requested extent
 	// True if reallocated -> contents are uninitialized, needs reupload

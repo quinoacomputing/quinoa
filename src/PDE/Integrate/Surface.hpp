@@ -16,6 +16,8 @@
 #define Surface_h
 
 #include "Basis.hpp"
+#include "Kokkos_Core.hpp"
+#include "KokkosDevice.hpp"
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
@@ -69,6 +71,10 @@ update_rhs_fa ( ncomp_t ncomp,
                 Fields& R,
                 std::vector< std::vector< tk::real > >& riemannDeriv );
 
+// Persistent device-resident scratch buffer for surfInt_constP
+// See tk::KokkosDeviceViews for more info
+using SurfIntDeviceViews = KokkosDeviceViews;
+
 //! Compute internal surface flux integrals for const-order DG (not p-adaptive)
 void
 surfInt_constP(
@@ -91,7 +97,8 @@ surfInt_constP(
   const tk::real /*dt*/,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
-  int intsharp=0 );
+  int intsharp=0,
+  SurfIntDeviceViews* dev=nullptr, bool prestaged=false );
 
 // Compute internal surface flux integrals for second order FV
 void

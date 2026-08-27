@@ -530,7 +530,10 @@ tk::volInt_constP(
   // PDE object lives in global g_dgpde vector and shared by every DG char on the PE
   // Returns false if time-invariant views need to be re-uploaded
   const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
-  
+
+  // Hook it up to the dtor thingy that releases the device buffer  
+  ensureFinalizeHook( dv );
+
   // Transfer solidx vector
   auto solidx_h_view = changeToView(solidx.data(), nmat);
   if (ensureDeviceCapacity(dv.solidx, "solidx_d_view", nmat) || !mesh_ok)

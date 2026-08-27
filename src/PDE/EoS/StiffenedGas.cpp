@@ -123,6 +123,7 @@ StiffenedGas::CauchyStress(
   return asig;
 }
 
+/*
 tk::real
 StiffenedGas::soundspeed(
   tk::real arho,
@@ -164,6 +165,7 @@ StiffenedGas::soundspeed(
 
   return a;
 }
+*/
 
 tk::real
 StiffenedGas::totalenergy(

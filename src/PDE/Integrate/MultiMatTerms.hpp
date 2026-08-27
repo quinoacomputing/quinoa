@@ -129,7 +129,8 @@ pressureRelaxationInt( const bool pref,
 //! Compute pressure relaxation integrals for const-order DG (not p-adaptive)
 void
 pressureRelaxationInt_constP( std::size_t nmat,
-                              const std::vector< tk::EOSDevice >& eosd,
+                              const std::vector< inciter::EOS >& mat_blk,
+                              //const std::vector< tk::EOSDevice >& eosd,
                               const std::size_t ndof,
                               const std::size_t rdof,
                               const std::size_t nelem,

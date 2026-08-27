@@ -376,6 +376,9 @@ nonConservativeInt_constP(
   // Refer to tk::meshResident() for more details
   const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
 
+  // Hook it up to the dtor thingy that releases the device buffer  
+  ensureFinalizeHook( dv );
+
   // Solidx
   auto solidx_h_view = changeToView(solidx.data(), nmat);
   if (ensureDeviceCapacity(dv.solidx, "nconsv_solidx_d_view", nmat) || !mesh_ok)
@@ -425,18 +428,22 @@ nonConservativeInt_constP(
     uploadStaged( exec, dv.U, dv.stage_U, U.getPointer(), U_size, "nconsv_U_d_view" );
   }
 
-  // RiemannDeriv only consumed here, nothing on the host runs between surf ints and this kernel
-  // So, there's nothing to hide it behind and we want to stage it locally
+  // RiemannDeriv is uploaded by surfInt_constP when prestaged, since the device
+  // surface kernel writes it and the host copy is then stale. When not
+  // prestaged it is only consumed here, and nothing on the host runs between
+  // the surface integrals and this kernel, so stage it locally.
   const std::size_t rd_nrow = riemannDeriv.size();
   const std::size_t rd_ncol = rd_nrow ? riemannDeriv[0].size() : 0;
-  const std::size_t rd_size = rd_nrow*rd_ncol;
-  std::vector<tk::real> rd_flat(rd_size);
-  for (std::size_t row=0; row<rd_nrow; ++row){
-    for (std::size_t col=0; col<rd_ncol; ++col){
-      rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
+  if (!prestaged) {
+    const std::size_t rd_size = rd_nrow*rd_ncol;
+    std::vector<tk::real> rd_flat(rd_size);
+    for (std::size_t row=0; row<rd_nrow; ++row){
+      for (std::size_t col=0; col<rd_ncol; ++col){
+        rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
+      }
     }
+    uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size, "nconsv_riemannDeriv_d_view" );
   }
-  uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size, "nconsv_riemannDeriv_d_view" );
 
   // Shallow copies of view handle
   // Does not touch device memory, just gives kernel below local names and captures plain views by value into KOKKOS_LAMBDA
@@ -993,7 +1000,8 @@ pressureRelaxationInt( const bool pref,
 void
 pressureRelaxationInt_constP(
   std::size_t nmat,
-  const std::vector< tk::EOSDevice >& eosd,
+  const std::vector< inciter::EOS >& mat_blk,
+  //const std::vector< tk::EOSDevice >& eosd,
   const std::size_t ndof,
   const std::size_t rdof,
   const std::size_t nelem,
@@ -1077,6 +1085,9 @@ pressureRelaxationInt_constP(
   // Refer to tk::meshResident() for more details
   const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
 
+  // Hook it up to the dtor thingy that releases the device buffer  
+  ensureFinalizeHook( dv );
+
   // Solidx
   auto solidx_h_view = changeToView(solidx.data(), nmat);
   if (ensureDeviceCapacity(dv.solidx, "nconsv_solidx_d_view", nmat) || !mesh_ok)
@@ -1110,8 +1121,9 @@ pressureRelaxationInt_constP(
   if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
-  auto eos_h_view = changeToView( eosd.data(), nmat );
-  if (ensureDeviceCapacity(dv.eos, "eos_d_view", nmat))
+  const std::size_t eos_bytes = nmat*sizeof(inciter::EOS);
+  auto eos_h_view = changeToView( reinterpret_cast< char* >( const_cast< inciter::EOS* >( mat_blk.data() ) ), eos_bytes );
+  if (ensureDeviceCapacity(dv.eos, "eos_d_view", eos_bytes))
     Kokkos::deep_copy(dv.eos, eos_h_view);
 
   // Up, P, R change per call so always upload
@@ -1142,7 +1154,7 @@ pressureRelaxationInt_constP(
   auto P_d_view = dv.P;
   auto U_d_view = dv.U;
   auto R_d_view = dv.R;
-  auto eos_d_view = dv.eos;
+  auto eos_d_view = reinterpret_cast< const inciter::EOS* >( dv.eos.data() );
 
   // Quadrature points can be hoisted out
   // Because P is constant
@@ -1192,8 +1204,7 @@ pressureRelaxationInt_constP(
           // device mirror of mat_blk[k].compute<EOS::soundspeed>(...)
           // NOTE: the host version Throws on a non-finite result; that check is
           // not available on device and is deliberately omitted here.
-          const real amat = soundspeedDevice( eos_d_view(k), arhomat,
-                                              apmat[k], alphamat );
+          const real amat = eos_d_view[k].compute< inciter::EOS::soundspeed >( arhomat, apmat[k], alphamat, k );
           kmat[k] = arhomat * amat * amat;
           pb += apmat[k];
 

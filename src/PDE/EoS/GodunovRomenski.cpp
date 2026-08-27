@@ -175,6 +175,7 @@ GodunovRomenski::CauchyStress(
   return asig;
 }
 
+/*
 tk::real
 GodunovRomenski::soundspeed(
   tk::real arho,
@@ -231,6 +232,7 @@ GodunovRomenski::soundspeed(
 
   return a;
 }
+*/
 
 tk::real
 GodunovRomenski::shearspeed(
@@ -375,6 +377,7 @@ GodunovRomenski::coldcomprEnergy( tk::real rho ) const
   return ( rho * m_K0/(2.0*m_rho0*m_alpha*m_alpha) * (rrho0a-1.0)*(rrho0a-1.0) );
 }
 
+/*
 tk::real
 GodunovRomenski::pressure_coldcompr(
   tk::real arho,
@@ -391,6 +394,7 @@ GodunovRomenski::pressure_coldcompr(
   auto rrho0a = std::pow(rho/m_rho0, m_alpha);
   return alpha * (m_K0/m_alpha * (rrho0a*rho/m_rho0) * (rrho0a-1.0));
 }
+*/
 
 tk::real
 GodunovRomenski::elasticEnergy(
@@ -418,6 +422,7 @@ GodunovRomenski::elasticEnergy(
   return rhoEe;
 }
 
+/*
 tk::real
 GodunovRomenski::DpccDrho( tk::real rho ) const
 // *************************************************************************
@@ -430,3 +435,4 @@ GodunovRomenski::DpccDrho( tk::real rho ) const
   return m_K0/(m_rho0*m_alpha) *
     ((2.0*m_alpha+1.0)*(rrho0a*rrho0a) - (m_alpha+1.0)*rrho0a);
 }
+*/

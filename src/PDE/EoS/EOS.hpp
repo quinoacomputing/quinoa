@@ -12,8 +12,6 @@
 #ifndef EOS_h
 #define EOS_h
 
-#include <variant>
-
 #include "PUPUtil.hpp"
 #include "Inciter/Options/Material.hpp"
 #include "EoS/StiffenedGas.hpp"
@@ -23,6 +21,7 @@
 #include "EoS/WilkinsAluminum.hpp"
 #include "EoS/GodunovRomenski.hpp"
 #include "EoS/ThermallyPerfectGas.hpp"
+#include "EoS/EOSDeviceFn.hpp"
 
 namespace inciter {
 
@@ -36,15 +35,44 @@ enum class EqType : uint8_t { compflow
 class EOS {
 
   private:
-    //! Variant type listing all eos types modeling the same concept
-    std::variant< StiffenedGas
+    //! Using union style instead of variant
+    enum class EOSType {
+                  StiffenedGas
                 , JWL
                 , SmallShearSolid
                 , LinearMieGruneisen
                 , WilkinsAluminum
                 , GodunovRomenski
                 , ThermallyPerfectGas
-                > m_material;
+                };
+
+    EOSType type{EOSType::StiffenedGas};
+
+    //! Init-state flag and helpers for movement
+    bool m_active{false};
+    //void destroy() noexcept;
+    //void copyFrom(const EOS& other);
+    //void moveFrom(EOS&& other);
+
+    union EOSUnion {
+        StiffenedGas stiffenedGas;
+        JWL jwl;
+        SmallShearSolid smallShearSolid;
+        LinearMieGruneisen linearMieGruneisen;
+        WilkinsAluminum wilkinsAluminum;
+        GodunovRomenski godunovRomenski;
+        ThermallyPerfectGas thermallyPerfectGas;
+
+        EOSUnion() {}
+        //~EOSUnion() {}
+        EOSUnion(const StiffenedGas& s) : stiffenedGas(s) {}
+        EOSUnion(const JWL& s) : jwl(s) {}
+        EOSUnion(const WilkinsAluminum& s) : wilkinsAluminum(s) {}
+        EOSUnion(const GodunovRomenski& s) : godunovRomenski(s) {}
+        EOSUnion(const ThermallyPerfectGas& s) : thermallyPerfectGas(s) {}
+
+    } m_material;
+
 
   public:
     //! Empty constructor for Charm++
@@ -52,6 +80,18 @@ class EOS {
 
     //! Constructor
     explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k );
+
+    /*
+    //! Movement
+    EOS(const EOS& other);
+    EOS& operator=(const EOS& other);
+
+    EOS(EOS&& other);
+    EOS& operator=(EOS&& other);
+
+    //! Destructor
+    ~EOS();
+    */
 
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
@@ -77,56 +117,349 @@ class EOS {
     //! \details This function issues a call to a member function of the
     //!   EOS vector and is thus equivalent to mat_blk[imat].Fn(...).
     template< typename Fn, typename... Args >
-    tk::real compute( Args&&... args ) const {
-      return std::visit( [&]( const auto& m )-> tk::real {
+    EOS_FN tk::real compute( Args&&... args ) const {
+        if (type == EOSType::StiffenedGas) {
           if constexpr( std::is_same_v< Fn, density > )
-            return m.density( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.density( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, pressure > )
-            return m.pressure( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.pressure( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, pressure_coldcompr > )
-            return m.pressure_coldcompr( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.pressure_coldcompr( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, soundspeed > )
-            return m.soundspeed( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.soundspeed( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, shearspeed > )
-            return m.shearspeed( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.shearspeed( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, totalenergy > )
-            return m.totalenergy( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.totalenergy( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, temperature > )
-            return m.temperature( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.temperature( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
-            return m.min_eff_pressure( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.min_eff_pressure( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, refDensity > )
-            return m.refDensity( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.refDensity( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, refPressure > )
-            return m.refPressure( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.refPressure( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, rho0 > )
-            return m.rho0( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.rho0( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, gas_constant > )
-            return m.gas_constant( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.gas_constant( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, internalenergy > )
-            return m.internalenergy( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.internalenergy( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, cv > )
-            return m.cv( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.cv( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, cp > )
-            return m.cp( std::forward< Args >( args )... );
+            return m_material.stiffenedGas.cp( std::forward< Args >( args )... );
 
           else if constexpr( std::is_same_v< Fn, viscCoeff > )
-            return m.viscCoeff( std::forward< Args >( args )... );
-        }, m_material );
+            return m_material.stiffenedGas.viscCoeff( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::JWL) {
+          if constexpr( std::is_same_v< Fn, density > )
+            return m_material.jwl.density( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure > )
+            return m_material.jwl.pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure_coldcompr > )
+            return m_material.jwl.pressure_coldcompr( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, soundspeed > )
+            return m_material.jwl.soundspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, shearspeed > )
+            return m_material.jwl.shearspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, totalenergy > )
+            return m_material.jwl.totalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, temperature > )
+            return m_material.jwl.temperature( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
+            return m_material.jwl.min_eff_pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refDensity > )
+            return m_material.jwl.refDensity( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refPressure > )
+            return m_material.jwl.refPressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, rho0 > )
+            return m_material.jwl.rho0( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, gas_constant > )
+            return m_material.jwl.gas_constant( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, internalenergy > )
+            return m_material.jwl.internalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cv > )
+            return m_material.jwl.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.jwl.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.jwl.viscCoeff( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::SmallShearSolid) {
+          if constexpr( std::is_same_v< Fn, density > )
+            return m_material.smallShearSolid.density( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, pressure > )
+            return m_material.smallShearSolid.pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure_coldcompr > )
+            return m_material.smallShearSolid.pressure_coldcompr( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, soundspeed > )
+            return m_material.smallShearSolid.soundspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, shearspeed > )
+            return m_material.smallShearSolid.shearspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, totalenergy > )
+            return m_material.smallShearSolid.totalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, temperature > )
+            return m_material.smallShearSolid.temperature( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
+            return m_material.smallShearSolid.min_eff_pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refDensity > )
+            return m_material.smallShearSolid.refDensity( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refPressure > )
+            return m_material.smallShearSolid.refPressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, rho0 > )
+            return m_material.smallShearSolid.rho0( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, gas_constant > )
+            return m_material.smallShearSolid.gas_constant( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, internalenergy > )
+            return m_material.smallShearSolid.internalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cv > )
+            return m_material.smallShearSolid.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.smallShearSolid.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.smallShearSolid.viscCoeff( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::GodunovRomenski) {
+          if constexpr( std::is_same_v< Fn, density > )
+            return m_material.godunovRomenski.density( std::forward< Args >( args )... );
+          else if constexpr( std::is_same_v< Fn, pressure > )
+            return m_material.godunovRomenski.pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure_coldcompr > )
+            return m_material.godunovRomenski.pressure_coldcompr( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, soundspeed > )
+            return m_material.godunovRomenski.soundspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, shearspeed > )
+            return m_material.godunovRomenski.shearspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, totalenergy > )
+            return m_material.godunovRomenski.totalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, temperature > )
+            return m_material.godunovRomenski.temperature( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
+            return m_material.godunovRomenski.min_eff_pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refDensity > )
+            return m_material.godunovRomenski.refDensity( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refPressure > )
+            return m_material.godunovRomenski.refPressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, rho0 > )
+            return m_material.godunovRomenski.rho0( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, gas_constant > )
+            return m_material.godunovRomenski.gas_constant( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, internalenergy > )
+            return m_material.godunovRomenski.internalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cv > )
+            return m_material.godunovRomenski.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.godunovRomenski.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.godunovRomenski.viscCoeff( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::ThermallyPerfectGas) {
+          if constexpr( std::is_same_v< Fn, density > )
+            return m_material.thermallyPerfectGas.density( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure > )
+            return m_material.thermallyPerfectGas.pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure_coldcompr > )
+            return m_material.thermallyPerfectGas.pressure_coldcompr( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, soundspeed > )
+            return m_material.thermallyPerfectGas.soundspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, shearspeed > )
+            return m_material.thermallyPerfectGas.shearspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, totalenergy > )
+            return m_material.thermallyPerfectGas.totalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, temperature > )
+            return m_material.thermallyPerfectGas.temperature( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
+            return m_material.thermallyPerfectGas.min_eff_pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refDensity > )
+            return m_material.thermallyPerfectGas.refDensity( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refPressure > )
+            return m_material.thermallyPerfectGas.refPressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, rho0 > )
+            return m_material.thermallyPerfectGas.rho0( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, gas_constant > )
+            return m_material.thermallyPerfectGas.gas_constant( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, internalenergy > )
+            return m_material.thermallyPerfectGas.internalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cv > )
+            return m_material.thermallyPerfectGas.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.thermallyPerfectGas.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.thermallyPerfectGas.viscCoeff( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::WilkinsAluminum) {
+          if constexpr( std::is_same_v< Fn, density > )
+            return m_material.wilkinsAluminum.density( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure > )
+            return m_material.wilkinsAluminum.pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure_coldcompr > )
+            return m_material.wilkinsAluminum.pressure_coldcompr( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, soundspeed > )
+            return m_material.wilkinsAluminum.soundspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, shearspeed > )
+            return m_material.wilkinsAluminum.shearspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, totalenergy > )
+            return m_material.wilkinsAluminum.totalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, temperature > )
+            return m_material.wilkinsAluminum.temperature( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
+            return m_material.wilkinsAluminum.min_eff_pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refDensity > )
+            return m_material.wilkinsAluminum.refDensity( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refPressure > )
+            return m_material.wilkinsAluminum.refPressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, rho0 > )
+            return m_material.wilkinsAluminum.rho0( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, gas_constant > )
+            return m_material.wilkinsAluminum.gas_constant( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, internalenergy > )
+            return m_material.wilkinsAluminum.internalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cv > )
+            return m_material.wilkinsAluminum.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.wilkinsAluminum.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.wilkinsAluminum.viscCoeff( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::LinearMieGruneisen) {
+          if constexpr( std::is_same_v< Fn, density > )
+            return m_material.linearMieGruneisen.density( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure > )
+            return m_material.linearMieGruneisen.pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, pressure_coldcompr > )
+            return m_material.linearMieGruneisen.pressure_coldcompr( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, soundspeed > )
+            return m_material.linearMieGruneisen.soundspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, shearspeed > )
+            return m_material.linearMieGruneisen.shearspeed( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, totalenergy > )
+            return m_material.linearMieGruneisen.totalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, temperature > )
+            return m_material.linearMieGruneisen.temperature( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, min_eff_pressure > )
+            return m_material.linearMieGruneisen.min_eff_pressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refDensity > )
+            return m_material.linearMieGruneisen.refDensity( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, refPressure > )
+            return m_material.linearMieGruneisen.refPressure( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, rho0 > )
+            return m_material.linearMieGruneisen.rho0( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, gas_constant > )
+            return m_material.linearMieGruneisen.gas_constant( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, internalenergy > )
+            return m_material.linearMieGruneisen.internalenergy( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cv > )
+            return m_material.linearMieGruneisen.cv( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, cp > )
+            return m_material.linearMieGruneisen.cp( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, viscCoeff > )
+            return m_material.linearMieGruneisen.viscCoeff( std::forward< Args >( args )... );
+        }
+        return 0;
     }
 
     //! Entry method tags for specific EOS classes to use with computeTensor()
@@ -140,12 +473,35 @@ class EOS {
     template< typename Fn, typename... Args >
     std::array< std::array< tk::real, 3 >, 3 > computeTensor( Args&&... args )
     const {
-      return std::visit( [&]( const auto& m )->
-        std::array< std::array< tk::real, 3 >, 3 > {
-          if constexpr( std::is_same_v< Fn, CauchyStress > )
-            return m.CauchyStress( std::forward< Args >( args )... );
-
-        }, m_material );
+        if (type == EOSType::StiffenedGas) {
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
+            return m_material.stiffenedGas.CauchyStress( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::GodunovRomenski) {
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
+            return m_material.godunovRomenski.CauchyStress( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::JWL) {
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
+            return m_material.jwl.CauchyStress( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::SmallShearSolid) {
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
+            return m_material.smallShearSolid.CauchyStress( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::ThermallyPerfectGas) {
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
+            return m_material.thermallyPerfectGas.CauchyStress( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::WilkinsAluminum) {
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
+            return m_material.wilkinsAluminum.CauchyStress( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::LinearMieGruneisen) {
+          if constexpr(std::is_same_v<Fn, CauchyStress>)
+            return m_material.linearMieGruneisen.CauchyStress( std::forward< Args >( args )... );
+        }
+        return {{}};
     }
 
     //! Entry method tags for specific EOS classes to use with set()
@@ -158,25 +514,88 @@ class EOS {
     //!   EOS vector and is thus equivalent to mat_blk[imat].Fn(...).
     template< typename Fn, typename... Args >
     void set( Args&&... args ) {
-      std::visit( [&]( auto& m )-> void {
-          if constexpr( std::is_same_v< Fn, setRho0 > )
-            m.setRho0( std::forward< Args >( args )... );
-        }, m_material );
+       if (type == EOSType::StiffenedGas) {
+          if constexpr(std::is_same_v<Fn, setRho0>)
+            return m_material.stiffenedGas.setRho0( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::GodunovRomenski) {
+          if constexpr(std::is_same_v<Fn, setRho0>)
+            return m_material.godunovRomenski.setRho0( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::JWL) {
+          if constexpr(std::is_same_v<Fn, setRho0>)
+            return m_material.jwl.setRho0( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::SmallShearSolid) {
+          if constexpr(std::is_same_v<Fn, setRho0>)
+            return m_material.smallShearSolid.setRho0( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::ThermallyPerfectGas) {
+          if constexpr(std::is_same_v<Fn, setRho0>)
+            return m_material.thermallyPerfectGas.setRho0( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::WilkinsAluminum) {
+          if constexpr(std::is_same_v<Fn, setRho0>)
+            return m_material.wilkinsAluminum.setRho0( std::forward< Args >( args )... );
+        }
+        else if (type == EOSType::LinearMieGruneisen) {
+          if constexpr(std::is_same_v<Fn, setRho0>)
+            return m_material.linearMieGruneisen.setRho0( std::forward< Args >( args )... );
+        }
     }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) {
-      p | m_material;
+    void pup(PUP::er &p) {
+    // Serialize the tag and the init-state flag first, so that the switch
+    // below selects the correct union member when unpacking.
+    int t = static_cast< int >( type );
+    p | t;
+    p | m_active;
+    if (p.isUnpacking()) type = static_cast< EOSType >( t );
+
+    switch(type) {
+        case EOSType::StiffenedGas:
+            p | m_material.stiffenedGas;
+            break;
+
+        case EOSType::JWL:
+            p | m_material.jwl;
+            break;
+
+        case EOSType::SmallShearSolid:
+            p | m_material.smallShearSolid;
+            break;
+
+        case EOSType::LinearMieGruneisen:
+            p | m_material.linearMieGruneisen;
+            break;
+
+        case EOSType::WilkinsAluminum:
+            p | m_material.wilkinsAluminum;
+            break;
+
+        case EOSType::GodunovRomenski:
+            p | m_material.godunovRomenski;
+            break;
+
+        case EOSType::ThermallyPerfectGas:
+            p | m_material.thermallyPerfectGas;
+            break;
     }
+    }
+
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] s EOS object reference
     friend void operator|( PUP::er& p, EOS& s ) { s.pup(p); }
     //@}
 };
+
+static_assert( std::is_trivially_copyable_v< EOS >, "EOS must be trivially copyable to mirror into a Kokkos view" );
+static_assert( std::is_trivially_destructible_v< EOS >, "EOS must be trivially destructible" );
 
 } // inciter::
 

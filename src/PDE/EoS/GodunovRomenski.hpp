@@ -17,6 +17,9 @@
 #define GodunovRomenski_h
 
 #include "Data.hpp"
+#include <cmath>
+#include <iostream>
+#include "EoS/EOSDeviceFn.hpp"
 
 namespace inciter {
 
@@ -36,7 +39,11 @@ class GodunovRomenski {
     tk::real coldcomprEnergy( tk::real rho ) const;
 
     //! Calculate the derivative of the cold compression pressure wrt. density
-    tk::real DpccDrho( tk::real rho ) const;
+    EOS_FN tk::real DpccDrho( tk::real rho ) const
+    {
+      auto rrho0a = std::pow(rho/m_rho0, m_alpha);
+      return m_K0/(m_rho0*m_alpha) * ((2.0*m_alpha+1.0)*(rrho0a*rrho0a) - (m_alpha+1.0)*rrho0a);
+    }
 
   public:
     //! Default constructor
@@ -70,9 +77,14 @@ class GodunovRomenski {
 
     //! \brief Calculate cold-compression contribution to material pressure from
     //!   the material density
-    tk::real pressure_coldcompr(
+    EOS_FN tk::real pressure_coldcompr(
       tk::real arho,
-      tk::real alpha=1.0 ) const;
+      tk::real alpha=1.0 ) const//;
+    {
+      auto rho = arho/alpha;
+      auto rrho0a = std::pow(rho/m_rho0, m_alpha);
+      return alpha * (m_K0/m_alpha * (rrho0a*rho/m_rho0) * (rrho0a-1.0));
+    }
 
     //! \brief Calculate the elastic Cauchy stress tensor from the material
     //!   inverse deformation gradient tensor using the GodunovRomenski EOS
@@ -83,12 +95,33 @@ class GodunovRomenski {
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad ) const;
 
     //! Calculate speed of sound from the material density and material pressure
-    tk::real soundspeed(
+    EOS_FN tk::real soundspeed(
       tk::real arho,
       tk::real apr,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const//;
+    {
+      tk::real a = 0.0;
+      auto al_eff = fmax( 1e-14, alpha );
+      tk::real rho = arho/al_eff;
+      auto p_cc = pressure_coldcompr(arho, al_eff);
+      a += fmax( 1.0e-15, DpccDrho(rho) + (m_gamma+1.0) * (apr - p_cc)/arho );
+      a += (4.0/3.0) * al_eff * m_mu / arho;
+      a = std::sqrt(a);
+#if !defined(__CUDA_ARCH__)
+      if (!std::isfinite(a)) {
+        std::cout << "Material-id: " << imat << std::endl;
+        std::cout << "Volume fraction: " << alpha << std::endl;
+        std::cout << "Partial density: " << arho << std::endl;
+        std::cout << "Partial pressure: " << apr << std::endl;
+        Throw("Material " + std::to_string(imat) + " has nan/inf sound speed.");
+      }
+#else
+      (void)imat;
+#endif
+      return a;
+    }
 
     //! Calculate speed of shear waves
     tk::real shearspeed(

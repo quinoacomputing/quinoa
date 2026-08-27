@@ -203,13 +203,13 @@ SmallShearSolid::CauchyStress(
   return asig;
 }
 
-tk::real
-SmallShearSolid::soundspeed(
-  tk::real arho,
-  tk::real apr,
-  tk::real alpha,
-  std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/ ) const
+//tk::real
+//SmallShearSolid::soundspeed(
+//  tk::real arho,
+//  tk::real apr,
+//  tk::real alpha,
+//  std::size_t imat,
+//  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/ ) cons
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -229,7 +229,7 @@ SmallShearSolid::soundspeed(
 //  //!   system, this argument can be left unspecified by the calling code
 //! \return Material speed of sound using the SmallShearSolid EoS
 // *************************************************************************
-{
+//{
   /* Rigorous approach: Eigenvalues of full elastic tensor
 
   // deformation gradient
@@ -540,6 +540,7 @@ SmallShearSolid::soundspeed(
 
   */
 
+/*  
   // Approximated elastic contribution, from Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
@@ -565,7 +566,8 @@ SmallShearSolid::soundspeed(
   }
 
   return a;
-}
+*/
+//}
 
 tk::real
 SmallShearSolid::shearspeed(

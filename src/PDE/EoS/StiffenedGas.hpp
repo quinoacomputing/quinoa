@@ -14,6 +14,9 @@
 #define StiffenedGas_h
 
 #include "Data.hpp"
+#include <cmath>
+#include <iostream>
+#include "EoS/EOSDeviceFn.hpp"
 
 namespace inciter {
 
@@ -64,11 +67,28 @@ class StiffenedGas {
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
 
     //! Calculate speed of sound from the material density and material pressure
-    tk::real soundspeed( tk::real arho,
+    EOS_FN tk::real soundspeed( tk::real arho, //added the prefix
                          tk::real apr,
                          tk::real alpha=1.0,
                          std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
+      const std::array< std::array< tk::real, 3 >, 3 >& /*adefgrad*/={{}} ) const
+    {
+      auto al_eff = fmax( 1.0e-14, alpha );
+      auto p_eff = fmax (1.0e-15, apr+(al_eff*m_pstiff) );
+      tk::real a = std::sqrt( m_gamma * p_eff / arho );
+#if !defined(__CUDA_ARCH__)
+      if (!std::isfinite(a)) {
+        std::cout << "Material-id: " << imat << std::endl;
+        std::cout << "Volume fraction: " << alpha << std::endl;
+        std::cout << "Partial density: " << arho << std::endl;
+        std::cout << "Partial pressure: " << apr << std::endl;
+        Throw("Material " + std::to_string(imat) + " has nan/inf sound speed.");
+      }
+#else
+      (void)imat;
+#endif
+      return a;
+    }
 
     //! Calculate speed of shear waves
     tk::real shearspeed(

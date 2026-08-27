@@ -197,7 +197,7 @@ LinearMieGruneisen::CauchyStress(
 }
 
 tk::real
-LinearMieGruneisen::soundspeed(
+LinearMieGruneisen::soundspeedHost(
   tk::real arho,
   tk::real apr,
   tk::real alpha,

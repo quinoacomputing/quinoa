@@ -102,7 +102,7 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk )
   }
 }
 
-void buildEOSDevice( std::vector< tk::EOSDevice >& eosd )
+void checkDeviceEOSSupport()
 // *****************************************************************************
 //  Mirror per-material EOS constants needed by device kernels
 //! \details Reads the same input deck fields as initializeMaterialEoS()
@@ -115,25 +115,12 @@ void buildEOSDevice( std::vector< tk::EOSDevice >& eosd )
   const auto& matprop = g_inputdeck.get< tag::material >();
   const auto& matidxmap = g_inputdeck.get< tag::matidxmap >();
 
-  eosd.clear();
-  eosd.resize( nmat );
-
   for (std::size_t k=0; k<nmat; ++k){
     auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get< tag::eos >();
-    auto& m = eosd[k];
-
-    if (mateos == ctr::MaterialType::STIFFENEDGAS) {
-      m.type = tk::EOSDevice::StiffenedGas;
-      m.gamma = getmatprop< tag::gamma >(k);
-      m.pstiff = getmatprop< tag::pstiff >(k);
-    }
-    else if (mateos == ctr::MaterialType::SMALLSHEARSOLID) {
-      m.type = tk::EOSDevice::SmallShearSolid;
-      m.gamma = getmatprop< tag::gamma >(k);
-      m.pstiff = getmatprop< tag::pstiff >(k);
-      m.mu = getmatprop< tag::mu >(k);
-    }
-    else {
+    if (mateos != ctr::MaterialType::STIFFENEDGAS &&
+        mateos != ctr::MaterialType::SMALLSHEARSOLID &&
+        mateos != ctr::MaterialType::GODUNOVROMENSKI)
+    {
       Throw( "Material-" + std::to_string(k) + " uses a device-unimplemented EOS." );
     }
   }

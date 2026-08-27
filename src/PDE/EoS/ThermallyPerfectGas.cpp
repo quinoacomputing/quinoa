@@ -28,8 +28,8 @@ ThermallyPerfectGas::ThermallyPerfectGas(
   tk::real C,
   bool Sutherland) :
   m_R(R),
-  m_cp_coeff(cp_coeff),
-  m_t_range(t_range),
+  //m_cp_coeff(cp_coeff),
+  //m_t_range(t_range),
   m_dH_ref(dH_ref),
   m_mu(mu),
   m_temp_ref(temp_ref),
@@ -48,7 +48,16 @@ ThermallyPerfectGas::ThermallyPerfectGas(
 //! \param[in] C Effective temperature (Sutherland constant)
 //! \param[in] Sutherland boolean keyword for toggling viscosity model
 // *************************************************************************
-{ }
+{
+  if (cp_coeff.size() != s_nintervals || t_range.size() != s_ntrange)
+    Throw("ThermallyPerfectGas: unexpected NASA-9 coefficient extents");
+  for (std::size_t i=0; i<s_nintervals; ++i) {
+    if (cp_coeff[i].size() != s_ncoeff)
+      Throw("ThermallyPerfectGas: unexpected cp_coeff row length");
+    for (std::size_t j=0; j<s_ncoeff; ++j) m_cp_coeff[i][j] = cp_coeff[i][j];
+  }
+  for (std::size_t i=0; i<s_ntrange; ++i) m_t_range[i] = t_range[i];
+}
 
 [[noreturn]] tk::real
 ThermallyPerfectGas::density(
@@ -108,7 +117,7 @@ ThermallyPerfectGas::CauchyStress(
 }
 
 [[noreturn]] tk::real
-ThermallyPerfectGas::soundspeed(
+ThermallyPerfectGas::soundspeedHost(
   tk::real ,
   tk::real ,
   tk::real,

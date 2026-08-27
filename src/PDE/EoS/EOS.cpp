@@ -14,6 +14,9 @@
 #include "Exception.hpp"
 #include "EoS/GetMatProp.hpp"
 
+#include <new>
+#include <utility>
+
 using inciter::EOS;
 
 //! Constructor
@@ -31,7 +34,10 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
-    m_material = StiffenedGas(g, ps, c_v, mu);
+    type = EOSType::StiffenedGas;
+    new (&m_material.stiffenedGas)
+      StiffenedGas(g, ps, c_v, mu);
+    m_active = true;
   }
   else if (mattype == ctr::MaterialType::JWL) {
     // query input deck to get jwl parameters
@@ -48,8 +54,10 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto rhor_jwl = getmatprop< tag::rhor_jwl >(k);
     auto Tr_jwl = getmatprop< tag::Tr_jwl >(k);
     auto Pr_jwl = getmatprop< tag::Pr_jwl >(k);
-    m_material = JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, Tr_jwl, Pr_jwl, A_jwl,
+    type = EOSType::JWL;
+    new (&m_material.jwl) JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, Tr_jwl, Pr_jwl, A_jwl,
       B_jwl, R1_jwl, R2_jwl);
+    m_active = true;
   }
   else if (mattype == ctr::MaterialType::SMALLSHEARSOLID) {
     // query input deck for SmallShearSolid parameters
@@ -57,7 +65,9 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
-    m_material = SmallShearSolid(g, ps, c_v, mu);
+    type = EOSType::SmallShearSolid;
+    new (&m_material.smallShearSolid) SmallShearSolid(g, ps, c_v, mu);
+    m_active = true;
   }
   else if (mattype == ctr::MaterialType::LINEARMIEGRUNEISEN) {
     // query input deck for LinearMieGruneisen parameters
@@ -68,15 +78,19 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
     auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
-    m_material =
+    type = EOSType::LinearMieGruneisen;
+    new (&m_material.linearMieGruneisen)
       LinearMieGruneisen(gamma0, rho0_gr, alpha, c0, s1, c_v, mu);
+    m_active = true;
   }
   else if (mattype == ctr::MaterialType::WILKINSALUMINUM) {
     // query input deck for Wilkins parameters
     auto g = getmatprop< tag::gamma >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
-    m_material = WilkinsAluminum(g, c_v, mu);
+    type = EOSType::WilkinsAluminum;
+    new (&m_material.wilkinsAluminum) WilkinsAluminum(g, c_v, mu);
+    m_active = true;
   }
   else if (mattype == ctr::MaterialType::GODUNOVROMENSKI) {
     // query input deck for Wilkins parameters
@@ -85,7 +99,9 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     auto rho0_gr = getmatprop< tag::rho0_jwl >(k);
     auto alpha = getmatprop< tag::alpha >(k);
     auto K0 = getmatprop< tag::K0 >(k);
-    m_material = GodunovRomenski(g, mu, rho0_gr, alpha, K0);
+    type = EOSType::GodunovRomenski;
+    new (&m_material.godunovRomenski) GodunovRomenski(g, mu, rho0_gr, alpha, K0);
+    m_active = true;
   }
   else Throw( "Unknown EOS for material " + std::to_string(k+1) );
   }
@@ -98,7 +114,10 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto ps = getspecprop< tag::pstiff >(k);
       auto c_v = getspecprop< tag::cv >(k);
       auto mu = getspecprop< tag::mu >(k);
-      m_material = StiffenedGas(g, ps, c_v, mu);
+      type = EOSType::StiffenedGas;
+      new (&m_material.stiffenedGas)
+        StiffenedGas(g, ps, c_v, mu);
+      m_active = true;
     }
     else if (mattype == ctr::MaterialType::THERMALLYPERFECTGAS) {
       // query input deck for ThermallyPerfectGas parameters
@@ -114,7 +133,10 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto mu_ref = getspecprop< tag::mu_ref >(k);
       auto C = getspecprop< tag::C >(k);
       auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
-      m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, mu, temp_ref, mu_ref, C, Sutherland);
+      type = EOSType::ThermallyPerfectGas;
+      new (&m_material.thermallyPerfectGas)
+        ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, mu, temp_ref, mu_ref, C, Sutherland);
+      m_active = true;
     }
     else Throw( "Unknown EOS for species " + std::to_string(k+1) );
   }
@@ -126,10 +148,195 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
       auto g = getmatprop< tag::gamma >(k);
       auto ps = getmatprop< tag::pstiff >(k);
       auto c_v = getmatprop< tag::cv >(k);
-      m_material = StiffenedGas(g, ps, c_v);
+      type = EOSType::StiffenedGas;
+      new (&m_material.stiffenedGas) StiffenedGas(g, ps, c_v);
+      m_active = true;
     }
     else Throw( "Unknown EOS for material " + std::to_string(k+1) );
   }
   else
     Throw( "Unknown PDE type encountered in EOS ctor" );
 }
+
+/*
+// Destroy
+EOS::~EOS()
+{
+  destroy();
+}
+
+void EOS::destroy() noexcept
+{
+  if (!m_active) return;
+
+  switch (type) {
+    case EOSType::StiffenedGas:
+      m_material.stiffenedGas.~StiffenedGas();
+      break;
+
+    case EOSType::JWL:
+      m_material.jwl.~JWL();
+      break;
+
+    case EOSType::SmallShearSolid:
+      m_material.smallShearSolid.~SmallShearSolid();
+      break;
+
+    case EOSType::LinearMieGruneisen:
+      m_material.linearMieGruneisen.~LinearMieGruneisen();
+      break;
+
+    case EOSType::WilkinsAluminum:
+      m_material.wilkinsAluminum.~WilkinsAluminum();
+      break;
+
+    case EOSType::GodunovRomenski:
+      m_material.godunovRomenski.~GodunovRomenski();
+      break;
+
+    case EOSType::ThermallyPerfectGas:
+      m_material.thermallyPerfectGas.~ThermallyPerfectGas();
+      break;
+  }
+
+  m_active = false;
+}
+
+// Move constructor
+void EOS::moveFrom(EOS&& other)
+{
+  if (!other.m_active) {
+    m_active = false;
+    return;
+  }
+
+  type = other.type;
+
+  switch (type) {
+    case EOSType::StiffenedGas:
+      new (&m_material.stiffenedGas)
+        StiffenedGas(std::move(other.m_material.stiffenedGas));
+      break;
+
+    case EOSType::JWL:
+      new (&m_material.jwl)
+        JWL(std::move(other.m_material.jwl));
+      break;
+
+    case EOSType::SmallShearSolid:
+      new (&m_material.smallShearSolid)
+        SmallShearSolid(std::move(other.m_material.smallShearSolid));
+      break;
+
+    case EOSType::LinearMieGruneisen:
+      new (&m_material.linearMieGruneisen)
+        LinearMieGruneisen(
+          std::move(other.m_material.linearMieGruneisen)
+        );
+      break;
+
+    case EOSType::WilkinsAluminum:
+      new (&m_material.wilkinsAluminum)
+        WilkinsAluminum(std::move(other.m_material.wilkinsAluminum));
+      break;
+
+    case EOSType::GodunovRomenski:
+      new (&m_material.godunovRomenski)
+        GodunovRomenski(std::move(other.m_material.godunovRomenski));
+      break;
+
+    case EOSType::ThermallyPerfectGas:
+      new (&m_material.thermallyPerfectGas)
+        ThermallyPerfectGas(
+          std::move(other.m_material.thermallyPerfectGas)
+        );
+      break;
+  }
+
+  m_active = true;
+}
+
+// Copy constructor
+void EOS::copyFrom(const EOS& other)
+{
+  if (!other.m_active) {
+    m_active = false;
+    return;
+  }
+
+  type = other.type;
+
+  switch (type) {
+    case EOSType::StiffenedGas:
+      new (&m_material.stiffenedGas)
+        StiffenedGas(other.m_material.stiffenedGas);
+      break;
+
+    case EOSType::JWL:
+      new (&m_material.jwl)
+        JWL(other.m_material.jwl);
+      break;
+
+    case EOSType::SmallShearSolid:
+      new (&m_material.smallShearSolid)
+        SmallShearSolid(other.m_material.smallShearSolid);
+      break;
+
+    case EOSType::LinearMieGruneisen:
+      new (&m_material.linearMieGruneisen)
+        LinearMieGruneisen(
+          other.m_material.linearMieGruneisen
+        );
+      break;
+
+    case EOSType::WilkinsAluminum:
+      new (&m_material.wilkinsAluminum)
+        WilkinsAluminum(other.m_material.wilkinsAluminum);
+      break;
+
+    case EOSType::GodunovRomenski:
+      new (&m_material.godunovRomenski)
+        GodunovRomenski(other.m_material.godunovRomenski);
+      break;
+
+    case EOSType::ThermallyPerfectGas:
+      new (&m_material.thermallyPerfectGas)
+        ThermallyPerfectGas(
+          other.m_material.thermallyPerfectGas
+        );
+      break;
+  }
+
+  m_active = true;
+}
+
+EOS::EOS(const EOS& other)
+{
+  copyFrom(other);
+}
+
+EOS& EOS::operator=(const EOS& other)
+{
+  if (this != &other) {
+    destroy();
+    copyFrom(other);
+  }
+
+  return *this;
+}
+
+EOS::EOS(EOS&& other)
+{
+  moveFrom(std::move(other));
+}
+
+EOS& EOS::operator=(EOS&& other)
+{
+  if (this != &other) {
+    destroy();
+    moveFrom(std::move(other));
+  }
+
+  return *this;
+}
+*/
