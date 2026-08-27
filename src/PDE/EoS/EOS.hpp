@@ -594,7 +594,8 @@ class EOS {
     //@}
 };
 
-static_assert( std::is_trivially_copyable_v< EOS >, "EOS must be trivially copyable to mirror into a Kokkos view");
+static_assert( std::is_trivially_copyable_v< EOS >, "EOS must be trivially copyable to mirror into a Kokkos view" );
+static_assert( std::is_trivially_destructible_v< EOS >, "EOS must be trivially destructible" );
 
 } // inciter::
 

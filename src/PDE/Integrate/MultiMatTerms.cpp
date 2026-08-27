@@ -376,6 +376,9 @@ nonConservativeInt_constP(
   // Refer to tk::meshResident() for more details
   const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
 
+  // Hook it up to the dtor thingy that releases the device buffer  
+  ensureFinalizeHook( dv );
+
   // Solidx
   auto solidx_h_view = changeToView(solidx.data(), nmat);
   if (ensureDeviceCapacity(dv.solidx, "nconsv_solidx_d_view", nmat) || !mesh_ok)
@@ -1082,6 +1085,9 @@ pressureRelaxationInt_constP(
   // Refer to tk::meshResident() for more details
   const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
 
+  // Hook it up to the dtor thingy that releases the device buffer  
+  ensureFinalizeHook( dv );
+
   // Solidx
   auto solidx_h_view = changeToView(solidx.data(), nmat);
   if (ensureDeviceCapacity(dv.solidx, "nconsv_solidx_d_view", nmat) || !mesh_ok)
@@ -1115,8 +1121,9 @@ pressureRelaxationInt_constP(
   if (ensureDeviceCapacity(dv.geoElem, "nconsv_geoElem_d_view", geoElem_size) || !mesh_ok)
     Kokkos::deep_copy(dv.geoElem, geoElem_h_view);
 
-  auto eos_h_view = changeToView( mat_blk.data(), nmat );
-  if (ensureDeviceCapacity(dv.eos, "eos_d_view", nmat))
+  const std::size_t eos_bytes = nmat*sizeof(inciter::EOS);
+  auto eos_h_view = changeToView( reinterpret_cast< char* >( const_cast< inciter::EOS* >( mat_blk.data() ) ), eos_bytes );
+  if (ensureDeviceCapacity(dv.eos, "eos_d_view", eos_bytes))
     Kokkos::deep_copy(dv.eos, eos_h_view);
 
   // Up, P, R change per call so always upload
@@ -1147,7 +1154,7 @@ pressureRelaxationInt_constP(
   auto P_d_view = dv.P;
   auto U_d_view = dv.U;
   auto R_d_view = dv.R;
-  auto eos_d_view = dv.eos;
+  auto eos_d_view = reinterpret_cast< const inciter::EOS* >( dv.eos.data() );
 
   // Quadrature points can be hoisted out
   // Because P is constant
@@ -1197,11 +1204,7 @@ pressureRelaxationInt_constP(
           // device mirror of mat_blk[k].compute<EOS::soundspeed>(...)
           // NOTE: the host version Throws on a non-finite result; that check is
           // not available on device and is deliberately omitted here.
-          /*
-          const real amat = soundspeedDevice( eos_d_view(k), arhomat,
-                                              apmat[k], alphamat );
-          */
-          const real amat = eos_d_view(k).compute< inciter::EOS::soundspeed >( arhomat, apmat[k], alphamat, k );
+          const real amat = eos_d_view[k].compute< inciter::EOS::soundspeed >( arhomat, apmat[k], alphamat, k );
           kmat[k] = arhomat * amat * amat;
           pb += apmat[k];
 

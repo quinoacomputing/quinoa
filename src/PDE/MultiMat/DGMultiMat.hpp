@@ -46,9 +46,6 @@
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
 
-// For timing/clocking
-#include <chrono>
-
 namespace inciter {
 
 extern ctr::InputDeck g_inputdeck;
@@ -988,17 +985,6 @@ class MultiMat {
       auto velfn = []( ncomp_t, tk::real, tk::real, tk::real, tk::real ){
         return tk::VelFn::result_type(); };
 
-      // Timing
-      using _clk = std::chrono::steady_clock;
-      static double _acc[7] = {0,0,0,0,0,0,0};
-      static std::size_t _ncall = 0;
-      auto _t = _clk::now();
-      auto _lap = [&](int i){ 
-                             auto n = _clk::now();
-                             _acc[i] += std::chrono::duration<double,std::milli>(n-_t).count();
-                             _t = n;
-                            };
-
       // p-adaptive DG
       if (!pref) {
         // Prefetch U and P onto device now before host-side surface integrals
@@ -1009,9 +995,6 @@ class MultiMat {
         tk::uploadStaged( exec, m_dev.U, m_dev.stage_U, U.getPointer(), U.getSize(), "U_d_view" );
         tk::uploadStaged( exec, m_dev.P, m_dev.stage_P, P.getPointer(), P.getSize(), "P_d_view" );
         
-        // timing
-        _lap(0);
-
         // Boundary faces run on the host and write both R and riemannDeriv, so
         // they must precede the device internal-face kernel: R and riemannDeriv
         // are uploaded with those contributions already in them, and the kernel
@@ -1021,7 +1004,6 @@ class MultiMat {
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
             m_riemann, velfn, std::get<1>(b), U, P, W, R,
             riemannDeriv, intsharp );
-        _lap(2);
 
         // R holds the boundary surface contributions; upload before the kernel.
         // riemannDeriv is uploaded inside surfInt_constP.
@@ -1032,7 +1014,6 @@ class MultiMat {
         tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
           coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
           dt, R, riemannDeriv, intsharp, &m_dev, true );
-        _lap(1);
       }
       else {
         // compute volume integrals
@@ -1068,7 +1049,6 @@ class MultiMat {
             riemannDeriv[k][e] /= geoElem(e, 0);
         }
       }
-      if(!pref) _lap(3);
 
       // compute volume integrals and volume integrals of non-conservative terms
       if (!pref) {
@@ -1077,8 +1057,6 @@ class MultiMat {
         // R was uploaded above, before the internal-face kernel, and has been
         // accumulated into on the device since; do NOT re-upload here or the
         // kernel's contributions would be overwritten by the stale host copy.
-        _lap(4);
-
         // prestaged=true: U,P,R are already resident so rhs() owns the roundtrip and up/download not req
         tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem, flux, velfn,
                            Problem::src, U, P, W, R, intsharp, &m_dev, true );
@@ -1093,23 +1071,15 @@ class MultiMat {
           tk::pressureRelaxationInt_constP( nmat, m_mat_blk, ndof, rdof, nelem, inpoel, coord, geoElem, U, P, ct_d,
                                             R, intsharp, &m_dev, true );
         }
-        _lap(5);
 
         // Single D2H of R, after the last kernel that touches it
         tk::downloadStaged( exec, R.getPointerNonConst(), m_dev.stage_R, m_dev.R, R.getSize(), "R_d_view" );
-        _lap(6);
 
         // And finally here's the source term on the host side
         // It's not device callable so this += lands on host R and needs to be post-download to avoid ovewrite
         // Guarded by a boolean so it only calls if necessary
         if constexpr (Problem::hasSrc)
           tk::srcInt_constP( nmat, t, m_mat_blk, ndof, U.nprop()/rdof, nelem, inpoel, coord, geoElem, Problem::src, R );
-
-        // print clock times
-        std::cout << "[rhs " << ++_ncall << "] upUP=" << _acc[0]
-                  << " surf=" << _acc[1] << " bnd=" << _acc[2]
-                  << " rdiv=" << _acc[3] << " upR=" << _acc[4]
-                  << " launch=" << _acc[5] << " d2h=" << _acc[6] << std::endl;
       }
       else {
         tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,

@@ -1137,8 +1137,9 @@ surfInt_constP(
     Kokkos::deep_copy( dv.geoFace, geoFace_h );
 
   // EOS block: constant for the run, upload once
-  auto eos_h = changeToView( mat_blk.data(), nmat );
-  if (ensureDeviceCapacity( dv.eos, "surf_eos_d_view", nmat ))
+  const std::size_t eos_bytes = nmat*sizeof(inciter::EOS);
+  auto eos_h = changeToView( reinterpret_cast< const char* >( mat_blk.data() ), eos_bytes );
+  if (ensureDeviceCapacity( dv.eos, "surf_eos_d_view", eos_bytes ))
     Kokkos::deep_copy( dv.eos, eos_h );
 
   // riemannDeriv arrives holding the boundary-face contributions computed on
@@ -1176,6 +1177,7 @@ surfInt_constP(
   auto R_d = dv.R;
   auto rd_d = dv.riemannDeriv;
   auto eos_d = dv.eos;
+  auto eos_p = reinterpret_cast< const inciter::EOS* >( eos_d.data() );
 
   Kokkos::parallel_for( "surfInt_constP",
     Kokkos::RangePolicy< execution_space >( exec, nbfac, nface ),
@@ -1252,7 +1254,7 @@ surfInt_constP(
         cx_d, cy_d, cz_d, geoElem_d, ref_gp_r, B_r, U_d, P_d, state[1] );
 
       // compute flux. ALE is refused above, so the mesh velocity is zero.
-      auto nflx = inciter::HLLCMultiMatConstP::flux( eos_d, fn, state, 0.0,
+      auto nflx = inciter::HLLCMultiMatConstP::flux( eos_p, fn, state, 0.0,
                     nmat, nsld, ncomp, nstate, solidx_d, flx );
 
       // Add the surface integration term to the rhs

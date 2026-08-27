@@ -103,7 +103,10 @@ namespace tk {
 
                 // Per-material EOS constants
                 // Time and partition invariant so only upload once when first allocated
-                Kokkos::View< inciter::EOS*, memory_space > eos;
+                Kokkos::View< char*, memory_space > eos;
+
+                // Set once a finalize hook is registered for this inst
+                bool hooked = false;
 
 		// Host-provenance of mesh data resident on device
 		const std::size_t* src_inpoel = nullptr;
@@ -191,6 +194,20 @@ namespace tk {
                 }
                 return hit;
         }//fr
+
+        // Register finalize hook so that the instance release its device buffer
+        // before Kokkos tears down the cuda context (this is idempotent)
+        inline void
+        ensureFinalizeHook( KokkosDeviceViews& d )
+        {
+          if (!d.hooked) {
+            d.hooked = true;
+            auto* p = &d;
+            Kokkos::push_finalize_hook([p](){ 
+              p->release(); 
+            });
+          }
+        }//efh
 
 	// Ensures persistent device view has requested extent
 	// True if reallocated -> contents are uninitialized, needs reupload
