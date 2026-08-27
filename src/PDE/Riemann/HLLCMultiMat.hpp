@@ -128,9 +128,10 @@ struct HLLCMultiMat {
         // Normal material: full constitutive model
         // But first, bound det(F) to prevent extreme deformation
         auto g_bounded = g;
-        if (det_F < 0.05 || det_F > 20.0 || !std::isfinite(det_F)) {
+        if (det_F < 0.001 || det_F > 100.0 || !std::isfinite(det_F)) {
           // Deformation too extreme - scale to bring det(F) into bounds
-          tk::real det_target = (det_F < 0.05 || !std::isfinite(det_F)) ? 0.05 : 20.0;
+          // Allow much larger range for high-velocity impact: 0.001 to 100
+          tk::real det_target = (det_F < 0.001 || !std::isfinite(det_F)) ? 0.001 : 100.0;
           tk::real scale = std::pow(det_target / std::max(1.0e-12, std::fabs(det_F)), 1.0/3.0);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
@@ -185,8 +186,8 @@ struct HLLCMultiMat {
           std::cout << "  count=" << nan_traction_count << std::endl;
         }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
-        // Clamp pressure to reasonable range to avoid gigapascal forces
-        tk::real p_clamped = std::max(-1.0e8, std::min(1.0e8, apl[k]));  // ±100 MPa
+        // Clamp pressure to reasonable range for high-velocity impact
+        tk::real p_clamped = std::max(-1.0e10, std::min(1.0e10, apl[k]));  // ±10 GPa
         for (std::size_t i=0; i<3; ++i)
           aTnl[k][i] = -p_clamped * fn[i];
       }
@@ -218,8 +219,8 @@ struct HLLCMultiMat {
           std::cout << "  count=" << nan_stress_count << std::endl;
         }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
-        // Clamp pressure to reasonable range to avoid gigapascal forces
-        tk::real p_clamped = std::max(-1.0e8, std::min(1.0e8, apl[k]));  // ±100 MPa
+        // Clamp pressure to reasonable range for high-velocity impact
+        tk::real p_clamped = std::max(-1.0e10, std::min(1.0e10, apl[k]));  // ±10 GPa
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             asignnl[k][i][j] = (i == j) ? -p_clamped : 0.0;
@@ -276,9 +277,10 @@ struct HLLCMultiMat {
         // Normal material: full constitutive model
         // But first, bound det(F) to prevent extreme deformation
         auto g_bounded_r = g_r;
-        if (det_F_r < 0.05 || det_F_r > 20.0 || !std::isfinite(det_F_r)) {
+        if (det_F_r < 0.001 || det_F_r > 100.0 || !std::isfinite(det_F_r)) {
           // Deformation too extreme - scale to bring det(F) into bounds
-          tk::real det_target = (det_F_r < 0.05 || !std::isfinite(det_F_r)) ? 0.05 : 20.0;
+          // Allow much larger range for high-velocity impact: 0.001 to 100
+          tk::real det_target = (det_F_r < 0.001 || !std::isfinite(det_F_r)) ? 0.001 : 100.0;
           tk::real scale = std::pow(det_target / std::max(1.0e-12, std::fabs(det_F_r)), 1.0/3.0);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
@@ -333,8 +335,8 @@ struct HLLCMultiMat {
           std::cout << "  count=" << nan_traction_count_r << std::endl;
         }
         // Use hydrostatic approximation: traction ≈ -pressure * normal
-        // Clamp pressure to reasonable range to avoid gigapascal forces
-        tk::real p_clamped = std::max(-1.0e8, std::min(1.0e8, apr[k]));  // ±100 MPa
+        // Clamp pressure to reasonable range for high-velocity impact
+        tk::real p_clamped = std::max(-1.0e10, std::min(1.0e10, apr[k]));  // ±10 GPa
         for (std::size_t i=0; i<3; ++i)
           aTnr[k][i] = -p_clamped * fn[i];
       }
@@ -366,8 +368,8 @@ struct HLLCMultiMat {
           std::cout << "  count=" << nan_stress_count_r << std::endl;
         }
         // Use hydrostatic approximation: stress_rotated ≈ -pressure * identity (in rotated frame)
-        // Clamp pressure to reasonable range to avoid gigapascal forces
-        tk::real p_clamped = std::max(-1.0e8, std::min(1.0e8, apr[k]));  // ±100 MPa
+        // Clamp pressure to reasonable range for high-velocity impact
+        tk::real p_clamped = std::max(-1.0e10, std::min(1.0e10, apr[k]));  // ±10 GPa
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             asignnr[k][i][j] = (i == j) ? -p_clamped : 0.0;
