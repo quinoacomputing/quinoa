@@ -886,8 +886,29 @@ class MultiMat {
               // Only allow spallation in TENSION (p < 0) with high damage
               // Compression + damage = crushed material (stays solid)
               // Tension + damage = spallation (voids open)
+
+              // DIAGNOSTIC: Check if conditions are close to being met
+              static int diag_count = 0;
+              if (diag_count < 100) {
+                if (damage > 0.8 || alpha_k > 0.05 && pressure_k < 0.0) {
+                  std::cout << "SPALLATION CHECK: damage=" << damage
+                            << " (threshold=" << damage_threshold << ")"
+                            << " alpha=" << alpha_k
+                            << " pressure=" << pressure_k << std::endl;
+                  diag_count++;
+                }
+              }
+
               if (damage > damage_threshold && alpha_k > 1.0e-03 && pressure_k < 0.0)
               {
+                static int spall_count = 0;
+                spall_count++;
+                if (spall_count <= 50) {
+                  std::cout << "*** SPALLATION TRIGGERED *** count=" << spall_count
+                            << " damage=" << damage
+                            << " alpha=" << alpha_k
+                            << " pressure=" << pressure_k << std::endl;
+                }
                 // Compute how much volume to transfer based on excess damage
                 tk::real excess_damage = std::min(damage - damage_threshold, 0.05);
                 tk::real transfer_rate = excess_damage / 0.05;  // 0.95→1.0 maps to 0→1
