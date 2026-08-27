@@ -731,6 +731,13 @@ MultiSpeciesViscousTermsDGP1::interfaceCorrection(
 {
 ic.assign(ncomp, std::array<tk::real, 3>{});
 
+// Keep these parameters referenced while the correction block is disabled.
+static_cast<void>(state);
+static_cast<void>(dir);
+
+// Disabled to use the original DDG method without interface correction.
+// Uncomment this block to restore DDG with interface correction.
+/*
 for (std::size_t l = 1; l<ncomp; ++l) {
   for (std::size_t i = 0; i < 3; ++i) {
     tk::real sum = 0.0;
@@ -741,6 +748,7 @@ for (std::size_t l = 1; l<ncomp; ++l) {
   ic[l][i] = sum;
   }
 }
+*/
   
 }
 
