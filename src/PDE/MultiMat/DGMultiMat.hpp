@@ -517,7 +517,7 @@ class MultiMat {
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
             auto gmat = getDeformGrad(nmat, imat, state);
-            auto damage = state[damageIdx(nmat, nsld, solidx[imat])];
+            auto damage = state[damageIdx(nmat, nsld, solidx[imat])]/arhomat;
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].template compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
                                alphamat, imat, gmat, damage );
