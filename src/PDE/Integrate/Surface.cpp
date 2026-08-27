@@ -26,6 +26,46 @@
 #include "Riemann/HLLCMultiMatConstP.hpp"
 #include "Inciter/Options/Flux.hpp"
 
+namespace {
+// Accumulators used by update_rhs_fa_constP so that one templated body can write either
+// to host tk::Fields/std::vector or to device Kokkos::Views
+// Device overloads are atomic so an internal face is written by both of its adjacent elems
+  
+// Accumulate into R, host tk::Fields
+inline void
+rhsAccum( tk::Fields& R, std::size_t e, std::size_t /*nprop*/,
+          std::size_t idx, tk::real v )
+{
+  R(e,idx) += v;
+}  
+
+// Accumulate into R, Kokkos::Views (device)
+KOKKOS_INLINE_FUNCTION
+void
+rhsAccum( const Kokkos::View< tk::real*, memory_space >& R, std::size_t e,
+          std::size_t nprop, std::size_t idx, tk::real v )
+{
+  Kokkos::atomic_add( &R(e*nprop + idx), v );
+}
+
+// Accumulate into riemannDeriv, host vector of vectors
+inline void
+rdAccum( std::vector< std::vector< tk::real > >& rd, std::size_t row,
+         std::size_t col, std::size_t /*ncol*/, tk::real v )
+{
+  rd[row][col] += v;
+}
+
+// Accumulate into riemannDeriv, device view (atomic)
+KOKKOS_INLINE_FUNCTION
+void
+rdAccum( const Kokkos::View< tk::real*, memory_space >& rd, std::size_t row,
+         std::size_t col, std::size_t ncol, tk::real v )
+{
+  Kokkos::atomic_add( &rd(row*ncol + col), v );
+}
+}//namespace
+
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 }
@@ -314,7 +354,7 @@ viscousInternalFaceIntDG(
       auto wt = wgp[igp] * geoFace(f,0);
 
       // Gradients of basis functions
-      for (std::size_t i=0; i<3; +i) {
+      for (std::size_t i=0; i<3; ++i) {
         dBdx[0][i].assign( ndof_l, 0.0 );
         dBdx[1][i].assign( ndof_r, 0.0 );
       }
@@ -749,7 +789,8 @@ update_rhs_fa( ncomp_t ncomp,
 //!   capacity. update_rhs_fa itself is untouched, so the p-adaptive path is
 //!   unaffected.
 // *****************************************************************************
-template< class FlT, class BT, class SolidxT, class RiemannDerivT >
+template< class FnT, class FlT, class BT, class SolidxT, class RT, class RiemannDerivT >
+KOKKOS_INLINE_FUNCTION
 void
 update_rhs_fa_constP( ncomp_t ncomp,
                std::size_t nmat,
@@ -757,7 +798,7 @@ update_rhs_fa_constP( ncomp_t ncomp,
                const std::size_t ndof_l,
                const std::size_t ndof_r,
                const tk::real wt,
-               const std::array< tk::real, 3 >& fn,
+               const FnT& fn,
                const std::size_t el,
                const std::size_t er,
                const FlT& fl,
@@ -766,8 +807,10 @@ update_rhs_fa_constP( ncomp_t ncomp,
                const BT& B_r,
                const SolidxT& solidx,
                const std::size_t nsld,
-               Fields& R,
-               RiemannDerivT& riemannDeriv )
+               RT& R,
+               const std::size_t r_nprop,
+               RiemannDerivT& riemannDeriv,
+               const std::size_t rd_ncol )
 // *****************************************************************************
 //  Update the rhs by adding the surface integration term
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -798,41 +841,41 @@ update_rhs_fa_constP( ncomp_t ncomp,
   for (ncomp_t c=0; c<ncomp; ++c)
   {
     auto mark = c*ndof;
-    R(el, mark) -= wt * fl[c];
-    R(er, mark) += wt * fl[c];
+    rhsAccum( R, el, r_nprop, mark, -wt*fl[c] );
+    rhsAccum( R, er, r_nprop, mark, wt*fl[c] );
 
     if(ndof_l > 1)          //DG(P1)
     {
-      R(el, mark+1) -= wt * fl[c] * B_l[1];
-      R(el, mark+2) -= wt * fl[c] * B_l[2];
-      R(el, mark+3) -= wt * fl[c] * B_l[3];
+      rhsAccum( R, el, r_nprop, mark+1, -wt * fl[c] * B_l[1] );
+      rhsAccum( R, el, r_nprop, mark+2, -wt * fl[c] * B_l[2] );
+      rhsAccum( R, el, r_nprop, mark+3, -wt * fl[c] * B_l[3] );
     }
 
     if(ndof_r > 1)          //DG(P1)
     {
-      R(er, mark+1) += wt * fl[c] * B_r[1];
-      R(er, mark+2) += wt * fl[c] * B_r[2];
-      R(er, mark+3) += wt * fl[c] * B_r[3];
+      rhsAccum( R, er, r_nprop, mark+1, wt * fl[c] * B_r[1] );
+      rhsAccum( R, er, r_nprop, mark+2, wt * fl[c] * B_r[2] );
+      rhsAccum( R, er, r_nprop, mark+3, wt * fl[c] * B_r[3] );
     }
 
     if(ndof_l > 4)          //DG(P2)
     {
-      R(el, mark+4) -= wt * fl[c] * B_l[4];
-      R(el, mark+5) -= wt * fl[c] * B_l[5];
-      R(el, mark+6) -= wt * fl[c] * B_l[6];
-      R(el, mark+7) -= wt * fl[c] * B_l[7];
-      R(el, mark+8) -= wt * fl[c] * B_l[8];
-      R(el, mark+9) -= wt * fl[c] * B_l[9];
+      rhsAccum( R, el, r_nprop, mark+4, -wt * fl[c] * B_l[4] );
+      rhsAccum( R, el, r_nprop, mark+5, -wt * fl[c] * B_l[5] );
+      rhsAccum( R, el, r_nprop, mark+6, -wt * fl[c] * B_l[6] );
+      rhsAccum( R, el, r_nprop, mark+7, -wt * fl[c] * B_l[7] );
+      rhsAccum( R, el, r_nprop, mark+8, -wt * fl[c] * B_l[8] );
+      rhsAccum( R, el, r_nprop, mark+9, -wt * fl[c] * B_l[9] );
     }
 
     if(ndof_r > 4)          //DG(P2)
     {
-      R(er, mark+4) += wt * fl[c] * B_r[4];
-      R(er, mark+5) += wt * fl[c] * B_r[5];
-      R(er, mark+6) += wt * fl[c] * B_r[6];
-      R(er, mark+7) += wt * fl[c] * B_r[7];
-      R(er, mark+8) += wt * fl[c] * B_r[8];
-      R(er, mark+9) += wt * fl[c] * B_r[9];
+      rhsAccum( R, er, r_nprop, mark+4, wt * fl[c] * B_r[4] );
+      rhsAccum( R, er, r_nprop, mark+5, wt * fl[c] * B_r[5] );
+      rhsAccum( R, er, r_nprop, mark+6, wt * fl[c] * B_r[6] );
+      rhsAccum( R, er, r_nprop, mark+7, wt * fl[c] * B_r[7] );
+      rhsAccum( R, er, r_nprop, mark+8, wt * fl[c] * B_r[8] );
+      rhsAccum( R, er, r_nprop, mark+9, wt * fl[c] * B_r[9] );
     }
   }
 
@@ -844,17 +887,21 @@ update_rhs_fa_constP( ncomp_t ncomp,
     {
       for (std::size_t idir=0; idir<3; ++idir)
       {
-        riemannDeriv[3*k+idir][el] += wt * fl[ncomp+k] * fn[idir];
-        riemannDeriv[3*k+idir][er] -= wt * fl[ncomp+k] * fn[idir];
+        rdAccum( riemannDeriv, 3*k+idir, el, rd_ncol,
+            wt * fl[ncomp+k] * fn[idir] );
+        rdAccum( riemannDeriv, 3*k+idir, er, rd_ncol,
+            -wt * fl[ncomp+k] * fn[idir] );
       }
     }
 
     // Divergence of velocity multiples basis fucntion( d(uB) / dx )
     for(std::size_t idof = 0; idof < ndof_l; idof++) {
-      riemannDeriv[3*nmat+idof][el] += wt * fl[ncomp+nmat] * B_l[idof];
+      rdAccum( riemannDeriv, 3*nmat+idof, el, rd_ncol,
+               wt * fl[ncomp+nmat] * B_l[idof] );
     }
     for(std::size_t idof = 0; idof < ndof_r; idof++) {
-      riemannDeriv[3*nmat+idof][er] -= wt * fl[ncomp+nmat] * B_r[idof];
+      rdAccum( riemannDeriv, 3*nmat+idof, er, rd_ncol,
+               -wt * fl[ncomp+nmat] * B_r[idof] );
     }
 
     // Divergence of asigma: d(asig_ij)/dx_j
@@ -865,10 +912,10 @@ update_rhs_fa_constP( ncomp_t ncomp,
 
         for (std::size_t i=0; i<3; ++i)
         {
-          riemannDeriv[3*nmat+ndof+3*(solidx[k]-1)+i][el] -=
-            wt * fl[mark+i];
-          riemannDeriv[3*nmat+ndof+3*(solidx[k]-1)+i][er] +=
-            wt * fl[mark+i];
+          rdAccum( riemannDeriv, 3*nmat+ndof+3*(solidx[k]-1)+i, el, rd_ncol,
+                   -wt * fl[mark+i] );
+          rdAccum( riemannDeriv, 3*nmat+ndof+3*(solidx[k]-1)+i, er, rd_ncol,
+                   wt * fl[mark+i] );
         }
       }
 
@@ -883,10 +930,10 @@ update_rhs_fa_constP( ncomp_t ncomp,
               {
                 std::size_t mark1 = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+l;
                 std::size_t mark2 = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+j;
-                riemannDeriv[3*nmat+ndof+3*nsld+newSolidsAccFn(k,i,j,l)][el] -=
-                  wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]);
-                riemannDeriv[3*nmat+ndof+3*nsld+newSolidsAccFn(k,i,j,l)][er] +=
-                  wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]);
+                rdAccum( riemannDeriv, 3*nmat+ndof+3*nsld+newSolidsAccFn(k,i,j,l), el, rd_ncol,
+                         -wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]) );
+                rdAccum( riemannDeriv, 3*nmat+ndof+3*nsld+newSolidsAccFn(k,i,j,l), er, rd_ncol,
+                         wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]) );
               }
   }
 }
@@ -993,6 +1040,11 @@ surfInt_constP(
   ErrChk( nstate <= inciter::HLLCMultiMatConstP::NSTATE_MAX_FLUX,
           "surfInt_constP state vector supports max "+std::to_string(inciter::HLLCMultiMatConstP::NSTATE_MAX_FLUX)+" states" );
 
+  // Strides needed by the accumulators which index R and riemannDeriv flatly
+  // Allows one body of each to serve both host and device without needing override
+  const std::size_t r_nprop = R.nprop();
+  const std::size_t rd_ncol = riemannDeriv.empty() ? 0 : riemannDeriv[0].size();
+
   // Caller-owned flux buffer reused across every face and quadrature pt
   Kokkos::Array< tk::real, inciter::HLLCMultiMatConstP::NFLX_MAX > flx;
 
@@ -1086,7 +1138,8 @@ surfInt_constP(
 
       // Add the surface integration term to the rhs
       update_rhs_fa_constP( ncomp, nmat, ndof, ndof, ndof, wt, fn,
-                            el, er, flx, nflx, B_l, B_r, solidx, nsld, R, riemannDeriv );
+                            el, er, flx, nflx, B_l, B_r, solidx, nsld, 
+                            R, r_nprop, riemannDeriv, rd_ncol );
     }
   }
 }
