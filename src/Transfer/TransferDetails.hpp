@@ -57,7 +57,8 @@ class TransferDetails : public CBase_TransferDetails {
     //! Set the source mesh data
     void setSourceTets( std::vector< std::size_t>* inpoel,
                         tk::UnsMesh::Coords* coords,
-                        const tk::Fields& u );
+                        const tk::Fields& u,
+                        CkCallback cb );
 
     //! Set the destination mesh data
     void setDestPoints( tk::UnsMesh::Coords* coords,
@@ -75,7 +76,7 @@ class TransferDetails : public CBase_TransferDetails {
     void determineActualCollisions( CProxy_TransferDetails proxy,
                                     int index,
                                     int nColls,
-                                    PotentialCollision* colls ) const;
+                                    PotentialCollision* colls );
 
     //! Transfer the interpolated solution data back to destination mesh
     void transferSolution( const std::vector< SolutionData >& soln );
@@ -107,7 +108,9 @@ class TransferDetails : public CBase_TransferDetails {
     int m_numsent;
     //! The number of messages received by the dest mesh
     int m_numreceived;
-    //! Called once the transfer is complete (m_numsent == m_numreceived)
+   //! Set to nonzero once source mesh is notified that source side is done
+    int m_srcnotified = 0;
+    //! Called once the transfer is complete
     CkCallback m_donecb;
 
     //! Initialize dest mesh solution with background data
