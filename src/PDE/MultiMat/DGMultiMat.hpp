@@ -837,6 +837,20 @@ class MultiMat {
 
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += arho*dD;
 
+            // DIAGNOSTIC: Track dD and damage evolution
+            static int dD_count = 0;
+            if (dD_count < 100 && (std::abs(dD) > 1.0e-8 || old_D > 0.5)) {
+              dD_count++;
+              std::cout << "dD_DIAGNOSTIC: mat=" << k
+                        << " alpha=" << alpha
+                        << " old_D=" << old_D
+                        << " dD=" << dD
+                        << " plastic_rate=" << plastic_rate
+                        << " phi=" << phi
+                        << " equiv_stress=" << equiv_stress
+                        << " yield_stress=" << yield_stress << std::endl;
+            }
+
             // 7. Maintain bounds
             // Upper bound: damage cannot exceed total density (D ≤ 1.0)
             // Lower bound: REMOVED - allow damage to be truly zero
@@ -861,6 +875,17 @@ class MultiMat {
                         << " dD=" << dD
                         << " bounds_clamped=" << (new_arhoD_before_bounds != new_arhoD ? "YES" : "NO")
                         << std::endl;
+            }
+
+            // DIAGNOSTIC: Track final damage values after bounds
+            static int final_D_count = 0;
+            if (final_D_count < 50 && (new_D > 0.8 || (old_D < 0.01 && new_D > 0.01))) {
+              final_D_count++;
+              std::cout << "FINAL_D: mat=" << k
+                        << " alpha=" << alpha
+                        << " old_D=" << old_D
+                        << " new_D=" << new_D
+                        << " change=" << (new_D - old_D) << std::endl;
             }
           }
         }
