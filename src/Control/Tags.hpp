@@ -241,6 +241,7 @@ DEFTAG(jc_d5);
 DEFTAG(t_melt);
 DEFTAG(t_room);
 DEFTAG(damage_length_scale);
+DEFTAG(damage_enabled);
 DEFTAG(temp_ref);
 DEFTAG(mu_ref);
 DEFTAG(C);

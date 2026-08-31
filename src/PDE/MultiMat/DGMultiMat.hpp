@@ -756,6 +756,10 @@ class MultiMat {
             // 7. Compute dD using Johnson-Cook damage model
             auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
 
+            // Check if damage is enabled for this material
+            tk::real damage_enabled = getmatprop< tag::damage_enabled >(k);
+            bool compute_damage = (damage_enabled > 0.5);  // treat as boolean
+
             // Get Johnson-Cook damage parameters from input
             tk::real d1 = getmatprop< tag::jc_d1 >(k);
             tk::real d2 = getmatprop< tag::jc_d2 >(k);
@@ -767,7 +771,7 @@ class MultiMat {
 
             tk::real ef = 0.0;
             tk::real dD = 0.0;
-            if (phi > 0.0) {
+            if (compute_damage && phi > 0.0) {
               // Compute temperature from EOS
               tk::real u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
               tk::real v = P(e, velocityDofIdx(nmat, 1, rdof, 0));

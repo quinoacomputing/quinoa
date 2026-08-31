@@ -139,6 +139,7 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::t_melt,    std::vector< tk::real >,
   tag::t_room,    std::vector< tk::real >,
   tag::damage_length_scale, std::vector< tk::real >,
+  tag::damage_enabled, std::vector< tk::real >,
   tag::temp_ref,  std::vector< tk::real >,
   tag::mu_ref,    std::vector< tk::real >,
   tag::C,         std::vector< tk::real >
@@ -1214,6 +1215,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         as: dD *= (h_element / h_ref) where h_element is the actual element size.
         Typical values: grain size or process zone size (e.g., 0.1-1.0 mm for metals).
         Units: m)", "vector of reals"});
+
+      keywords.insert({"damage_enabled", "Enable or disable damage evolution per material",
+        R"(This keyword is used to enable (1.0) or disable (0.0) damage evolution for
+        each material. When disabled, the damage variable remains at its initial value
+        and does not evolve. This is useful for diagnostic testing to isolate the
+        effect of damage on the solution. Default: 1.0 (enabled).)", "vector of reals"});
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the

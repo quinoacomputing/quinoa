@@ -1543,6 +1543,13 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "damage_length_scale", ntype,
       mati_deck.get< tag::damage_length_scale >());
 
+    // damage_enabled (default: 1.0 = enabled)
+    if (!sol_mat[imat+1]["damage_enabled"].valid())
+      sol_mat[imat+1]["damage_enabled"] =
+        std::vector< tk::real >(ntype, 1.0);
+    checkStoreMatProp(sol_mat[imat+1], "damage_enabled", ntype,
+      mati_deck.get< tag::damage_enabled >());
+
     // assign solid
     is_solid = true;
   }
@@ -1644,6 +1651,13 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "damage_length_scale", ntype,
       mati_deck.get< tag::damage_length_scale >());
 
+    // damage_enabled (default: 1.0 = enabled)
+    if (!sol_mat[imat+1]["damage_enabled"].valid())
+      sol_mat[imat+1]["damage_enabled"] =
+        std::vector< tk::real >(ntype, 1.0);
+    checkStoreMatProp(sol_mat[imat+1], "damage_enabled", ntype,
+      mati_deck.get< tag::damage_enabled >());
+
     // assign solid
     is_solid = true;
   }
@@ -1728,6 +1742,13 @@ LuaParser::registerMaterials(
         std::vector< tk::real >(ntype, 1.0e-3);
     checkStoreMatProp(sol_mat[imat+1], "damage_length_scale", ntype,
       mati_deck.get< tag::damage_length_scale >());
+
+    // damage_enabled (default: 1.0 = enabled)
+    if (!sol_mat[imat+1]["damage_enabled"].valid())
+      sol_mat[imat+1]["damage_enabled"] =
+        std::vector< tk::real >(ntype, 1.0);
+    checkStoreMatProp(sol_mat[imat+1], "damage_enabled", ntype,
+      mati_deck.get< tag::damage_enabled >());
 
     // assign solid
     is_solid = true;
@@ -1825,6 +1846,13 @@ LuaParser::registerMaterials(
         std::vector< tk::real >(ntype, 1.0e-3);
     checkStoreMatProp(sol_mat[imat+1], "damage_length_scale", ntype,
       mati_deck.get< tag::damage_length_scale >());
+
+    // damage_enabled (default: 1.0 = enabled)
+    if (!sol_mat[imat+1]["damage_enabled"].valid())
+      sol_mat[imat+1]["damage_enabled"] =
+        std::vector< tk::real >(ntype, 1.0);
+    checkStoreMatProp(sol_mat[imat+1], "damage_enabled", ntype,
+      mati_deck.get< tag::damage_enabled >());
 
     // assign solid
     is_solid = true;
