@@ -861,8 +861,23 @@ class MultiMat {
             // Reset if trace OR pathological
             // Trace materials: prevents getCauchyStress from failing on ~zero volume fraction
             // Pathological damage: safety net for NaN/Inf regardless of alpha
-            if (is_trace || is_pathological)
+            // TESTING: Only reset if pathological (NaN/Inf), NOT if just trace
+            // Hypothesis: trace cleanup is "healing" damaged material as it advects
+            if (is_pathological)
             {
+              // DIAGNOSTIC: Track when damage is being reset
+              static int reset_count = 0;
+              static int high_damage_reset = 0;
+              if (reset_count < 100) {
+                if (damage_ratio > 0.5) {
+                  high_damage_reset++;
+                  std::cout << "*** DAMAGE RESET *** (high damage trace) count=" << high_damage_reset
+                            << " alpha=" << alpha_k
+                            << " damage_ratio=" << damage_ratio
+                            << " reason=" << (is_trace ? "trace" : "pathological") << std::endl;
+                }
+                reset_count++;
+              }
               // Reset damage to minimum value (not zero, for numerical stability)
               U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 1.0e-06 * arho_k;
             }
