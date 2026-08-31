@@ -838,9 +838,14 @@ class MultiMat {
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += arho*dD;
 
             // 7. Maintain bounds
+            // Upper bound: damage cannot exceed total density (D ≤ 1.0)
+            // Lower bound: REMOVED - allow damage to be truly zero
+            // Old code had: std::max(..., 1.0e-06*arho) which artificially set D ≥ 1.0e-06
+            // This caused "undamaged" material to have D = 1.0e-06, leading to
+            // elastic rebound when fresh material flowed into contact zone.
             tk::real new_arhoD_before_bounds = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
-              std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 1.0e-06*arho);
+              std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 0.0);
             tk::real new_arhoD = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
             tk::real new_D = new_arhoD / std::max(1.0e-12, arho);
 
