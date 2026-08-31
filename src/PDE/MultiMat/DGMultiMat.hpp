@@ -830,11 +830,33 @@ class MultiMat {
             // 6. Evolve D
             //printf("k, dmg = %lu, %e\n", k, U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)));
             tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+
+            // DIAGNOSTIC: Track damage changes
+            tk::real old_arhoD = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
+            tk::real old_D = old_arhoD / std::max(1.0e-12, arho);
+
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += arho*dD;
 
             // 7. Maintain bounds
+            tk::real new_arhoD_before_bounds = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
               std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 1.0e-06*arho);
+            tk::real new_arhoD = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
+            tk::real new_D = new_arhoD / std::max(1.0e-12, arho);
+
+            // Alert if damage DECREASED (healing!)
+            static int heal_count = 0;
+            if (heal_count < 50 && new_D < old_D - 1.0e-6 && old_D > 0.1) {
+              heal_count++;
+              std::cout << "*** DAMAGE DECREASED (HEALING!) *** count=" << heal_count
+                        << " mat=" << k
+                        << " alpha=" << alpha
+                        << " old_D=" << old_D
+                        << " new_D=" << new_D
+                        << " dD=" << dD
+                        << " bounds_clamped=" << (new_arhoD_before_bounds != new_arhoD ? "YES" : "NO")
+                        << std::endl;
+            }
           }
         }
 
@@ -857,6 +879,16 @@ class MultiMat {
             bool is_trace = alpha_k < 0.0001;
             tk::real damage_ratio = damage_k / std::max(1.0e-12, arho_k);
             bool is_pathological = !std::isfinite(damage_ratio);
+
+            // DIAGNOSTIC: Track when we would have reset due to trace (OLD behavior)
+            static int trace_skip_count = 0;
+            if (trace_skip_count < 20 && is_trace && !is_pathological && damage_ratio > 0.5) {
+              trace_skip_count++;
+              std::cout << "*** TRACE CLEANUP SKIPPED *** (would have reset in old code) count=" << trace_skip_count
+                        << " mat=" << k
+                        << " alpha=" << alpha_k
+                        << " damage_ratio=" << damage_ratio << std::endl;
+            }
 
             // Reset if trace OR pathological
             // Trace materials: prevents getCauchyStress from failing on ~zero volume fraction
@@ -910,7 +942,8 @@ class MultiMat {
               static int diag_count = 0;
               if (diag_count < 100) {
                 if (damage > 0.8 || alpha_k > 0.05 && pressure_k < 0.0) {
-                  std::cout << "SPALLATION CHECK: damage=" << damage
+                  std::cout << "SPALLATION CHECK: mat=" << k
+                            << " damage=" << damage
                             << " (threshold=" << damage_threshold << ")"
                             << " alpha=" << alpha_k
                             << " pressure=" << pressure_k << std::endl;
