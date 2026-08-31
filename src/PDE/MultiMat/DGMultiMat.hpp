@@ -953,12 +953,21 @@ class MultiMat {
                   std::max(1.0e-14, U(e, densityDofIdx(nmat, kfluid, rdof, 0)));
 
                 // Transfer damage (stored as ρD, partial damage density)
-                // Reduce proportionally to maintain D = ρD/ρ for remaining solid
-                tk::real arhoD_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
-                tk::real d_arhoD = dalpha * (arhoD_k / std::max(1.0e-12, alpha_k));
-                U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) -= d_arhoD;
+                // IMPORTANT: Do NOT remove damage from the remaining solid!
+                // When highly damaged material spalls, the remaining solid should
+                // stay damaged (or become more damaged). Removing damage causes
+                // the material to "heal" and re-strengthen, leading to unphysical
+                // elastic rebound.
+                // The damage density (ρD) stays with the remaining solid, making
+                // the damage ratio D = ρD/ρ INCREASE for the remaining material.
+                //
+                // OLD CODE (caused "healing" bug):
+                // tk::real arhoD_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
+                // tk::real d_arhoD = dalpha * (arhoD_k / std::max(1.0e-12, alpha_k));
+                // U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) -= d_arhoD;
+                //
                 // Note: fluid doesn't have damage variable, so the damage state is
-                // lost when failed solid transforms to fluid
+                // lost when failed solid transforms to fluid (this is correct)
 
                 // Deformation gradient g: No transfer needed - it's an intensive
                 // property of the solid phase itself. The remaining solid keeps
