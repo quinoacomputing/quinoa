@@ -89,8 +89,29 @@ bndSurfInt_constP(
   const Fields& W,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
-  int intsharp=0,
-  int bckind=0 );
+  int intsharp=0 );
+
+//! \brief Compute boundary surface flux integrals for const-order multi-material
+//!   DG (not p-adaptive)
+void
+bndSurfIntMultiMat_constP(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< std::pair< std::vector< std::size_t >, int > >& bcsets,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const Fields& U,
+  const Fields& P,
+  const Fields& W,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp=0 );
 
 //! Compute boundary surface flux integrals for a given boundary type for FV
 void

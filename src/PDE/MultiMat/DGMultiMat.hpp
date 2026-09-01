@@ -1010,6 +1010,10 @@ class MultiMat {
           tk::real, tk::real, tk::real, tk::real,
           const std::array< tk::real, 3 >& );
 
+        // Collect every boundary condition with a device-callable state
+        // function into one list, so the const-order path handles them all in
+        // a single pass. Anything unsupported keeps the untouched host path.
+        std::vector< std::pair< std::vector< std::size_t >, int > > bcsets;
         for (const auto& b : m_bc) {
           auto tgt = std::get<1>(b).target< SFnPtr >();
           int bckind = -1;
@@ -1020,16 +1024,17 @@ class MultiMat {
               bckind = static_cast< int >( inciter::BCKind::Extrapolate );
           }
           if (bckind >= 0)
-            tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
-              std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-              m_riemann, velfn, std::get<1>(b), U, P, W, R,
-              riemannDeriv, intsharp, bckind );
+            bcsets.emplace_back( std::get<0>(b), bckind );
           else
             tk::bndSurfInt( false, nmat, m_mat_blk, ndof, rdof,
               std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
               m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
               riemannDeriv, intsharp );
         }
+        if (!bcsets.empty())
+          tk::bndSurfIntMultiMat_constP( nmat, m_mat_blk, ndof, rdof,
+            bcsets, fd, geoFace, geoElem, inpoel, coord, t,
+            U, P, W, R, riemannDeriv, intsharp );
 
         // R holds the boundary surface contributions; upload before the kernel.
         // riemannDeriv is uploaded inside surfInt_constP.

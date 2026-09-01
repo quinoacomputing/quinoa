@@ -807,16 +807,15 @@ bndSurfInt_constP(
   const std::vector< std::size_t >& inpoel,
   const UnsMesh::Coords& coord,
   real t,
-  const RiemannFluxFn& /*flux*/,
-  const VelFn& /*vel*/,
-  const StateFn& /*state*/,
+  const RiemannFluxFn& flux,
+  const VelFn& vel,
+  const StateFn& state,
   const Fields& U,
   const Fields& P,
   const Fields& W,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
-  int intsharp,
-  int bckind )
+  int intsharp )
 // *****************************************************************************
 //! \brief Compute boundary surface flux integrals for a given boundary type for
 //!   const-order DG (not p-adaptive)
@@ -855,17 +854,6 @@ bndSurfInt_constP(
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
-  // Loop-invariants for the _constP path. solidx and nsld were read from the
-  // input deck inside the state function and update_rhs_bc, once per
-  // quadrature point; flx replaces a per-point heap allocation.
-  const auto& solidx =
-    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
-  auto nsld = inciter::numSolids(nmat, solidx);
-  const std::size_t r_nprop = R.nprop();
-  const std::size_t rd_ncol = riemannDeriv.empty() ? 0 : riemannDeriv[0].size();
-  const auto bck = static_cast< inciter::BCKind >( bckind );
-  Kokkos::Array< tk::real, inciter::HLLCMultiMatConstP::NFLX_MAX > flx;
-
   const auto& cx = coord[0];
   const auto& cy = coord[1];
   const auto& cz = coord[2];
@@ -899,6 +887,205 @@ bndSurfInt_constP(
     {
       for (const auto& f : bc->second)
       {
+        Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
+
+        std::size_t el = static_cast< std::size_t >(esuf[2*f]);
+
+        // Extract the left element coordinates
+        std::array< std::array< tk::real, 3>, 4 > coordel_l {{
+        {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
+        {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
+        {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
+        {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
+
+        // Compute the determinant of Jacobian matrix
+        auto detT_l =
+          Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+
+        // Extract the face coordinates
+        std::array< std::array< tk::real, 3>, 3 > coordfa {{
+          {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
+          {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
+          {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
+
+        std::array< real, 3 >
+          fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
+
+        // Gaussian quadrature
+        for (std::size_t igp=0; igp<ng; ++igp)
+        {
+          // Compute the coordinates of quadrature point at physical domain
+          auto gp = eval_gp( igp, coordfa, coordgp );
+
+          std::array< tk::real, 3> ref_gp_l{
+            Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+            Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+            Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
+
+          //Compute the basis functions for the left element
+          eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
+
+          auto wt = wgp[igp] * geoFace(f,0);
+
+          // Compute the state variables at the left element
+          evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof, nmat, el,
+            rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, ugp);
+
+          auto var = state( ncomp, mat_blk, ugp, gp[0], gp[1], gp[2], t, fn );
+
+          // mesh velocity at quadrature point
+          tk::real wn_igp(0.0);
+          if (ale) {
+            auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+
+            // mesh velocity normal to element face
+            wn_igp = tk::dot(w_igp, fn);
+          }
+
+          // Compute the numerical flux
+          auto fl = flux(mat_blk, fn, var, vel(ncomp, gp[0], gp[1], gp[2], t),
+            wn_igp);
+
+          // Code below commented until details about the form of these terms in
+          // the \alpha_k g_k equations are sorted out.
+          // // Add RHS inverse deformation terms if necessary
+          // if (haveSolid)
+          //   solidTermsSurfInt( nmat, ndof, rdof, fn, el, er, solidx, geoElem, U,
+          //                      coordel_l, coordel_r, igp, coordgp, dt, fl );
+
+          // Add the surface integration term to the rhs
+          update_rhs_bc( ncomp, nmat, ndof, ndof, wt, fn, el, fl,
+                         B_l, R, riemannDeriv );
+        }
+      }
+    }
+  }
+}
+void
+bndSurfIntMultiMat_constP(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< std::pair< std::vector< std::size_t >, int > >& bcsets,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const Fields& U,
+  const Fields& P,
+  const Fields& W,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp )
+// *****************************************************************************
+//! \brief Compute boundary surface flux integrals for const-order multi-material
+//!   DG (not p-adaptive)
+//! \details MultiMat-specific: the Riemann solver is fixed to HLLC and the
+//!   boundary state comes from inciter::bcStateDev, so the flux, vel and state
+//!   function arguments the shared bndSurfInt_constP takes are not needed here.
+//!   bndSurfInt_constP is left untouched for CompFlow, MultiSpecies and
+//!   Transport, which pass their own state functions.
+//! \details This function computes contributions from surface integrals along
+//!   all faces for a particular boundary condition type, configured by the state
+//!   function
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] bcsets Supported boundary conditions for this mesh: for each,
+//!   the side sets it applies to and its inciter::BCKind. All of them are
+//!   handled in one pass so that the device version is a single launch rather
+//!   than one per boundary condition.
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] t Physical time
+//! \param[in] flux Riemann flux function to use
+//! \param[in] vel Function to use to query prescribed velocity (if any)
+//! \param[in] state Function to evaluate the left and right solution state at
+//!   boundaries
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
+//! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
+//! \param[in] intsharp Interface compression tag, an optional argument, with
+//!   default 0, so that it is unused for single-material and transport.
+// *****************************************************************************
+{
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
+  const auto& bface = fd.Bface();
+  const auto& esuf = fd.Esuf();
+  const auto& inpofa = fd.Inpofa();
+
+  // Loop-invariants for the _constP path. solidx and nsld were read from the
+  // input deck inside the state function and update_rhs_bc, once per
+  // quadrature point; flx replaces a per-point heap allocation.
+  const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nsld = inciter::numSolids(nmat, solidx);
+  const std::size_t r_nprop = R.nprop();
+  const std::size_t rd_ncol = riemannDeriv.empty() ? 0 : riemannDeriv[0].size();
+  Kokkos::Array< tk::real, inciter::HLLCMultiMatConstP::NFLX_MAX > flx;
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+  //        "derivative vector for single material compflow" );
+
+  // Quadrature points
+  auto ng = tk::NGfa(ndof);
+
+  // arrays for quadrature points
+  std::array< std::vector< real >, 2 > coordgp;
+  std::vector< real > wgp;
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  wgp.resize( ng );
+
+  // get quadrature point weights and coordinates for triangle
+  GaussQuadratureTri( ng, coordgp, wgp );
+
+  // Allocate memory
+  std::vector< tk::real > B_l(rdof, 1.0), ugp(ncomp+nprim);
+
+  // Flatten every supported boundary condition into one face list, paired
+  // with the state function each face needs. Visitation order is preserved
+  // exactly: bcsets order, then side set order within each (std::map iterates
+  // by id, as the previous nested loop did), then face order within each side
+  // set. Preserving it keeps the accumulation into R bit-identical.
+  std::vector< std::size_t > bfaces;
+  std::vector< int > bfkind;
+  for (const auto& bs : bcsets)
+    for (const auto& s : bs.first) {
+      auto bc = bface.find(static_cast<int>(s));
+      if (bc != end(bface))
+        for (const auto& f : bc->second) {
+          bfaces.push_back( f );
+          bfkind.push_back( bs.second );
+        }
+    }
+
+  for (std::size_t ifa=0; ifa<bfaces.size(); ++ifa) {
+    {
+      {
+        const auto f = bfaces[ifa];
+        const auto bck = static_cast< inciter::BCKind >( bfkind[ifa] );
+
         Assert( esuf[2*f+1] == -1, "outside boundary element not -1" );
 
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
