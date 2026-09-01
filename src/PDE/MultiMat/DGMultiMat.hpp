@@ -725,7 +725,7 @@ class MultiMat {
               // Scale rel_factor by alpha to suppress plasticity in mixed cells
               // Mixed cells experience fake velocity gradients from interface advection
               // which creates artificial strains. Only allow full plasticity in nearly-pure cells.
-              tk::real a_min = 0.95, a_max = 0.99;  // Suppress unless α > 99%
+              tk::real a_min = 0.3, a_max = 0.9;
               auto smoothstep = [&](tk::real a){
                 tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
                 return t*t*(3.0-2.0*t);
@@ -828,65 +828,14 @@ class MultiMat {
             }
 
             // 6. Evolve D
-            //printf("k, dmg = %lu, %e\n", k, U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)));
             tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
-
-            // DIAGNOSTIC: Track damage changes
-            tk::real old_arhoD = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
-            tk::real old_D = old_arhoD / std::max(1.0e-12, arho);
-
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += arho*dD;
-
-            // DIAGNOSTIC: Track dD and damage evolution
-            static int dD_count = 0;
-            if (dD_count < 100 && (std::abs(dD) > 1.0e-8 || old_D > 0.5)) {
-              dD_count++;
-              std::cout << "dD_DIAGNOSTIC: mat=" << k
-                        << " alpha=" << alpha
-                        << " old_D=" << old_D
-                        << " dD=" << dD
-                        << " plastic_rate=" << plastic_rate
-                        << " phi=" << phi
-                        << " equiv_stress=" << equiv_stress
-                        << " yield_stress=" << yield_stress << std::endl;
-            }
 
             // 7. Maintain bounds
             // Upper bound: damage cannot exceed total density (D ≤ 1.0)
-            // Lower bound: REMOVED - allow damage to be truly zero
-            // Old code had: std::max(..., 1.0e-06*arho) which artificially set D ≥ 1.0e-06
-            // This caused "undamaged" material to have D = 1.0e-06, leading to
-            // elastic rebound when fresh material flowed into contact zone.
-            tk::real new_arhoD_before_bounds = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
+            // Lower bound: damage ≥ 0 (natural physical bound)
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
               std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 0.0);
-            tk::real new_arhoD = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
-            tk::real new_D = new_arhoD / std::max(1.0e-12, arho);
-
-            // Alert if damage DECREASED (healing!)
-            static int heal_count = 0;
-            if (heal_count < 50 && new_D < old_D - 1.0e-6 && old_D > 0.1) {
-              heal_count++;
-              std::cout << "*** DAMAGE DECREASED (HEALING!) *** count=" << heal_count
-                        << " mat=" << k
-                        << " alpha=" << alpha
-                        << " old_D=" << old_D
-                        << " new_D=" << new_D
-                        << " dD=" << dD
-                        << " bounds_clamped=" << (new_arhoD_before_bounds != new_arhoD ? "YES" : "NO")
-                        << std::endl;
-            }
-
-            // DIAGNOSTIC: Track final damage values after bounds
-            static int final_D_count = 0;
-            if (final_D_count < 50 && (new_D > 0.8 || (old_D < 0.01 && new_D > 0.01))) {
-              final_D_count++;
-              std::cout << "FINAL_D: mat=" << k
-                        << " alpha=" << alpha
-                        << " old_D=" << old_D
-                        << " new_D=" << new_D
-                        << " change=" << (new_D - old_D) << std::endl;
-            }
           }
         }
 
@@ -903,45 +852,13 @@ class MultiMat {
             tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
             tk::real damage_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
 
-            // Clean up if:
-            // 1. Material is truly trace (alpha < 0.0001) - prevents NaN from constitutive models
-            // 2. OR damage is NaN/Inf (pathological) - safety net
-            bool is_trace = alpha_k < 0.0001;
+            // Clean up if damage is NaN/Inf (pathological)
             tk::real damage_ratio = damage_k / std::max(1.0e-12, arho_k);
             bool is_pathological = !std::isfinite(damage_ratio);
 
-            // DIAGNOSTIC: Track when we would have reset due to trace (OLD behavior)
-            static int trace_skip_count = 0;
-            if (trace_skip_count < 20 && is_trace && !is_pathological && damage_ratio > 0.5) {
-              trace_skip_count++;
-              std::cout << "*** TRACE CLEANUP SKIPPED *** (would have reset in old code) count=" << trace_skip_count
-                        << " mat=" << k
-                        << " alpha=" << alpha_k
-                        << " damage_ratio=" << damage_ratio << std::endl;
-            }
-
-            // Reset if trace OR pathological
-            // Trace materials: prevents getCauchyStress from failing on ~zero volume fraction
-            // Pathological damage: safety net for NaN/Inf regardless of alpha
-            // TESTING: Only reset if pathological (NaN/Inf), NOT if just trace
-            // Hypothesis: trace cleanup is "healing" damaged material as it advects
             if (is_pathological)
             {
-              // DIAGNOSTIC: Track when damage is being reset
-              static int reset_count = 0;
-              static int high_damage_reset = 0;
-              if (reset_count < 100) {
-                if (damage_ratio > 0.5) {
-                  high_damage_reset++;
-                  std::cout << "*** DAMAGE RESET *** (high damage trace) count=" << high_damage_reset
-                            << " alpha=" << alpha_k
-                            << " damage_ratio=" << damage_ratio
-                            << " reason=" << (is_trace ? "trace" : "pathological") << std::endl;
-                }
-                reset_count++;
-              }
-              // Reset damage to minimum value (not zero, for numerical stability)
-              U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 1.0e-06 * arho_k;
+              U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 0.0;
             }
           }
         }
@@ -968,29 +885,8 @@ class MultiMat {
               // Compression + damage = crushed material (stays solid)
               // Tension + damage = spallation (voids open)
 
-              // DIAGNOSTIC: Check if conditions are close to being met
-              static int diag_count = 0;
-              if (diag_count < 100) {
-                if (damage > 0.8 || alpha_k > 0.05 && pressure_k < 0.0) {
-                  std::cout << "SPALLATION CHECK: mat=" << k
-                            << " damage=" << damage
-                            << " (threshold=" << damage_threshold << ")"
-                            << " alpha=" << alpha_k
-                            << " pressure=" << pressure_k << std::endl;
-                  diag_count++;
-                }
-              }
-
               if (damage > damage_threshold && alpha_k > 1.0e-03 && pressure_k < 0.0)
               {
-                static int spall_count = 0;
-                spall_count++;
-                if (spall_count <= 50) {
-                  std::cout << "*** SPALLATION TRIGGERED *** count=" << spall_count
-                            << " damage=" << damage
-                            << " alpha=" << alpha_k
-                            << " pressure=" << pressure_k << std::endl;
-                }
                 // Compute how much volume to transfer based on excess damage
                 tk::real excess_damage = std::min(damage - damage_threshold, 0.05);
                 tk::real transfer_rate = excess_damage / 0.05;  // 0.95→1.0 maps to 0→1
