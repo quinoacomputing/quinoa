@@ -424,6 +424,14 @@ class MultiSpecies {
                              tk::Fields& /*prim*/,
                              std::size_t /*nielem*/ ) const {}
 
+    //! Evolve damage variable for solids
+    //! \details Evolve damage variable for solids. Unused here.
+    void evolveDamage( tk::real,
+                       const tk::Fields&,
+                       tk::Fields&,
+                       tk::Fields&,
+                       std::size_t ) const {}
+
     //! Reconstruct second-order solution from first-order
     //! \param[in] geoElem Element geometry array
     //! \param[in] fd Face connectivity and boundary conditions object

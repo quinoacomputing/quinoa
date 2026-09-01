@@ -57,6 +57,8 @@ std::map< std::string, tk::GetVarFn > MultiMatOutVarFn()
   OutFnMap["g31"] = multimat::defGradOutVar<2,0>;
   OutFnMap["g32"] = multimat::defGradOutVar<2,1>;
   OutFnMap["g33"] = multimat::defGradOutVar<2,2>;
+  // Damage
+  OutFnMap["damage"] = multimat::damageOutVar;
 
   return OutFnMap;
 }

@@ -467,6 +467,7 @@ class MultiMat {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      auto nsld = numSolids(nmat, solidx);
 
       Assert( unk.nunk() == prim.nunk(), "Number of unknowns in solution "
               "vector and primitive vector at recent time step incorrect" );
@@ -531,16 +532,17 @@ class MultiMat {
             auto arhomat = state[densityIdx(nmat, imat)];
             auto arhoemat = state[energyIdx(nmat, imat)];
             auto gmat = getDeformGrad(nmat, imat, state);
+            auto damage = state[damageIdx(nmat, nsld, solidx[imat])]/arhomat;
             pri[pressureIdx(nmat,imat)] = m_mat_blk[imat].template compute<
               EOS::pressure >( arhomat, vel[0], vel[1], vel[2], arhoemat,
-              alphamat, imat, gmat );
+                               alphamat, imat, gmat, damage );
 
             pri[pressureIdx(nmat,imat)] = constrain_pressure( m_mat_blk,
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
 
             if (solidx[imat] > 0) {
               auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
-              alphamat, imat, gmat );
+                alphamat, imat, gmat, damage );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -610,9 +612,390 @@ class MultiMat {
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
       auto neg_density = cleanTraceMultiMat(t, nielem, m_mat_blk, geoElem, nmat,
-        unk, prim);
+                                            unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
+    }
+
+    //! Evolve damage variable for solids
+    //! \param[in] dt Current time step used
+    //! \param[in] geoElem Element geometry array
+    //! \param[in,out] U Array of unknowns
+    //! \param[in,out] P Array of primitives
+    //! \param[in] nelem Number of internal elements
+    //! \details Evolve damage variable for solids
+    void evolveDamage( tk::real dt,
+                       const tk::Fields& geoElem,
+                       tk::Fields& U,
+                       tk::Fields& P,
+                       std::size_t nelem ) const
+    {
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      std::size_t ncomp = U.nprop()/rdof;
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      auto nsld = numSolids(nmat, solidx);
+
+      // Check if at least one fluid material exists (needed for spallation)
+      bool has_fluid = false;
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] == 0) {
+          has_fluid = true;
+          break;
+        }
+      }
+
+      for (std::size_t e=0; e<nelem; ++e)
+      {
+        // get conserved quantities
+        std::vector< tk::real > B(rdof, 0.0);
+        B[0] = 1.0;
+
+        // Loop through materials
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (solidx[k] > 0)
+          {
+            tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            std::array< std::array< tk::real, 3 >, 3 > g;
+            // Compute the source terms
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                g[i][j] = U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+
+            // Compute Lp
+            // Reference: Ortega, A. L., Lombardini, M., Pullin, D. I., &
+            // Meiron, D. I. (2014). Numerical simulation of elastic–plastic
+            // solid mechanics using an Eulerian stretch tensor approach and
+            // HLLD Riemann solver. Journal of Computational Physics, 257,
+            // 414-441
+            std::array< std::array< tk::real, 3 >, 3 > Lp;
+
+            // 1. Compute dev(sigma)
+            auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
+            auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
+               alpha, k, g, damage );
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                sigma_dev[i][j] /= alpha;
+            tk::real sigma_trace =
+              sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
+            for (std::size_t i=0; i<3; ++i)
+              sigma_dev[i][i] -= sigma_trace/3.0;
+            tk::real pk = -sigma_trace/3.0;
+
+            // 2. Compute inv(g)
+            double ginv[9];
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                ginv[3*i+j] = g[i][j];
+            lapack_int ipiv[3];
+            #ifndef NDEBUG
+            lapack_int ierr =
+            #endif
+              LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, ginv, 3, ipiv);
+            Assert(ierr==0, "Lapack error in LU factorization of g");
+            #ifndef NDEBUG
+            lapack_int jerr =
+            #endif
+              LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, ginv, 3, ipiv);
+            Assert(jerr==0, "Lapack error in inverting g");
+
+            // 3. Compute dev(sigma)*inv(g)
+            std::array< std::array< tk::real, 3 >, 3 > aux_mat;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+              {
+                tk::real sum = 0.0;
+                for (std::size_t l=0; l<3; ++l)
+                  sum += sigma_dev[i][l]*ginv[3*l+j];
+                aux_mat[i][j] = sum;
+              }
+
+            // 4. Compute g*(dev(sigma)*inv(g))
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+              {
+                tk::real sum = 0.0;
+                for (std::size_t l=0; l<3; ++l)
+                  sum += g[i][l]*aux_mat[l][j];
+                Lp[i][j] = sum;
+              }
+
+            // 5. Divide by 2*mu*tau
+            // 'Perfect' plasticity
+            std::vector< tk::real > s(9*ndof, 0.0);
+            tk::real yield_stress = getmatprop< tag::yield_stress >(k);
+            tk::real equiv_stress = 0.0;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                equiv_stress += sigma_dev[i][j]*sigma_dev[i][j];
+            equiv_stress = std::sqrt(3.0*equiv_stress/2.0);
+            tk::real rel_factor = 0.0;
+            tk::real phi = std::max(0.0, equiv_stress-yield_stress);
+            tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
+            if (phi > 0.0) {
+              rel_factor = std::pow((phi/yield_stress),2.0)/rel_time;
+              // Scale rel_factor by alpha to suppress plasticity in mixed cells
+              // Mixed cells experience fake velocity gradients from interface advection
+              // which creates artificial strains. Only allow full plasticity in nearly-pure cells.
+              tk::real a_min = 0.3, a_max = 0.9;
+              auto smoothstep = [&](tk::real a){
+                tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
+                return t*t*(3.0-2.0*t);
+              };
+              tk::real a_tilde = smoothstep(alpha);
+              rel_factor *= a_tilde;
+            }
+            tk::real mu = getmatprop< tag::mu >(k);
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                Lp[i][j] *= rel_factor/(2.0*mu);
+
+            // 6. Compute equivalent plastic strain rate
+            tk::real plastic_rate = 0.0;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                plastic_rate += Lp[i][j]*Lp[i][j];
+            // Scale plastic_rate by alpha
+            tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+            auto smoothstep = [&](tk::real a){
+              tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
+              return t*t*(3.0-2.0*t);
+            };
+            tk::real a_tilde = smoothstep(alpha);
+            // plastic_rate *= a_tilde;
+            plastic_rate = std::sqrt(3.0*plastic_rate/2.0);
+
+            // 7. Compute dD using Johnson-Cook damage model
+            auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
+
+            // Check if damage is enabled for this material
+            tk::real damage_enabled = getmatprop< tag::damage_enabled >(k);
+            bool compute_damage = (damage_enabled > 0.5);  // treat as boolean
+
+            // Get Johnson-Cook damage parameters from input
+            tk::real d1 = getmatprop< tag::jc_d1 >(k);
+            tk::real d2 = getmatprop< tag::jc_d2 >(k);
+            tk::real d3 = getmatprop< tag::jc_d3 >(k);
+            tk::real d4 = getmatprop< tag::jc_d4 >(k);
+            tk::real d5 = getmatprop< tag::jc_d5 >(k);
+            tk::real t_melt = getmatprop< tag::t_melt >(k);
+            tk::real t_room = getmatprop< tag::t_room >(k);
+
+            tk::real ef = 0.0;
+            tk::real dD = 0.0;
+            if (compute_damage && phi > 0.0) {
+              // Compute temperature from EOS
+              tk::real u = P(e, velocityDofIdx(nmat, 0, rdof, 0));
+              tk::real v = P(e, velocityDofIdx(nmat, 1, rdof, 0));
+              tk::real w = P(e, velocityDofIdx(nmat, 2, rdof, 0));
+              tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+              tk::real arhoE = U(e, energyDofIdx(nmat, k, rdof, 0));
+              tk::real T = m_mat_blk[k].template compute< EOS::temperature >(
+                arho, u, v, w, arhoE, alk, g, damage);
+
+              // Johnson-Cook damage model:
+              // epsilon_f = [d1 + d2*exp(d3*eta)] * [1 + d4*ln(edot/edot0)] * [1 + d5*T_hat]
+              // where T_hat = (T - T_room) / (T_melt - T_room)
+
+              // Triaxiality term
+              tk::real eta = std::clamp(-pk/equiv_stress, -1.5, 1.5);
+              tk::real f_triax = d1 + d2*std::exp(d3*eta);
+
+              // Strain rate term (using plastic_rate as equivalent plastic strain rate)
+              // Reference strain rate edot0 = 1.0 s^-1
+              tk::real edot0 = 1.0;
+              tk::real edot = plastic_rate;
+              tk::real f_rate = 1.0;
+              if (edot > 1.0e-10 && std::abs(d4) > 1.0e-10) {
+                f_rate = 1.0 + d4 * std::log(std::max(edot/edot0, 1.0e-10));
+              }
+
+              // Temperature term
+              tk::real T_hat = 0.0;
+              if (t_melt > t_room && t_melt > 1.0e-10) {
+                T_hat = std::clamp((T - t_room)/(t_melt - t_room), 0.0, 1.0);
+              }
+              tk::real f_temp = 1.0 + d5 * T_hat;
+
+              // Failure strain
+              ef = std::max(f_triax * f_rate * f_temp, 1.0e-04);
+
+              // Damage increment: dD = edot * dt / epsilon_f
+              dD = plastic_rate * dt / ef;
+
+              // Crack band regularization for mesh independence
+              // Scale damage rate with element size to preserve fracture energy
+              // WARNING: Only use this on meshes where h <= h_ref!
+              // On coarse meshes (h >> h_ref), this ACCELERATES damage!
+              // DISABLED FOR COARSE MESH TESTING
+              /*
+              tk::real h_ref = getmatprop< tag::damage_length_scale >(k);
+              if (h_ref > 1.0e-12) {
+                tk::real vol = geoElem(e, 0);
+                tk::real h = std::cbrt(vol);  // characteristic element size
+                tk::real reg_factor = h / h_ref;
+                dD *= reg_factor;
+              }
+              */
+            }
+
+            // 6. Evolve D
+            tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+            U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += arho*dD;
+
+            // 7. Maintain bounds
+            // Upper bound: damage cannot exceed total density (D ≤ 1.0)
+            // Lower bound: damage ≥ 0 (natural physical bound)
+            U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
+              std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 0.0);
+          }
+        }
+
+        // Clean up damage in trace materials only
+        // In Eulerian codes, damage gets "painted" on the mesh as material advects.
+        // Only clean up when material is truly trace AND damage ratio is unphysical.
+        // This allows damage accumulation in mixed cells (needed for wall separation)
+        // while preventing numerical blow-up in trace materials.
+        for (std::size_t k=0; k<nmat; ++k)
+        {
+          if (solidx[k] > 0)
+          {
+            tk::real alpha_k = U(e, volfracDofIdx(nmat, k, rdof, 0));
+            tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
+            tk::real damage_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
+
+            // Clean up if damage is NaN/Inf (pathological)
+            tk::real damage_ratio = damage_k / std::max(1.0e-12, arho_k);
+            bool is_pathological = !std::isfinite(damage_ratio);
+
+            if (is_pathological)
+            {
+              U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) = 0.0;
+            }
+          }
+        }
+
+        // Volume fraction redistribution for highly damaged solids (spallation)
+        // When solid is critically damaged AND in tension, transfer volume to fluid
+        // (void formation/spallation). Only proceed if there's at least one fluid
+        // material in the system.
+        if (has_fluid)
+        {
+          tk::real damage_threshold = 0.95;
+          for (std::size_t k=0; k<nmat; ++k)
+          {
+            if (solidx[k] > 0)
+            {
+              tk::real alpha_k = U(e, volfracDofIdx(nmat, k, rdof, 0));
+              tk::real damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) /
+                               std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
+
+              // Get pressure to check for tension
+              tk::real pressure_k = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alpha_k;
+
+              // Only allow spallation in TENSION (p < 0) with high damage
+              // Compression + damage = crushed material (stays solid)
+              // Tension + damage = spallation (voids open)
+
+              if (damage > damage_threshold && alpha_k > 1.0e-03 && pressure_k < 0.0)
+              {
+                // Compute how much volume to transfer based on excess damage
+                tk::real excess_damage = std::min(damage - damage_threshold, 0.05);
+                tk::real transfer_rate = excess_damage / 0.05;  // 0.95→1.0 maps to 0→1
+                tk::real dalpha = alpha_k * transfer_rate * dt * 100.0;  // rate factor
+                dalpha = std::min(dalpha, alpha_k - 1.0e-03);  // don't go below min
+
+                // Find a fluid material to receive the volume
+                std::size_t kfluid = nmat;
+                for (std::size_t kf=0; kf<nmat; ++kf) {
+                  if (solidx[kf] == 0) {
+                    kfluid = kf;
+                    break;
+                  }
+                }
+
+                if (kfluid < nmat && dalpha > 1.0e-10)
+                {
+                  // Get current state BEFORE modifying
+                  tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
+                  tk::real arhoE_k = U(e, energyDofIdx(nmat, k, rdof, 0));
+
+                  // Compute mass transfer (partial density)
+                  // Protect against division by very small alpha_k
+                  tk::real d_arho = dalpha * (arho_k / std::max(1.0e-12, alpha_k));
+
+                // Transfer volume fraction
+                U(e, volfracDofIdx(nmat, k, rdof, 0)) -= dalpha;
+                U(e, volfracDofIdx(nmat, kfluid, rdof, 0)) += dalpha;
+
+                // Transfer mass: solid loses, fluid gains (conserves total mass)
+                U(e, densityDofIdx(nmat, k, rdof, 0)) -= d_arho;
+                U(e, densityDofIdx(nmat, kfluid, rdof, 0)) += d_arho;
+
+                // Ensure densities remain positive
+                U(e, densityDofIdx(nmat, k, rdof, 0)) =
+                  std::max(1.0e-14, U(e, densityDofIdx(nmat, k, rdof, 0)));
+                U(e, densityDofIdx(nmat, kfluid, rdof, 0)) =
+                  std::max(1.0e-14, U(e, densityDofIdx(nmat, kfluid, rdof, 0)));
+
+                // Transfer damage (stored as ρD, partial damage density)
+                // IMPORTANT: Do NOT remove damage from the remaining solid!
+                // When highly damaged material spalls, the remaining solid should
+                // stay damaged (or become more damaged). Removing damage causes
+                // the material to "heal" and re-strengthen, leading to unphysical
+                // elastic rebound.
+                // The damage density (ρD) stays with the remaining solid, making
+                // the damage ratio D = ρD/ρ INCREASE for the remaining material.
+                //
+                // OLD CODE (caused "healing" bug):
+                // tk::real arhoD_k = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
+                // tk::real d_arhoD = dalpha * (arhoD_k / std::max(1.0e-12, alpha_k));
+                // U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) -= d_arhoD;
+                //
+                // Note: fluid doesn't have damage variable, so the damage state is
+                // lost when failed solid transforms to fluid (this is correct)
+
+                // Deformation gradient g: No transfer needed - it's an intensive
+                // property of the solid phase itself. The remaining solid keeps
+                // its current deformation state.
+
+                // Momentum transfer: In MultiMat, momentum is stored per-cell (shared
+                // between materials), not per-material. The velocity field is common,
+                // so when mass transfers at constant velocity, momentum is automatically
+                // conserved. No explicit momentum transfer needed.
+
+                // Transfer energy proportionally
+                tk::real d_arhoE = dalpha * (arhoE_k / std::max(1.0e-12, alpha_k));
+                U(e, energyDofIdx(nmat, k, rdof, 0)) -= d_arhoE;
+                U(e, energyDofIdx(nmat, kfluid, rdof, 0)) += d_arhoE;
+              }
+            }
+          }
+          } // end for k loop (volume redistribution)
+        } // end if (has_fluid)
+      }
+
+      // Sanitize state variables: replace NaN/Inf with safe values
+      // This prevents numerical instabilities in trace-amount cells
+      for (std::size_t e=0; e<nelem; ++e) {
+        for (std::size_t k=0; k<nmat; ++k) {
+          // Only sanitize the cell-average (DOF 0)
+          auto& arho = U(e, densityDofIdx(nmat, k, rdof, 0));
+          auto& arhoE = U(e, energyDofIdx(nmat, k, rdof, 0));
+
+          // Replace NaN densities with minimum value
+          if (!std::isfinite(arho) || arho < 0.0) {
+            arho = 1.0e-14;
+          }
+          // Replace NaN energies
+          if (!std::isfinite(arhoE) || arhoE < 0.0) {
+            arhoE = 1.0e-14;
+          }
+        }
+      }
     }
 
     //! Reconstruct second-order solution from first-order
@@ -1231,6 +1614,7 @@ class MultiMat {
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
+      auto nsld = numSolids(nmat, solidx);
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -1286,8 +1670,9 @@ class MultiMat {
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
             // 1. Compute dev(sigma)
+            auto damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0))/std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
-              alpha, k, g );
+              alpha, k, g, damage );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
@@ -1324,8 +1709,10 @@ class MultiMat {
             if (phi > 0.0) {
               // Note: if plasticity becomes unstable, raise the power (below) to two
               rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
-              // Scale rel_factor by alpha
-              tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+              // Scale rel_factor by alpha to suppress plasticity in mixed cells
+              // Mixed cells experience fake velocity gradients from interface advection
+              // which creates artificial strains. Only allow full plasticity in nearly-pure cells.
+              tk::real a_min = 0.95, a_max = 0.99;  // Suppress unless α > 99%
               auto smoothstep = [&](tk::real a){
                 tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
                 return t*t*(3.0-2.0*t);
@@ -1677,11 +2064,12 @@ class MultiMat {
       // material pressures
       for (std::size_t k=0; k<nmat; ++k)
       {
+        tk::real damage = ur[damageIdx(nmat, nsld, solidx[k])]/ur[densityIdx(nmat, k)];
         auto gk = getDeformGrad(nmat, k, ur);
         ur[ncomp+pressureIdx(nmat, k)] = mat_blk[k].compute< EOS::pressure >(
           ur[densityIdx(nmat, k)], ur[ncomp+velocityIdx(nmat, 0)],
           ur[ncomp+velocityIdx(nmat, 1)], ur[ncomp+velocityIdx(nmat, 2)],
-          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, gk );
+          ur[energyIdx(nmat, k)], ur[volfracIdx(nmat, k)], k, gk, damage );
       }
 
       Assert( ur.size() == ncomp+nmat+3+nsld*6, "Incorrect size for appended "

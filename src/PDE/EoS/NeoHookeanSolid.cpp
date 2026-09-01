@@ -92,7 +92,8 @@ NeoHookeanSolid::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t /*imat*/,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
 //!   and the inverse deformation gradient tensor using the NeoHookeanSolid
@@ -115,9 +116,9 @@ NeoHookeanSolid::pressure(
 //!   NeoHookeanSolid EoS
 // *************************************************************************
 {
-  // obtain elastic contribution to energy
+  // obtain elastic contribution to energy (UNDAMAGED for energy partitioning)
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, 0.0);  // Use 0.0 damage for partitioning
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -153,7 +154,8 @@ std::array< std::array< tk::real, 3 >, 3 >
 NeoHookeanSolid::CauchyStress(
   tk::real alpha,
   std::size_t /*imat*/,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate the elastic Cauchy stress tensor from the material
 //!   inverse deformation gradient tensor using the NeoHookeanSolid EOS
@@ -172,9 +174,9 @@ NeoHookeanSolid::CauchyStress(
 
   // obtain elastic contribution to energy
   tk::real eps2;
-  elasticEnergy(defgrad, eps2);
+  elasticEnergy(defgrad, eps2, damage);
 
-  // p_mean
+  // p_mean (no damage scaling - bulk compressibility unaffected by damage)
   auto pmean = - alpha * m_mu * eps2;
 
   // Volumetric component of Cauchy stress tensor
@@ -197,7 +199,7 @@ NeoHookeanSolid::CauchyStress(
   // Add deviatoric component of Cauchy stress tensor
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
-      asig[i][j] += m_mu*alpha*devbt[i][j];
+      asig[i][j] += std::max(1.0e-06, (1.0-damage)) * m_mu*alpha*devbt[i][j];
   }
 
   return asig;
@@ -209,7 +211,8 @@ NeoHookeanSolid::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/ ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -540,15 +543,22 @@ NeoHookeanSolid::soundspeed(
 
   */
 
+  // For trace amounts of material (alpha < 1e-6), return a safe sound speed
+  // The density field is not reliable at these tiny volume fractions
+  if (alpha < 1.0e-6 || !std::isfinite(arho)) {
+    return 100.0;  // Return a reasonable sound speed for trace material
+  }
+
   // Approximated elastic contribution, from Barton, P. T. (2019).
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50
   auto al_eff = std::max( 1.0e-14, alpha );
-  tk::real a = (4.0/3.0) * m_mu * al_eff / arho;
+  auto arho_eff = std::abs(arho);
+  tk::real a = (4.0/3.0) /** std::max(0.0, (1.0-damage))*/ * m_mu * al_eff / arho_eff;
 
   // hydrodynamic contribution
   auto p_eff = std::max( 1.0e-15, apr+(al_eff*m_pstiff) );
-  a += m_gamma * p_eff / arho;
+  a += m_gamma * p_eff / arho_eff;
 
   // Compute square root
   a = std::sqrt(a);
@@ -571,7 +581,8 @@ tk::real
 NeoHookeanSolid::shearspeed(
   tk::real arho,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  tk::real damage ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -588,7 +599,7 @@ NeoHookeanSolid::shearspeed(
   // An interface-capturing Godunov method for the simulation of compressible
   // solid-fluid problems. Journal of Computational Physics, 390, 25-50.
   auto al_eff = std::max( 1e-14, alpha );
-  tk::real a = std::sqrt(al_eff*m_mu/arho);
+  tk::real a = std::sqrt(al_eff * std::max(1.0e-06, (1.0-damage)) * m_mu/arho);
 
   // check shear-wave speed divergence
   if (!std::isfinite(a)) {
@@ -611,7 +622,8 @@ NeoHookeanSolid::totalenergy(
   tk::real w,
   tk::real apr,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -634,7 +646,7 @@ NeoHookeanSolid::totalenergy(
     (u*u + v*v + w*w);
   // obtain elastic contribution to energy
   tk::real eps2;
-  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
 
   return (arhoEh + arhoEe);
 }
@@ -647,7 +659,8 @@ NeoHookeanSolid::temperature(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy
@@ -665,9 +678,9 @@ NeoHookeanSolid::temperature(
 //! \return Material temperature using the NeoHookeanSolid EoS
 // *************************************************************************
 {
-  // obtain elastic contribution to energy
+  // obtain elastic contribution to energy (UNDAMAGED for energy partitioning)
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, 0.0);  // Use 0.0 damage for partitioning
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -694,7 +707,8 @@ NeoHookeanSolid::min_eff_pressure(
 tk::real
 NeoHookeanSolid::elasticEnergy(
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
-  tk::real& eps2 ) const
+  tk::real& eps2,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate elastic contribution to material energy from the material
 //!   density, and deformation gradient tensor
@@ -705,14 +719,42 @@ NeoHookeanSolid::elasticEnergy(
 //!   the elastic shear distortion for further use
 // *************************************************************************
 {
+  // Guard against non-finite damage values
+  if (!std::isfinite(damage)) {
+    eps2 = 0.0;
+    return 0.0;
+  }
+
+  // Clamp damage to physical bounds [0,1]
+  damage = std::max(0.0, std::min(1.0, damage));
+
   // compute volume-preserving part of Right Cauchy-Green strain tensor
   auto Ct = tk::getIsochorRightCauchyGreen(defgrad);
+
+  // Check if strain tensor is finite
+  if (!std::isfinite(Ct[0][0]) || !std::isfinite(Ct[1][1]) || !std::isfinite(Ct[2][2])) {
+    eps2 = 0.0;
+    return 0.0;
+  }
 
   // compute elastic shear distortion
   eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
 
-  // compute elastic energy
-  auto rhoEe = m_mu * eps2;
+  // Guard against non-finite eps2
+  if (!std::isfinite(eps2)) {
+    eps2 = 0.0;
+    return 0.0;
+  }
+
+  // compute elastic energy with safe damage factor
+  // Use max to ensure we don't get exact zero which could cause issues
+  auto damage_factor = std::max(1.0e-06, (1.0-damage));
+  auto rhoEe = damage_factor * m_mu * eps2;
+
+  // Final check for finite result
+  if (!std::isfinite(rhoEe)) {
+    return 0.0;
+  }
 
   return rhoEe;
 }

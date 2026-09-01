@@ -105,7 +105,7 @@ struct HLLDMultiMat {
       gnl.push_back(tk::rotateTensor(gl[k], fn));
       auto amatl = mat_blk[k].compute< EOS::soundspeed >(
         u[0][densityIdx(nmat, k)], apl[k],
-        u[0][volfracIdx(nmat, k)], k, gnl[k] );
+        u[0][volfracIdx(nmat, k)], k, gnl[k], 0.0 );
 
       // Right state
       apr[k] = u[1][ncomp+pressureIdx(nmat, k)];
@@ -131,7 +131,7 @@ struct HLLDMultiMat {
       gnr.push_back(tk::rotateTensor(gr[k], fn));
       auto amatr = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], apr[k],
-        u[1][volfracIdx(nmat, k)], k, gnr[k] );
+        u[1][volfracIdx(nmat, k)], k, gnr[k], 0.0 );
 
       // Mixture speed of sound
       acl += u[0][densityIdx(nmat, k)] * amatl * amatl;
@@ -246,7 +246,7 @@ struct HLLDMultiMat {
       rholStar += uStar[0][densityIdx(nmat, k)];
 
       auto amatl = mat_blk[k].compute< EOS::shearspeed >(
-        uStar[0][densityIdx(nmat, k)], uStar[0][volfracIdx(nmat, k)], k );
+        uStar[0][densityIdx(nmat, k)], uStar[0][volfracIdx(nmat, k)], k, 0.0 );
 
       // Right
       gnrStar[k] = gnr[k];
@@ -265,7 +265,7 @@ struct HLLDMultiMat {
       rhorStar += uStar[1][densityIdx(nmat, k)];
 
       auto amatr = mat_blk[k].compute< EOS::shearspeed >(
-        uStar[1][densityIdx(nmat, k)], uStar[1][volfracIdx(nmat, k)], k );
+        uStar[1][densityIdx(nmat, k)], uStar[1][volfracIdx(nmat, k)], 0.0, k );
 
       // Mixture speed of sound
       acsl += uStar[0][densityIdx(nmat, k)] * amatl * amatl;

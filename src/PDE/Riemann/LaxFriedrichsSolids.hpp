@@ -90,7 +90,7 @@ struct LaxFriedrichsSolids {
       // rotate deformation gradient tensor for speed of sound in normal dir
       gn_l = tk::rotateTensor(g_l[k], fn);
       am_l[k] = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, gn_l );
+        u[0][densityIdx(nmat, k)], pml[k], al_l[k], k, gn_l, 0.0 );
 
       // Right state
       al_r[k] = u[1][volfracIdx(nmat, k)];
@@ -109,7 +109,7 @@ struct LaxFriedrichsSolids {
       // rotate deformation gradient tensor for speed of sound in normal dir
       gn_r = tk::rotateTensor(g_r[k], fn);
       am_r[k] = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, gn_r );
+        u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k, gn_r, 0.0 );
     }
 
     // Mixture speed of sound

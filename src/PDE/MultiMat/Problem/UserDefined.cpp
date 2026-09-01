@@ -18,6 +18,7 @@
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "FieldOutput.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
+#include "MultiMat/MiscMultiMatFns.hpp"
 
 namespace inciter {
 
@@ -46,6 +47,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
   auto nmat = g_inputdeck.get< eq, tag::nmat >();
   auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nsld = numSolids(nmat,solidx);
 
   // Set background ICs
   const auto& ic = g_inputdeck.get< tag::ic >();
@@ -91,10 +93,14 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
     else {
       g = {{}};
     }
+    tk::real damage = 0.0;
+    // damage variable for solids
+    if (solidx[k] > 0)
+      s[damageIdx(nmat,nsld,solidx[k])] = 0.0;
     // total specific energy
     s[energyIdx(nmat,k)] =
       mat_blk[k].compute< EOS::totalenergy >(s[volfracIdx(nmat,k)]*rhok, u, v,
-      w, s[volfracIdx(nmat,k)]*bgpreic, s[volfracIdx(nmat,k)], g);
+      w, s[volfracIdx(nmat,k)]*bgpreic, s[volfracIdx(nmat,k)], g, damage);
     // bulk density
     rb += s[densityIdx(nmat,k)];
   }

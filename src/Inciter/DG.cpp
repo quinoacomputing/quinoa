@@ -1600,6 +1600,10 @@ DG::solve( tk::real newdt )
       }
     }
 
+  // Evolve damage
+  g_dgpde[d->MeshId()].evolveDamage( d->Dt(), myGhosts()->m_geoElem, m_u,
+      m_p, myGhosts()->m_fd.Esuel().size()/4 );
+
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof, m_interface );

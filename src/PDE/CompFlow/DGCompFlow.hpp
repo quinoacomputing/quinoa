@@ -281,6 +281,14 @@ class CompFlow {
                              tk::Fields&,
                              std::size_t ) const {}
 
+    //! Evolve damage variable for solids
+    //! \details Evolve damage variable for solids. Unused here.
+    void evolveDamage( tk::real,
+                       const tk::Fields&,
+                       tk::Fields&,
+                       tk::Fields&,
+                       std::size_t ) const {}
+
     //! Reconstruct second-order solution from first-order using least-squares
 //    //! \param[in] t Physical time
 //    //! \param[in] geoFace Face geometry array

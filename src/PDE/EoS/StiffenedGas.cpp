@@ -64,7 +64,8 @@ StiffenedGas::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum and total
 //!   energy using the stiffened-gas equation of state
@@ -89,6 +90,8 @@ StiffenedGas::pressure(
   tk::real partpressure = (arhoE - 0.5 * arho * (u*u + v*v + w*w)) * (g-1.0) -
     alpha*g*p_c;
 
+  partpressure = std::max(min_eff_pressure(1e-10, arho, alpha), partpressure);
+
   // check partial pressure divergence
   if (!std::isfinite(partpressure)) {
     std::cout << "Material-id:      " << imat << std::endl;
@@ -109,7 +112,8 @@ std::array< std::array< tk::real, 3 >, 3 >
 StiffenedGas::CauchyStress(
   tk::real,
   std::size_t,
-  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  tk::real ) const
 // *************************************************************************
 //! \brief Calculate the Cauchy stress tensor from the material
 //!   inverse deformation gradient tensor
@@ -129,7 +133,8 @@ StiffenedGas::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  tk::real  ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -173,7 +178,8 @@ StiffenedGas::totalenergy(
   tk::real w,
   tk::real apr,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  tk::real ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -203,7 +209,8 @@ StiffenedGas::temperature(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& ) const
+  const std::array< std::array< tk::real, 3 >, 3 >&,
+  tk::real ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy

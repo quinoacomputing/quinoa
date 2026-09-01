@@ -224,6 +224,14 @@ class DGPDE {
                              std::size_t nielem ) const
     { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
 
+    //! Public interface for function to evolve damage in solids
+    void evolveDamage( tk::real dt,
+                       const tk::Fields& geoElem,
+                       tk::Fields& U,
+                       tk::Fields& P,
+                       std::size_t nelem ) const
+    { self->evolveDamage(dt, geoElem, U, P, nelem); }
+
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
@@ -485,6 +493,11 @@ class DGPDE {
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
+      virtual void evolveDamage( tk::real,
+                                 const tk::Fields&,
+                                 tk::Fields&,
+                                 tk::Fields&,
+                                 std::size_t ) const = 0;
       virtual void reconstruct( tk::real,
                                 const tk::Fields&,
                                 const tk::Fields&,
@@ -677,6 +690,12 @@ class DGPDE {
                                tk::Fields& prim,
                                std::size_t nielem )
       const override { data.cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
+      void evolveDamage( tk::real dt,
+                         const tk::Fields& geoElem,
+                         tk::Fields& U,
+                         tk::Fields& P,
+                         std::size_t nelem)
+      const override { data.evolveDamage( dt, geoElem, U, P, nelem); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,

@@ -90,7 +90,8 @@ LinearMieGruneisen::pressure(
   tk::real arhoE,
   tk::real alpha,
   std::size_t /*imat*/,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
 //!   and the inverse deformation gradient tensor using the LinearMieGruneisen
@@ -115,7 +116,7 @@ LinearMieGruneisen::pressure(
 {
   // obtain elastic contribution to energy
   tk::real eps2;
-  const auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  const auto arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
   // obtain hydrodynamic internal energy
   const auto arhoEi = arhoE - arhoEe - 0.5*arho*(u*u + v*v + w*w);
 
@@ -146,7 +147,8 @@ std::array< std::array< tk::real, 3 >, 3 >
 LinearMieGruneisen::CauchyStress(
   tk::real alpha,
   std::size_t /*imat*/,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate the elastic Cauchy stress tensor from the material
 //!   inverse deformation gradient tensor using the LinearMieGruneisen EOS
@@ -165,7 +167,7 @@ LinearMieGruneisen::CauchyStress(
 
   // obtain elastic contribution to energy
   tk::real eps2;
-  elasticEnergy(defgrad, eps2);
+  elasticEnergy(defgrad, eps2, damage);
 
   // p_mean
   auto pmean = - alpha * m_mu * eps2;
@@ -202,7 +204,8 @@ LinearMieGruneisen::soundspeed(
   tk::real apr,
   tk::real alpha,
   std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/ ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/,
+  tk::real damage ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -260,7 +263,8 @@ tk::real
 LinearMieGruneisen::shearspeed(
   tk::real arho,
   tk::real alpha,
-  std::size_t imat ) const
+  std::size_t imat,
+  tk::real damage ) const
 // *************************************************************************
 //! Calculate speed of sound from the material density and material pressure
 //! \param[in] arho Material partial density (alpha_k * rho_k)
@@ -300,7 +304,8 @@ LinearMieGruneisen::totalenergy(
   tk::real w,
   tk::real apr,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate material specific total energy from the material
 //!   density, momentum and material pressure
@@ -326,7 +331,7 @@ LinearMieGruneisen::totalenergy(
     0.5 * arho * (u*u + v*v + w*w);
   // obtain elastic contribution to energy
   tk::real eps2;
-  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  tk::real arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
 
   return (arhoEh + arhoEe);
 }
@@ -339,7 +344,8 @@ LinearMieGruneisen::temperature(
   tk::real w,
   tk::real arhoE,
   tk::real alpha,
-  const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
+  const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate material temperature from the material density, and
 //!   material specific total energy
@@ -359,7 +365,7 @@ LinearMieGruneisen::temperature(
 {
   // obtain elastic contribution to energy
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
   // obtain hydrodynamic internal energy
   auto arhoEi = arhoE - arhoEe - 0.5*arho*(u*u + v*v + w*w);
 
@@ -400,7 +406,8 @@ LinearMieGruneisen::min_eff_pressure(
 tk::real
 LinearMieGruneisen::elasticEnergy(
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
-  tk::real& eps2 ) const
+  tk::real& eps2,
+  tk::real damage ) const
 // *************************************************************************
 //! \brief Calculate elastic contribution to material energy from the material
 //!   density, and deformation gradient tensor

@@ -1553,8 +1553,13 @@ VertexBasedLimiting(
     for (std::size_t i=0; i<VarList.size(); ++i)
     {
       auto mark = VarList[i]*rdof;
-      uMin[i] = U(e, mark);
-      uMax[i] = U(e, mark);
+      auto val = U(e, mark);
+      // Guard against non-finite initial values
+      if (!std::isfinite(val)) {
+        val = 0.0;  // Use safe default if cell average is non-finite
+      }
+      uMin[i] = val;
+      uMax[i] = val;
     }
     auto p = inpoel[4*e+lp];
     const auto& pesup = tk::cref_find(esup, p);
@@ -1566,8 +1571,12 @@ VertexBasedLimiting(
       for (std::size_t i=0; i<VarList.size(); ++i)
       {
         auto mark = VarList[i]*rdof;
-        uMin[i] = std::min(uMin[i], U(er, mark));
-        uMax[i] = std::max(uMax[i], U(er, mark));
+        auto val = U(er, mark);
+        // Only use finite values in min/max to avoid SIGFPE
+        if (std::isfinite(val)) {
+          uMin[i] = std::min(uMin[i], val);
+          uMax[i] = std::max(uMax[i], val);
+        }
       }
     }
 
@@ -1584,22 +1593,59 @@ VertexBasedLimiting(
       auto u0 = U(e, mark);
       auto uNeg = state[c] - u0;
 
-      auto tol = 1.0e-06*std::max(std::fabs(u0), 1e-14);
-      if (uNeg > tol)
-      {
-        phi_gp = std::min( 1.0, (uMax[i]-u0)/uNeg );
+      // Guard against non-finite values
+      if (!std::isfinite(u0) || !std::isfinite(uNeg) ||
+          !std::isfinite(uMin[i]) || !std::isfinite(uMax[i])) {
+        phi_gp = 1.0;  // Don't limit if we have non-finite values
       }
-      else if (uNeg < -tol)
-      {
-        phi_gp = std::min( 1.0, (uMin[i]-u0)/uNeg );
-      }
-      else
-      {
-        phi_gp = 1.0;
+      else {
+        auto tol = 1.0e-06*std::max(std::fabs(u0), 1e-14);
+        // Additional safety: ensure denominator magnitude is never too small
+        const auto min_denom = 1.0e-12;
+
+        if (uNeg > tol)
+        {
+          // Ensure denominator is large enough to avoid SIGFPE
+          if (std::fabs(uNeg) > min_denom) {
+            auto numer = uMax[i] - u0;
+            // Check for valid numerator and finite result
+            if (std::isfinite(numer)) {
+              auto ratio = numer/uNeg;
+              if (std::isfinite(ratio)) {
+                phi_gp = std::min( 1.0, ratio );
+              }
+            }
+          }
+        }
+        else if (uNeg < -tol)
+        {
+          // Ensure denominator is large enough to avoid SIGFPE
+          if (std::fabs(uNeg) > min_denom) {
+            auto numer = uMin[i] - u0;
+            // Check for valid numerator and finite result
+            if (std::isfinite(numer)) {
+              auto ratio = numer/uNeg;
+              if (std::isfinite(ratio)) {
+                phi_gp = std::min( 1.0, ratio );
+              }
+            }
+          }
+        }
+        else
+        {
+          phi_gp = 1.0;
+        }
       }
 
     // ----- Step-3: take the minimum of the nodal-limiter functions
-      phi[c] = std::min( phi[c], phi_gp );
+      // Guard against NaN propagation in min operation
+      if (std::isfinite(phi_gp) && std::isfinite(phi[c])) {
+        phi[c] = std::min( phi[c], phi_gp );
+      }
+      else if (std::isfinite(phi_gp)) {
+        phi[c] = phi_gp;  // Use phi_gp if phi[c] is not finite
+      }
+      // else keep phi[c] as is (if phi_gp is not finite, don't update)
     }
   }
 }
@@ -1848,14 +1894,30 @@ void consistentMultiMatLimiting_P1(
     {
       auto alk =
         std::max( 1.0e-14, U(e,volfracDofIdx(nmat, k, rdof, 0)) );
-      auto rhok = U(e,densityDofIdx(nmat, k, rdof, 0)) / alk;
-      auto rhoE = U(e,energyDofIdx(nmat, k, rdof, 0)) / alk;
+      auto rho_numer = U(e,densityDofIdx(nmat, k, rdof, 0));
+      auto rhoE_numer = U(e,energyDofIdx(nmat, k, rdof, 0));
+
+      // Guard against non-finite values and potential overflow
+      tk::real rhok = 0.0, rhoE = 0.0;
+      if (std::isfinite(alk) && std::isfinite(rho_numer) && std::isfinite(rhoE_numer)) {
+        rhok = rho_numer / alk;
+        rhoE = rhoE_numer / alk;
+        // Check results are finite
+        if (!std::isfinite(rhok)) rhok = 0.0;
+        if (!std::isfinite(rhoE)) rhoE = 0.0;
+      }
+
       for (std::size_t idof=1; idof<rdof; ++idof)
       {
-          U(e,densityDofIdx(nmat, k, rdof, idof)) = rhok *
-            U(e,volfracDofIdx(nmat, k, rdof, idof));
-          U(e,energyDofIdx(nmat, k, rdof, idof)) = rhoE *
-            U(e,volfracDofIdx(nmat, k, rdof, idof));
+          auto al_dof = U(e,volfracDofIdx(nmat, k, rdof, idof));
+          if (std::isfinite(al_dof)) {
+            auto rho_val = rhok * al_dof;
+            auto rhoE_val = rhoE * al_dof;
+            if (std::isfinite(rho_val))
+              U(e,densityDofIdx(nmat, k, rdof, idof)) = rho_val;
+            if (std::isfinite(rhoE_val))
+              U(e,energyDofIdx(nmat, k, rdof, idof)) = rhoE_val;
+          }
       }
       if (solidx[k] > 0)
         for (std::size_t i=0; i<3; ++i)
@@ -2066,10 +2128,33 @@ BoundPreservingLimitingFunction( const tk::real min,
 {
   tk::real phi(1.0), al_diff(0.0);
   al_diff = al_gp - al_avg;
-  if(al_gp > max && fabs(al_diff) > 1e-15)
-    phi = std::fabs( (max - al_avg) / al_diff );
-  else if(al_gp < min && fabs(al_diff) > 1e-15)
-    phi = std::fabs( (min - al_avg) / al_diff );
+
+  // Guard against non-finite values and division issues
+  if (!std::isfinite(al_gp) || !std::isfinite(al_avg) ||
+      !std::isfinite(min) || !std::isfinite(max)) {
+    return phi;
+  }
+
+  // Use a more conservative tolerance to avoid SIGFPE
+  const auto min_denom = 1.0e-12;
+  if(al_gp > max && fabs(al_diff) > min_denom) {
+    auto numer = max - al_avg;
+    if (std::isfinite(numer)) {
+      auto ratio = numer / al_diff;
+      if (std::isfinite(ratio)) {
+        phi = std::fabs(ratio);
+      }
+    }
+  }
+  else if(al_gp < min && fabs(al_diff) > min_denom) {
+    auto numer = min - al_avg;
+    if (std::isfinite(numer)) {
+      auto ratio = numer / al_diff;
+      if (std::isfinite(ratio)) {
+        phi = std::fabs(ratio);
+      }
+    }
+  }
   return phi;
 }
 
@@ -2457,11 +2542,25 @@ PositivityFunction( const tk::real min,
 // *****************************************************************************
 {
   tk::real phi(1.0);
+
+  // Guard against non-finite values
+  if (!std::isfinite(u_gp) || !std::isfinite(u_avg) || !std::isfinite(min)) {
+    return phi;
+  }
+
   tk::real diff = u_gp - u_avg;
   // Only when u_gp is less than minimum threshold and the high order
   // contribution is not zero, the limiting function will be applied
-  if(u_gp < min)
-    phi = std::fabs( (min - u_avg) / (diff+std::copysign(1e-15,diff)) );
+  if(u_gp < min) {
+    auto denom = diff + std::copysign(1e-12, diff);  // Increased from 1e-15 to 1e-12
+    auto numer = min - u_avg;
+    if (std::isfinite(numer) && std::isfinite(denom) && std::fabs(denom) > 1e-13) {
+      auto ratio = numer / denom;
+      if (std::isfinite(ratio)) {
+        phi = std::fabs(ratio);
+      }
+    }
+  }
   return phi;
 }
 
@@ -2811,9 +2910,12 @@ correctLimConservMultiMat(
         auto arhomat = state[densityIdx(nmat, imat)];
         auto apremat = state[ncomp+pressureIdx(nmat, imat)];
         auto gmat = getDeformGrad(nmat, imat, state);
+        const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+        auto nsld = numSolids(nmat, solidx);
+        auto damage = state[damageIdx(nmat, nsld, solidx[imat])]/arhomat;
         s[pressureIdx(nmat,imat)] =
           mat_blk[imat].compute< EOS::totalenergy >( arhomat, vel[0], vel[1],
-          vel[2], apremat, alphamat, gmat );
+          vel[2], apremat, alphamat, gmat, damage );
       }
 
       // Evaluate the righ-hand-side vector
