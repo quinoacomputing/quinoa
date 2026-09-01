@@ -38,7 +38,7 @@ namespace inciter {
 //!   bndSurfInt_constP call handles exactly one boundary condition, so the
 //!   branch is uniform across every face and quadrature point in the launch
 //!   and costs no divergence.
-enum class BCKind : std::uint8_t { Symmetry, Extrapolate };
+enum class BCKind : std::uint8_t { Symmetry, Extrapolate, NoSlipWall };
 
 //! Extrapolate boundary state: the ghost state equals the internal state
 template< class StateT >
@@ -48,35 +48,25 @@ extrapolateDev( std::size_t nstate, const StateT& ul, StateT& ur )
   for (std::size_t i=0; i<nstate; ++i) ur[i] = ul[i];
 }
 
-//! Symmetry boundary state: velocity reflected about the face normal
+//! Shared wall-type boundary state body
+//! \details symmetry and noslipwall differ only in how the ghost velocity is
+//!   formed; everything else, including the solid reflection, is identical in
+//!   the host originals. The ghost velocity is passed in so that one body
+//!   serves both and cannot drift.
 template< class FnT, class SolidxT, class StateT >
 KOKKOS_INLINE_FUNCTION void
-symmetryDev( std::size_t ncomp,
-             std::size_t nmat,
-             std::size_t nstate,
-             const SolidxT& solidx,
-             const FnT& fn,
-             const StateT& ul,
-             StateT& ur )
+wallStateDev( std::size_t ncomp,
+              std::size_t nmat,
+              std::size_t nstate,
+              const SolidxT& solidx,
+              const FnT& fn,
+              const StateT& ul,
+              StateT& ur,
+              tk::real rho,
+              tk::real v1r,
+              tk::real v2r,
+              tk::real v3r )
 {
-  tk::real rho(0.0);
-  for (std::size_t k=0; k<nmat; ++k)
-    rho += ul[densityIdx(nmat, k)];
-
-  // host does `auto ur = ul`; copy explicitly into the caller's buffer
-  for (std::size_t i=0; i<nstate; ++i) ur[i] = ul[i];
-
-  // Internal cell velocity components
-  auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
-  auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
-  auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
-  // Normal component of velocity
-  auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
-  // Ghost state velocity components
-  auto v1r = v1l - 2.0*vnl*fn[0];
-  auto v2r = v2l - 2.0*vnl*fn[1];
-  auto v3r = v3l - 2.0*vnl*fn[2];
-
   // Boundary condition
   for (std::size_t k=0; k<nmat; ++k)
   {
@@ -124,6 +114,69 @@ symmetryDev( std::size_t ncomp,
     ur[ncomp+pressureIdx(nmat, k)] = ul[ncomp+pressureIdx(nmat, k)];
 }
 
+//! Symmetry boundary state: velocity reflected about the face normal
+template< class FnT, class SolidxT, class StateT >
+KOKKOS_INLINE_FUNCTION void
+symmetryDev( std::size_t ncomp,
+             std::size_t nmat,
+             std::size_t nstate,
+             const SolidxT& solidx,
+             const FnT& fn,
+             const StateT& ul,
+             StateT& ur )
+{
+  tk::real rho(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    rho += ul[densityIdx(nmat, k)];
+
+  // host does `auto ur = ul`; copy explicitly into the caller's buffer
+  for (std::size_t i=0; i<nstate; ++i) ur[i] = ul[i];
+
+  // Internal cell velocity components
+  auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
+  auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
+  auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
+  // Normal component of velocity
+  auto vnl = v1l*fn[0] + v2l*fn[1] + v3l*fn[2];
+  // Ghost state velocity components
+  auto v1r = v1l - 2.0*vnl*fn[0];
+  auto v2r = v2l - 2.0*vnl*fn[1];
+  auto v3r = v3l - 2.0*vnl*fn[2];
+
+  wallStateDev( ncomp, nmat, nstate, solidx, fn, ul, ur, rho, v1r, v2r, v3r );
+}
+
+//! No-slip wall boundary state: velocity negated
+//! \details Identical to symmetry apart from the ghost velocity, matching the
+//!   host noslipwall in BCFunctions.hpp.
+template< class FnT, class SolidxT, class StateT >
+KOKKOS_INLINE_FUNCTION void
+noslipwallDev( std::size_t ncomp,
+               std::size_t nmat,
+               std::size_t nstate,
+               const SolidxT& solidx,
+               const FnT& fn,
+               const StateT& ul,
+               StateT& ur )
+{
+  tk::real rho(0.0);
+  for (std::size_t k=0; k<nmat; ++k)
+    rho += ul[densityIdx(nmat, k)];
+
+  for (std::size_t i=0; i<nstate; ++i) ur[i] = ul[i];
+
+  // Internal cell velocity components
+  auto v1l = ul[ncomp+velocityIdx(nmat, 0)];
+  auto v2l = ul[ncomp+velocityIdx(nmat, 1)];
+  auto v3l = ul[ncomp+velocityIdx(nmat, 2)];
+  // Ghost state velocity components
+  auto v1r = -v1l;
+  auto v2r = -v2l;
+  auto v3r = -v3l;
+
+  wallStateDev( ncomp, nmat, nstate, solidx, fn, ul, ur, rho, v1r, v2r, v3r );
+}
+
 //! Dispatch to the boundary state function selected by kind
 template< class FnT, class SolidxT, class StateT >
 KOKKOS_INLINE_FUNCTION void
@@ -138,6 +191,8 @@ bcStateDev( BCKind kind,
 {
   if (kind == BCKind::Symmetry)
     symmetryDev( ncomp, nmat, nstate, solidx, fn, ul, ur );
+  else if (kind == BCKind::NoSlipWall)
+    noslipwallDev( ncomp, nmat, nstate, solidx, fn, ul, ur );
   else
     extrapolateDev( nstate, ul, ur );
 }

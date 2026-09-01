@@ -1014,6 +1014,9 @@ class MultiMat {
         // function into one list, so the const-order path handles them all in
         // a single pass. Anything unsupported keeps the untouched host path.
         std::vector< std::pair< std::vector< std::size_t >, int > > bcsets;
+        // Set if any boundary condition fell through to the host path, which
+        // writes into the host riemannDeriv and so must be carried to device
+        bool hostBC = false;
         for (const auto& b : m_bc) {
           auto tgt = std::get<1>(b).target< SFnPtr >();
           int bckind = -1;
@@ -1022,29 +1025,49 @@ class MultiMat {
               bckind = static_cast< int >( inciter::BCKind::Symmetry );
             else if (*tgt == &inciter::extrapolate)
               bckind = static_cast< int >( inciter::BCKind::Extrapolate );
+            else if (*tgt == &inciter::noslipwall)
+              bckind = static_cast< int >( inciter::BCKind::NoSlipWall );
           }
           if (bckind >= 0)
             bcsets.emplace_back( std::get<0>(b), bckind );
-          else
+          else {
+            hostBC = true;
             tk::bndSurfInt( false, nmat, m_mat_blk, ndof, rdof,
               std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
               m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
               riemannDeriv, intsharp );
+          }
         }
         // R is zeroed on the host above and now carries only whatever the
         // unsupported-BC host fallback added; upload before the boundary
         // kernel, which accumulates into it on the device from here on.
         tk::uploadStaged( exec, m_dev.R, m_dev.stage_R, R.getPointer(), R.getSize(), "R_d_view" );
 
-        // riemannDeriv is written by the boundary and internal-face kernels
-        // and never read on the host in this path, so it is zeroed in place
-        // on the device rather than uploaded from a host copy.
+        // riemannDeriv is accumulated into by both the boundary and the
+        // internal-face kernels, so the device copy has to start from the host
+        // state. It is constructed zeroed each call, so when every boundary
+        // condition ran on the device a device-side memset is equivalent and
+        // avoids a ~5 MB flatten and PCIe transfer per rhs() call. When
+        // something fell through to the host path, the host copy carries its
+        // contributions and must be uploaded instead: zeroing would discard
+        // them. Either branch sizes the view first, since nothing else
+        // allocates it any more.
         {
           const std::size_t rd_nrow = riemannDeriv.size();
           const std::size_t rd_ncol = rd_nrow ? riemannDeriv[0].size() : 0;
-          tk::ensureDeviceCapacity( m_dev.riemannDeriv, "riemannDeriv_d_view",
-                                    rd_nrow*rd_ncol );
-          Kokkos::deep_copy( exec, m_dev.riemannDeriv, 0.0 );
+          const std::size_t rd_size = rd_nrow*rd_ncol;
+          if (hostBC) {
+            std::vector< tk::real > rd_flat( rd_size );
+            for (std::size_t row=0; row<rd_nrow; ++row)
+              for (std::size_t col=0; col<rd_ncol; ++col)
+                rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
+            tk::uploadStaged( exec, m_dev.riemannDeriv, m_dev.stage_rd,
+                              rd_flat.data(), rd_size, "riemannDeriv_d_view" );
+          } else {
+            tk::ensureDeviceCapacity( m_dev.riemannDeriv,
+                                      "riemannDeriv_d_view", rd_size );
+            Kokkos::deep_copy( exec, m_dev.riemannDeriv, 0.0 );
+          }
         }
 
         if (!bcsets.empty())
