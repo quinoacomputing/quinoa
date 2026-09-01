@@ -176,8 +176,8 @@ NeoHookeanSolid::CauchyStress(
   tk::real eps2;
   elasticEnergy(defgrad, eps2, damage);
 
-  // p_mean
-  auto pmean = - alpha * std::max(1.0e-06, (1.0-damage)) * m_mu * eps2;
+  // p_mean (no damage scaling - bulk compressibility unaffected by damage)
+  auto pmean = - alpha * m_mu * eps2;
 
   // Volumetric component of Cauchy stress tensor
   asig[0][0] = -pmean;
