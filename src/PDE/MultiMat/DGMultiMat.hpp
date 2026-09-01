@@ -1031,14 +1031,26 @@ class MultiMat {
               m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
               riemannDeriv, intsharp );
         }
+        // R is zeroed on the host above and now carries only whatever the
+        // unsupported-BC host fallback added; upload before the boundary
+        // kernel, which accumulates into it on the device from here on.
+        tk::uploadStaged( exec, m_dev.R, m_dev.stage_R, R.getPointer(), R.getSize(), "R_d_view" );
+
+        // riemannDeriv is written by the boundary and internal-face kernels
+        // and never read on the host in this path, so it is zeroed in place
+        // on the device rather than uploaded from a host copy.
+        {
+          const std::size_t rd_nrow = riemannDeriv.size();
+          const std::size_t rd_ncol = rd_nrow ? riemannDeriv[0].size() : 0;
+          tk::ensureDeviceCapacity( m_dev.riemannDeriv, "riemannDeriv_d_view",
+                                    rd_nrow*rd_ncol );
+          Kokkos::deep_copy( exec, m_dev.riemannDeriv, 0.0 );
+        }
+
         if (!bcsets.empty())
           tk::bndSurfIntMultiMat_constP( nmat, m_mat_blk, ndof, rdof,
             bcsets, fd, geoFace, geoElem, inpoel, coord, t,
-            U, P, W, R, riemannDeriv, intsharp );
-
-        // R holds the boundary surface contributions; upload before the kernel.
-        // riemannDeriv is uploaded inside surfInt_constP.
-        tk::uploadStaged( exec, m_dev.R, m_dev.stage_R, R.getPointer(), R.getSize(), "R_d_view" );
+            U, P, W, R, riemannDeriv, intsharp, &m_dev, true );
 
         // compute internal surface flux integrals on device. Also performs the
         // riemannDeriv /= geoElem(e,0) division, so it stays device resident.

@@ -1110,15 +1110,8 @@ surfInt_constP(
   if (ensureDeviceCapacity( dv.eos, "surf_eos_d_view", eos_bytes ))
     Kokkos::deep_copy( dv.eos, eos_h );
 
-  // riemannDeriv arrives holding the boundary-face contributions computed on
-  // the host. Flatten and upload so the kernel adds internal faces on top.
-  const std::size_t rd_size = rd_nrow*rd_ncol;
-  std::vector< real > rd_flat( rd_size );
-  for (std::size_t row=0; row<rd_nrow; ++row)
-    for (std::size_t col=0; col<rd_ncol; ++col)
-      rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
-  uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size,
-                "surf_rd_d_view" );
+  // riemannDeriv is zeroed on the device by rhs() and accumulated into by the
+  // boundary kernel before this one runs, so there is nothing to upload here.
 
   // Quadrature in device storage, kept in the closure as for the volume
   // kernels: the access is a pure broadcast across the warp.

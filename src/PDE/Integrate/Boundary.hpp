@@ -16,6 +16,8 @@
 #define Boundary_h
 
 #include "Basis.hpp"
+#include "Kokkos_Core.hpp"
+#include "KokkosDevice.hpp"
 #include "Surface.hpp"
 #include "Fields.hpp"
 #include "FaceData.hpp"
@@ -91,6 +93,10 @@ bndSurfInt_constP(
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp=0 );
 
+// Persistent device-resident scratch for bndSurfIntMultiMat_constP
+// See tk::KokkosDeviceViews (src/PDE/KokkosDevice.hpp) for more info
+using BndSurfIntDeviceViews = KokkosDeviceViews;
+
 //! \brief Compute boundary surface flux integrals for const-order multi-material
 //!   DG (not p-adaptive)
 void
@@ -111,7 +117,8 @@ bndSurfIntMultiMat_constP(
   const Fields& W,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
-  int intsharp=0 );
+  int intsharp=0,
+  BndSurfIntDeviceViews* dev=nullptr, bool prestaged=false );
 
 //! Compute boundary surface flux integrals for a given boundary type for FV
 void

@@ -85,6 +85,11 @@ namespace tk {
                 // Face data for the surfInt_constP
                 Kokkos::View< int*, memory_space > esuf;
                 Kokkos::View< std::size_t*, memory_space > inpofa;
+                // Flattened boundary-face list and the BC kind for each,
+                // rebuilt every call by bndSurfIntMultiMat_constP. Small, so
+                // uploaded unconditionally rather than residency-checked.
+                Kokkos::View< std::size_t*, memory_space > bfaces;
+                Kokkos::View< int*, memory_space > bfkind;
                 Kokkos::View< real*, memory_space > geoFace;
 
 		// Per-call
