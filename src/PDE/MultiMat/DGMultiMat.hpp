@@ -43,6 +43,7 @@
 #include "Problem/BoxInitialization.hpp"
 #include "PrefIndicator.hpp"
 #include "MultiMat/BCFunctions.hpp"
+#include "MultiMat/BCFunctionsDev.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
 
@@ -999,11 +1000,36 @@ class MultiMat {
         // they must precede the device internal-face kernel: R and riemannDeriv
         // are uploaded with those contributions already in them, and the kernel
         // atomically adds the internal faces on top.
-        for (const auto& b : m_bc)
-          tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
-            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-            m_riemann, velfn, std::get<1>(b), U, P, W, R,
-            riemannDeriv, intsharp );
+        // Select the device-shaped boundary state function by comparing the
+        // stored target of the std::function against the two supported state
+        // functions. BCStateFn carries no type tag, so this is the only way to
+        // identify a boundary condition without changing the shared ConfigBC.
+        // Anything else falls through to the host path, which is unchanged.
+        using SFnPtr = tk::StateFn::result_type (*)( ncomp_t,
+          const std::vector< inciter::EOS >&, const std::vector< tk::real >&,
+          tk::real, tk::real, tk::real, tk::real,
+          const std::array< tk::real, 3 >& );
+
+        for (const auto& b : m_bc) {
+          auto tgt = std::get<1>(b).target< SFnPtr >();
+          int bckind = -1;
+          if (tgt) {
+            if (*tgt == &inciter::symmetry)
+              bckind = static_cast< int >( inciter::BCKind::Symmetry );
+            else if (*tgt == &inciter::extrapolate)
+              bckind = static_cast< int >( inciter::BCKind::Extrapolate );
+          }
+          if (bckind >= 0)
+            tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
+              std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+              m_riemann, velfn, std::get<1>(b), U, P, W, R,
+              riemannDeriv, intsharp, bckind );
+          else
+            tk::bndSurfInt( false, nmat, m_mat_blk, ndof, rdof,
+              std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+              m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
+              riemannDeriv, intsharp );
+        }
 
         // R holds the boundary surface contributions; upload before the kernel.
         // riemannDeriv is uploaded inside surfInt_constP.

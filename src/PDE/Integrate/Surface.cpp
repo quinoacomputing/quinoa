@@ -25,6 +25,7 @@
 #include "EoS/GetMatProp.hpp"
 #include "Riemann/HLLCMultiMatConstP.hpp"
 #include "Inciter/Options/Flux.hpp"
+#include "RhsAccum.hpp"
 
 namespace {
 // Accumulators used by update_rhs_fa_constP so that one templated body can write either
@@ -43,39 +44,6 @@ auto changeToView( T* object, std::size_t n ) {
   return object_view;
 }
 
-// Accumulate into R, host tk::Fields
-inline void
-rhsAccum( tk::Fields& R, std::size_t e, std::size_t /*nprop*/,
-          std::size_t idx, tk::real v )
-{
-  R(e,idx) += v;
-}  
-
-// Accumulate into R, Kokkos::Views (device)
-KOKKOS_INLINE_FUNCTION
-void
-rhsAccum( const Kokkos::View< tk::real*, memory_space >& R, std::size_t e,
-          std::size_t nprop, std::size_t idx, tk::real v )
-{
-  Kokkos::atomic_add( &R(e*nprop + idx), v );
-}
-
-// Accumulate into riemannDeriv, host vector of vectors
-inline void
-rdAccum( std::vector< std::vector< tk::real > >& rd, std::size_t row,
-         std::size_t col, std::size_t /*ncol*/, tk::real v )
-{
-  rd[row][col] += v;
-}
-
-// Accumulate into riemannDeriv, device view (atomic)
-KOKKOS_INLINE_FUNCTION
-void
-rdAccum( const Kokkos::View< tk::real*, memory_space >& rd, std::size_t row,
-         std::size_t col, std::size_t ncol, tk::real v )
-{
-  Kokkos::atomic_add( &rd(row*ncol + col), v );
-}
 }//namespace
 
 namespace inciter {

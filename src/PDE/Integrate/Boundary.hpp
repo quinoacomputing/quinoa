@@ -89,7 +89,8 @@ bndSurfInt_constP(
   const Fields& W,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
-  int intsharp=0 );
+  int intsharp=0,
+  int bckind=0 );
 
 //! Compute boundary surface flux integrals for a given boundary type for FV
 void
