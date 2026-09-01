@@ -116,9 +116,9 @@ NeoHookeanSolid::pressure(
 //!   NeoHookeanSolid EoS
 // *************************************************************************
 {
-  // obtain elastic contribution to energy
+  // obtain elastic contribution to energy (UNDAMAGED for energy partitioning)
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, 0.0);  // Use 0.0 damage for partitioning
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
@@ -678,9 +678,9 @@ NeoHookeanSolid::temperature(
 //! \return Material temperature using the NeoHookeanSolid EoS
 // *************************************************************************
 {
-  // obtain elastic contribution to energy
+  // obtain elastic contribution to energy (UNDAMAGED for energy partitioning)
   tk::real eps2;
-  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, damage);
+  auto arhoEe = alpha*elasticEnergy(defgrad, eps2, 0.0);  // Use 0.0 damage for partitioning
   // obtain hydro contribution to energy
   auto arhoEh = arhoE - arhoEe;
 
