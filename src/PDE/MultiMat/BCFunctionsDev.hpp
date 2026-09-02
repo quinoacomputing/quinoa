@@ -40,6 +40,29 @@ namespace inciter {
 //!   and costs no divergence.
 enum class BCKind : std::uint8_t { Symmetry, Extrapolate, NoSlipWall };
 
+//! Whether a boundary state function needs EOS::density / EOS::totalenergy
+//! \details Symmetry, Extrapolate and NoSlipWall derive the ghost state
+//!   entirely from the internal state, so they need neither. The host inlet,
+//!   farfield and back_pressure state functions in BCFunctions.hpp DO call
+//!   compute< EOS::density > and compute< EOS::totalenergy >.
+//!
+//!   This deliberately returns true for any BCKind not listed below, so a
+//!   newly added kind is treated as needing density until someone states
+//!   otherwise. That is the fail-safe direction: the cost of a wrong "true" is
+//!   that the boundary condition runs on the host, whereas the cost of a wrong
+//!   "false" is a device kernel silently producing NaN for a material whose
+//!   density() is host-only (currently JWL). Do not add a default case.
+KOKKOS_INLINE_FUNCTION bool bcKindNeedsDensity( BCKind kind )
+{
+  switch (kind) {
+    case BCKind::Symmetry:
+    case BCKind::Extrapolate:
+    case BCKind::NoSlipWall:
+      return false;
+  }
+  return true;
+}
+
 //! Extrapolate boundary state: the ghost state equals the internal state
 template< class StateT >
 KOKKOS_INLINE_FUNCTION void

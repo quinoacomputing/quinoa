@@ -52,36 +52,6 @@ LinearMieGruneisen::LinearMieGruneisen(
 { }
 
 tk::real
-LinearMieGruneisen::density(
-  tk::real pr,
-  tk::real temp ) const
-// *************************************************************************
-//! \brief Calculate density from the material pressure and temperature
-//!   using the LinearMieGruneisen equation of state
-//! \param[in] pr Material pressure
-//! \param[in] temp Material temperature
-//! \return Material density calculated using the LinearMieGruneisen EoS
-// *************************************************************************
-{
-  auto rho = m_rho0;
-  const std::size_t maxiter = 50;
-  const tk::real tol = 1.0e-10;
-
-  for (std::size_t iter=0; iter<maxiter; ++iter) {
-    const auto p = hugoniotPressure(rho) + gruneisen(rho)*rho*m_cv*temp;
-    const auto dpdrho = dHugoniotPressureDrho(rho) +
-      (gruneisen(rho) + rho*dGruneisenDrho(rho))*m_cv*temp;
-    const auto rhoold = rho;
-    const auto delta = (p - pr)/dpdrho;
-    rho -= delta;
-    if (rho <= 0.0) rho = 0.5*rhoold;
-    if (std::abs(delta) <= tol*std::max(1.0, std::abs(rho))) break;
-  }
-
-  return rho;
-}
-
-tk::real
 LinearMieGruneisen::pressure(
   tk::real arho,
   tk::real u,

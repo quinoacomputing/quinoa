@@ -59,8 +59,35 @@ class JWL {
     void setRho0(tk::real) {}
 
     //! Calculate density from the material pressure and temperature
-    tk::real density( tk::real pr,
-                      tk::real temp ) const;
+    //! \details Deliberately NOT ported to the device. The host
+    //!   implementation goes through bisection(), which runs up to 1000
+    //!   iterations of PfromRT, is preceded by two unbounded bound-expansion
+    //!   while loops, and throws on non-convergence. None of that belongs in
+    //!   a boundary kernel: the iteration count would diverge badly across a
+    //!   warp and the Throw cannot exist on the device.
+    //!
+    //!   The device branch therefore returns a NaN, mirroring the stub
+    //!   pattern the other materials' soundspeed used before it was ported.
+    //!   This is unreachable in practice: checkDeviceEOSSupport() permits JWL,
+    //!   so a JWL case CAN take the device path, and any device call to
+    //!   compute< EOS::density > on a JWL material will silently produce NaN.
+    //!   Porting this, or gating JWL out of device boundary conditions, is
+    //!   outstanding work.
+    EOS_FN tk::real density( tk::real pr,
+                             tk::real temp ) const
+    {
+#if defined(__CUDA_ARCH__)
+      (void)pr; (void)temp;
+      tk::real z=0.0;
+      return z/z; //NaN
+#else
+      return densityHost( pr, temp );
+#endif
+    }
+
+    //! Host implementation of density (outofline)
+    tk::real densityHost( tk::real pr,
+                          tk::real temp ) const;
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure( tk::real arho,
@@ -172,6 +199,29 @@ class JWL {
                           tk::real arhoE,
                           tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of temperature
+    //! \details Takes defgrad as a raw C array; see the note on the device
+    //!   totalenergy overload. defgrad is unused here, as in the host version.
+    //!   std::max -> fmax. Arithmetic otherwise identical to JWL::temperature
+    //!   in JWL.cpp.
+    EOS_FN tk::real temperature( tk::real arho,
+                                 tk::real u,
+                                 tk::real v,
+                                 tk::real w,
+                                 tk::real arhoE,
+                                 tk::real alpha,
+      const tk::real /*defgrad*/[3][3] ) const
+    {
+      alpha = fmax(1e-14,alpha);
+      tk::real rho = arho/alpha;
+
+      tk::real t = ((arhoE - 0.5*arho*(u*u + v*v + w*w))/arho + m_de -
+        1.0/m_rho0*( m_a/m_r1*exp(-m_r1*m_rho0/rho)
+                   + m_b/m_r2*exp(-m_r2*m_rho0/rho) ))/m_cv;
+
+      return t;
+    }
 
     //! Compute the minimum allowed pressure
     //! \details Moved inline (from a .cpp definition) so soundspeed() below

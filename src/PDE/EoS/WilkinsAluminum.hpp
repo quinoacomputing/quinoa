@@ -81,8 +81,33 @@ class WilkinsAluminum {
     void setRho0(tk::real rho0);
 
     //! Calculate density from the material pressure and temperature
-    tk::real density( tk::real pr,
-                      tk::real temp ) const;
+    //! \details Moved inline as EOS_FN; see the note on the StiffenedGas
+    //!   equivalent. The 50-iteration Newton loop is preserved verbatim; the
+    //!   e1..e5 fit constants are class members (moved there by the soundspeed
+    //!   port) so they are visible to the device compile.
+    EOS_FN tk::real density( tk::real pr,
+                             tk::real ) const
+    {
+      tk::real rho0 = m_rho0;
+      // Quick Newton
+      tk::real rho = rho0;
+      std::size_t maxiter = 50;
+      tk::real tol = 1.0e-04;
+      tk::real err = tol + 1;
+      for (std::size_t iter=0; iter<maxiter; ++iter)
+      {
+        tk::real p = 2*e2*std::pow(rho/rho0,3.0)
+                   + e3*std::pow(rho/rho0,2.0)
+                   - e5*rho/rho0 - e4 - pr;
+        tk::real dpdrho = 6*e2*std::pow(rho/rho0,2.0)/rho0
+                        + 2*e3*rho/(rho0*rho0) - e5/rho0;
+        tk::real delta = p/dpdrho;
+        rho -= delta;
+        err = std::sqrt(std::pow(p,2.0));
+        if (err < tol) break;
+      }
+      return rho;
+    }
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure(
@@ -205,6 +230,25 @@ class WilkinsAluminum {
       tk::real arhoE,
       tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of temperature
+    //! \details Takes defgrad as a raw C array; see the note on the device
+    //!   totalenergy overload. Every parameter is unused: the host version
+    //!   returns a fixed 300.0 because temperature as a function of energy is
+    //!   not known for this EOS. Reproduced verbatim.
+    EOS_FN tk::real temperature(
+      tk::real,
+      tk::real,
+      tk::real,
+      tk::real,
+      tk::real,
+      tk::real,
+      const tk::real [3][3] ) const
+    {
+      tk::real t = 300.0;
+
+      return t;
+    }
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(

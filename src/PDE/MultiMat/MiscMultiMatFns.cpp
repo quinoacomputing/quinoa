@@ -134,6 +134,31 @@ void checkDeviceEOSSupport()
   }
 }
 
+bool anyMaterialLacksDeviceDensity()
+// *****************************************************************************
+//  Whether any configured material lacks a device-callable density()
+//! \details Reads the same input deck fields as checkDeviceEOSSupport().
+//!   JWL is the only such material at present: JWL::density goes through
+//!   bisection(), which is unsuitable for a device kernel (up to 1000
+//!   iterations, two unbounded bound-expansion loops, and a Throw on
+//!   non-convergence), so its device branch returns NaN.
+//!   Not cached: this is called once per rhs(), not per face, and caching in a
+//!   function-local static would risk latching a value read before the input
+//!   deck is fully populated.
+// *****************************************************************************
+{
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+  const auto& matprop = g_inputdeck.get< tag::material >();
+  const auto& matidxmap = g_inputdeck.get< tag::matidxmap >();
+
+  for (std::size_t k=0; k<nmat; ++k) {
+    auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get< tag::eos >();
+    if (mateos == ctr::MaterialType::JWL) return true;
+  }
+
+  return false;
+}
+
 bool
 cleanTraceMultiMat(
   tk::real t,

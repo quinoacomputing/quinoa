@@ -138,8 +138,31 @@ class LinearMieGruneisen {
     void setRho0(tk::real) {}
 
     //! Calculate density from the material pressure and temperature
-    tk::real density( tk::real pr,
-                      tk::real temp ) const;
+    //! \details Moved inline as EOS_FN; see the note on the StiffenedGas
+    //!   equivalent. The 50-iteration Newton loop is preserved verbatim apart
+    //!   from std::abs/std::max -> fabs/fmax (both are constexpr in libstdc++
+    //!   and nvcc rejects them without --expt-relaxed-constexpr). All the
+    //!   Hugoniot/Gruneisen helpers it calls are already device-callable.
+    EOS_FN tk::real density( tk::real pr,
+                             tk::real temp ) const
+    {
+      auto rho = m_rho0;
+      const std::size_t maxiter = 50;
+      const tk::real tol = 1.0e-10;
+
+      for (std::size_t iter=0; iter<maxiter; ++iter) {
+        const auto p = hugoniotPressure(rho) + gruneisen(rho)*rho*m_cv*temp;
+        const auto dpdrho = dHugoniotPressureDrho(rho) +
+          (gruneisen(rho) + rho*dGruneisenDrho(rho))*m_cv*temp;
+        const auto rhoold = rho;
+        const auto delta = (p - pr)/dpdrho;
+        rho -= delta;
+        if (rho <= 0.0) rho = 0.5*rhoold;
+        if (fabs(delta) <= tol*fmax(1.0, fabs(rho))) break;
+      }
+
+      return rho;
+    }
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure(
@@ -265,6 +288,31 @@ class LinearMieGruneisen {
       tk::real arhoE,
       tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of temperature
+    //! \details Takes defgrad as a raw C array; see the note on the device
+    //!   totalenergy overload. Arithmetic and its ordering are identical to
+    //!   LinearMieGruneisen::temperature in LinearMieGruneisen.cpp.
+    //! \warning Not bit-identical to the host version, via elasticEnergyDev.
+    EOS_FN tk::real temperature(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real arhoE,
+      tk::real alpha,
+      const tk::real defgrad[3][3] ) const
+    {
+      // obtain elastic contribution to energy
+      tk::real eps2;
+      auto arhoEe = alpha*elasticEnergyDev(defgrad, eps2);
+      // obtain hydrodynamic internal energy
+      auto arhoEi = arhoE - arhoEe - 0.5*arho*(u*u + v*v + w*w);
+
+      const auto rho = arho/alpha;
+      const auto t = (arhoEi/arho - hugoniotEnergy(rho))/m_cv;
+      return t;
+    }
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(

@@ -64,7 +64,7 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 }
 
 tk::real
-JWL::density(
+JWL::densityHost(
   tk::real pr,
   tk::real temp ) const
 // *************************************************************************

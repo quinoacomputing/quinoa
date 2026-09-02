@@ -64,26 +64,6 @@ SmallShearSolid::setRho0( tk::real rho0 )
 }
 
 tk::real
-SmallShearSolid::density(
-  tk::real pr,
-  tk::real temp ) const
-// *************************************************************************
-//! \brief Calculate density from the material pressure and temperature 
-//!   using the SmallShearSolid equation of state
-//! \param[in] pr Material pressure
-//! \param[in] temp Material temperature
-//! \return Material density calculated using the SmallShearSolid EoS
-// *************************************************************************
-{
-  tk::real g = m_gamma;
-  tk::real p_c = m_pstiff;
-  tk::real c_v = m_cv;
-
-  tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
-  return rho;
-}
-
-tk::real
 SmallShearSolid::pressure(
   tk::real arho,
   tk::real u,

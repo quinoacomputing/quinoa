@@ -60,7 +60,7 @@ ThermallyPerfectGas::ThermallyPerfectGas(
 }
 
 [[noreturn]] tk::real
-ThermallyPerfectGas::density(
+ThermallyPerfectGas::densityHost(
   tk::real ,
   tk::real ) const
 // *************************************************************************

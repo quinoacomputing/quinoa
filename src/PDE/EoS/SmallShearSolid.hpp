@@ -74,8 +74,18 @@ class SmallShearSolid {
     void setRho0(tk::real rho0);
 
     //! Calculate density from the material pressure and temperature
-    tk::real density( tk::real pr,
-                      tk::real temp ) const;
+    //! \details Moved inline as EOS_FN; see the note on the StiffenedGas
+    //!   equivalent. Takes only scalars, so no device overload is needed.
+    EOS_FN tk::real density( tk::real pr,
+                             tk::real temp ) const
+    {
+      tk::real g = m_gamma;
+      tk::real p_c = m_pstiff;
+      tk::real c_v = m_cv;
+
+      tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
+      return rho;
+    }
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure(
@@ -180,6 +190,31 @@ class SmallShearSolid {
       tk::real arhoE,
       tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of temperature
+    //! \details Takes defgrad as a raw C array; see the note on the device
+    //!   totalenergy overload. Arithmetic and its ordering are identical to
+    //!   SmallShearSolid::temperature in SmallShearSolid.cpp.
+    //! \warning Not bit-identical to the host version, via elasticEnergyDev.
+    EOS_FN tk::real temperature(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real arhoE,
+      tk::real alpha,
+      const tk::real defgrad[3][3] ) const
+    {
+      // obtain elastic contribution to energy
+      tk::real eps2;
+      auto arhoEe = alpha*elasticEnergyDev(defgrad, eps2);
+      // obtain hydro contribution to energy
+      auto arhoEh = arhoE - arhoEe;
+
+      tk::real t = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) - alpha*m_pstiff)
+                   / (arho*m_cv);
+      return t;
+    }
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(

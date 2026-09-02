@@ -143,8 +143,28 @@ class ThermallyPerfectGas {
     void setRho0(tk::real) {}
 
     //! Calculate density from the material pressure and temperature
-    [[noreturn]] tk::real density( tk::real pr,
-                      tk::real temp ) const;
+    //! \details Device branch exists only so that EOS::compute< EOS::density >
+    //!   can be instantiated for device code: compute() selects the material
+    //!   with a runtime if, so every branch must compile even though multimat
+    //!   never constructs a ThermallyPerfectGas. There is no TPG density to
+    //!   port -- the host implementation throws.
+    //!   checkDeviceEOSSupport() rejects this material on the host before any
+    //!   device kernel runs, so the NaN below should be unreachable.
+    EOS_FN tk::real density( tk::real pr,
+                             tk::real temp ) const
+    {
+#if defined(__CUDA_ARCH__)
+      (void)pr; (void)temp;
+      tk::real z=0.0;
+      return z/z; //loud NaN will yell at us if reached
+#else
+      return densityHost( pr, temp );
+#endif
+    }
+
+    //! Host implementation of density (outofline)
+    [[noreturn]] tk::real densityHost( tk::real pr,
+                          tk::real temp ) const;
 
     //! Calculate pressure from the material density, momentum and total energy
     [[noreturn]] tk::real pressure( tk::real rho,
@@ -246,6 +266,29 @@ class ThermallyPerfectGas {
                           tk::real rhoE,
                           tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of temperature: not implemented
+    //! \details Exists only so that EOS::compute< EOS::temperature > can be
+    //!   instantiated for device code; see the note on the device totalenergy
+    //!   overload. There is no TPG temperature to port -- the host version
+    //!   throws. checkDeviceEOSSupport() rejects this material on the host
+    //!   before any device kernel runs, so the NaN below should be unreachable.
+    EOS_FN tk::real temperature( tk::real rho,
+                                 tk::real u,
+                                 tk::real v,
+                                 tk::real w,
+                                 tk::real rhoE,
+                                 tk::real alpha,
+      const tk::real /*defgrad*/[3][3] ) const
+    {
+#if defined(__CUDA_ARCH__)
+      (void)rho; (void)u; (void)v; (void)w; (void)rhoE; (void)alpha;
+      tk::real z=0.0;
+      return z/z; //loud NaN will yell at us if reached
+#else
+      Throw("Direct call to TPG temperature should not occur. Use Mixture class.");
+#endif
+    }
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(

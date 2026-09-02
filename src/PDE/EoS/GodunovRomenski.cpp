@@ -44,34 +44,6 @@ GodunovRomenski::GodunovRomenski(
 { }
 
 tk::real
-GodunovRomenski::density(
-  tk::real pr,
-  tk::real ) const
-// *************************************************************************
-//! \brief Calculate density from the material pressure and temperature
-//!   using the GodunovRomenski equation of state
-//! \param[in] pr Material pressure
-//! \return Material density calculated using the cold compression pressure
-// *************************************************************************
-{
-  // Quick Newton
-  tk::real rho = m_rho0;
-  std::size_t maxiter = 50;
-  tk::real tol = 1.0e-04;
-  tk::real err = tol + 1;
-  for (std::size_t iter=0; iter<maxiter; ++iter)
-  {
-    tk::real p = pressure_coldcompr(rho) - pr;
-    auto dpdrho = DpccDrho(rho);
-    auto delta = p/dpdrho;
-    rho -= delta;
-    err = std::sqrt(std::pow(p,2.0));
-    if (err < tol) break;
-  }
-  return rho;
-}
-
-tk::real
 GodunovRomenski::pressure(
   tk::real arho,
   tk::real u,

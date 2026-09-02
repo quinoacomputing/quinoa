@@ -63,39 +63,6 @@ WilkinsAluminum::setRho0( tk::real rho0 )
 }
 
 tk::real
-WilkinsAluminum::density(
-  tk::real pr,
-  tk::real ) const
-// *************************************************************************
-//! \brief Calculate density from the material pressure and temperature
-//!   using the WilkinsAluminum equation of state
-//! \param[in] pr Material pressure
-// //! \param[in] temp Material temperature
-//! \return Material density calculated using the WilkinsAluminum EoS
-// *************************************************************************
-{
-  tk::real rho0 = m_rho0;
-  // Quick Newton
-  tk::real rho = rho0;
-  std::size_t maxiter = 50;
-  tk::real tol = 1.0e-04;
-  tk::real err = tol + 1;
-  for (std::size_t iter=0; iter<maxiter; ++iter)
-  {
-    tk::real p = 2*e2*std::pow(rho/rho0,3.0)
-               + e3*std::pow(rho/rho0,2.0)
-               - e5*rho/rho0 - e4 - pr;
-    tk::real dpdrho = 6*e2*std::pow(rho/rho0,2.0)/rho0
-                    + 2*e3*rho/(rho0*rho0) - e5/rho0;
-    tk::real delta = p/dpdrho;
-    rho -= delta;
-    err = std::sqrt(std::pow(p,2.0));
-    if (err < tol) break;
-  }
-  return rho;
-}
-
-tk::real
 WilkinsAluminum::pressure(
   tk::real arho,
   tk::real,

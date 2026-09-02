@@ -1028,6 +1028,20 @@ class MultiMat {
             else if (*tgt == &inciter::noslipwall)
               bckind = static_cast< int >( inciter::BCKind::NoSlipWall );
           }
+          // A boundary state function that needs compute< EOS::density > or
+          // compute< EOS::totalenergy > cannot run on the device if any
+          // material's density() is host-only -- JWL's device branch returns
+          // NaN, and the isfinite diagnostics are host-only, so the NaN would
+          // propagate silently. Send such boundary conditions back to the host
+          // fallback below, where JWL::densityHost works, rather than refusing
+          // the case outright: a JWL run with an inlet/farfield/back_pressure
+          // boundary works correctly today via that path and must keep working.
+          if (bckind >= 0 &&
+              inciter::bcKindNeedsDensity(
+                static_cast< inciter::BCKind >( bckind ) ) &&
+              anyMaterialLacksDeviceDensity())
+            bckind = -1;
+
           if (bckind >= 0)
             bcsets.emplace_back( std::get<0>(b), bckind );
           else {
