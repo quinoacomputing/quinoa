@@ -24,6 +24,7 @@
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "EoS/EOS.hpp"
+#include "MultiMat/BCFunctionsDev.hpp"
 
 namespace tk {
 
@@ -118,7 +119,8 @@ bndSurfIntMultiMat_constP(
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp=0,
-  BndSurfIntDeviceViews* dev=nullptr, bool prestaged=false );
+  BndSurfIntDeviceViews* dev=nullptr, bool prestaged=false,
+  const inciter::BCParamsDev& bcparams = inciter::BCParamsDev{} );
 
 //! Compute boundary surface flux integrals for a given boundary type for FV
 void

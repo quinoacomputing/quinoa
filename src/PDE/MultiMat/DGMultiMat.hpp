@@ -1027,6 +1027,12 @@ class MultiMat {
               bckind = static_cast< int >( inciter::BCKind::Extrapolate );
             else if (*tgt == &inciter::noslipwall)
               bckind = static_cast< int >( inciter::BCKind::NoSlipWall );
+            else if (*tgt == &inciter::farfield)
+              bckind = static_cast< int >( inciter::BCKind::Farfield );
+            else if (*tgt == &inciter::inlet)
+              bckind = static_cast< int >( inciter::BCKind::Inlet );
+            else if (*tgt == &inciter::back_pressure)
+              bckind = static_cast< int >( inciter::BCKind::BackPressure );
           }
           // A boundary state function that needs compute< EOS::density > or
           // compute< EOS::totalenergy > cannot run on the device if any
@@ -1084,10 +1090,42 @@ class MultiMat {
           }
         }
 
-        if (!bcsets.empty())
+        if (!bcsets.empty()) {
+          // Gather the scalar boundary condition parameters the device state
+          // functions need. The input deck is not reachable from device code,
+          // so these are read once here per rhs() call rather than per face.
+          // Mirrors exactly what the host inlet/farfield/back_pressure read:
+          // both use block [0] only, so per-sideset parameters are no more
+          // supported here than on the host.
+          inciter::BCParamsDev bcparams;
+          bcparams.alphamin =
+            g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
+          const auto& bc0 = g_inputdeck.get< tag::bc >()[0];
+          // farfield
+          bcparams.fp = bc0.get< tag::pressure >();
+          bcparams.ft = bc0.get< tag::temperature >();
+          const auto& fuv = bc0.get< tag::velocity >();
+          for (std::size_t i=0; i<3 && i<fuv.size(); ++i)
+            bcparams.fu[i] = fuv[i];
+          bcparams.fmat = bc0.get< tag::materialid >() - 1;
+          // inlet
+          const auto& inbc = bc0.get< tag::inlet >();
+          if (!inbc.empty()) {
+            bcparams.p_in = inbc[0].get< tag::pressure >();
+            bcparams.t_in = inbc[0].get< tag::temperature >();
+            const auto& uiv = inbc[0].get< tag::velocity >();
+            for (std::size_t i=0; i<3 && i<uiv.size(); ++i)
+              bcparams.u_in[i] = uiv[i];
+            bcparams.mat_in = inbc[0].get< tag::materialid >() - 1;
+          }
+          // back pressure
+          bcparams.fbp =
+            bc0.get< tag::back_pressure >().get< tag::pressure >();
+
           tk::bndSurfIntMultiMat_constP( nmat, m_mat_blk, ndof, rdof,
             bcsets, fd, geoFace, geoElem, inpoel, coord, t,
-            U, P, W, R, riemannDeriv, intsharp, &m_dev, true );
+            U, P, W, R, riemannDeriv, intsharp, &m_dev, true, bcparams );
+        }
 
         // compute internal surface flux integrals on device. Also performs the
         // riemannDeriv /= geoElem(e,0) division, so it stays device resident.

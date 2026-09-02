@@ -996,7 +996,8 @@ bndSurfIntMultiMat_constP(
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp,
   BndSurfIntDeviceViews* dev,
-  [[maybe_unused]] bool prestaged )
+  [[maybe_unused]] bool prestaged,
+  const inciter::BCParamsDev& bcparams )
 // *****************************************************************************
 //! \brief Compute boundary surface flux integrals for const-order multi-material
 //!   DG (not p-adaptive)
@@ -1220,6 +1221,8 @@ bndSurfIntMultiMat_constP(
   auto R_d = dv.R;
   auto rd_d = dv.riemannDeriv;
   auto eos_p = reinterpret_cast< const inciter::EOS* >( dv.eos.data() );
+  // Local copy so the closure captures the POD by value, not a host reference
+  const auto bcp = bcparams;
 
   Kokkos::parallel_for( "bndSurfIntMultiMat_constP",
     Kokkos::RangePolicy< execution_space >( exec, 0, nbf ),
@@ -1284,7 +1287,7 @@ bndSurfIntMultiMat_constP(
 
       // Ghost state
       inciter::bcStateDev( bck, ncomp, nmat, nstate, solidx_d, fn,
-                           var[0], var[1] );
+                           var[0], var[1], eos_p, bcp );
 
       // Compute the numerical flux. ALE is refused above, so wn is zero.
       auto nflx = inciter::HLLCMultiMatConstP::flux( eos_p, fn, var, 0.0,
