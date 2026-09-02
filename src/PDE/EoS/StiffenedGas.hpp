@@ -106,6 +106,28 @@ class StiffenedGas {
                           tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
+    //! \brief Device overload of totalenergy
+    //! \details Takes defgrad as a raw C array rather than a std::array:
+    //!   std::array::operator[] is constexpr in libstdc++ and nvcc rejects
+    //!   calls to it from device code without --expt-relaxed-constexpr, which
+    //!   this build does not pass. defgrad is unused here, as in the host
+    //!   version. Arithmetic and its ordering are identical to
+    //!   StiffenedGas::totalenergy in StiffenedGas.cpp.
+    EOS_FN tk::real totalenergy( tk::real arho,
+                                 tk::real u,
+                                 tk::real v,
+                                 tk::real w,
+                                 tk::real apr,
+                                 tk::real alpha,
+      const tk::real /*defgrad*/[3][3] ) const
+    {
+      auto g = m_gamma;
+      auto p_c = m_pstiff;
+
+      tk::real arhoE = (apr + alpha*g*p_c) / (g-1.0) + 0.5 * arho * (u*u + v*v + w*w);
+      return arhoE;
+    }
+
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
     tk::real temperature( tk::real arho,

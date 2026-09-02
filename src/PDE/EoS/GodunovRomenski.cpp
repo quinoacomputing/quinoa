@@ -364,19 +364,6 @@ GodunovRomenski::min_eff_pressure(
     // + pressure_coldcompr(arhoeff, aeff)/aeff;
 }
 
-tk::real
-GodunovRomenski::coldcomprEnergy( tk::real rho ) const
-// *************************************************************************
-//! \brief Calculate cold-compression contribution to material energy from the
-//!   material density
-//! \param[in] rho Material density
-//! \return Material cold compression energy using the GodunovRomenski EoS
-// *************************************************************************
-{
-  auto rrho0a = std::pow(rho/m_rho0, m_alpha);
-  return ( rho * m_K0/(2.0*m_rho0*m_alpha*m_alpha) * (rrho0a-1.0)*(rrho0a-1.0) );
-}
-
 /*
 tk::real
 GodunovRomenski::pressure_coldcompr(

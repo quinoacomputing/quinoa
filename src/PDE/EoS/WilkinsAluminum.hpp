@@ -17,7 +17,10 @@
 #define WilkinsAluminum_h
 
 #include "Data.hpp"
+#include <cmath>
+#include <iostream>
 #include "EoS/EOSDeviceFn.hpp"
+#include "EoS/TensorEOSDev.hpp"
 
 namespace inciter {
 
@@ -26,11 +29,46 @@ class WilkinsAluminum {
   private:
     tk::real m_gamma, m_cv, m_mu, m_rho0;
 
+    //! Wilkins-aluminum fit constants (Barton 2019, Example 4)
+    //! \details Moved here from file-scope statics in WilkinsAluminum.cpp so
+    //!   they're visible to the device compile of soundspeed() below. This is
+    //!   now their one definition; WilkinsAluminum.cpp's uses of e1..e5
+    //!   resolve to these members unqualified, same as before.
+    static constexpr tk::real e1 = -13.0e+09;
+    static constexpr tk::real e2 = 20.0e+09;
+    static constexpr tk::real e3 = 52.0e+09;
+    static constexpr tk::real e4 = -59.0e+09;
+    static constexpr tk::real e5 = 151.0e+09;
+
     //! \brief Calculate elastic contribution to material energy from the
     //!   material density, and deformation gradient tensor
     tk::real elasticEnergy(
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
       std::array< std::array< tk::real, 3 >, 3 >& devH ) const;
+
+    //! \brief Device version of elasticEnergy
+    //! \details Mirror of WilkinsAluminum::elasticEnergy in
+    //!   WilkinsAluminum.cpp, with tk::getDevHencky -> tk::devHenckyEOS.
+    //!   Distinct name rather than an overload, for the reason given in
+    //!   SmallShearSolid.hpp.
+    //! \warning Not bit-identical to the host version: devHenckyEOS inverts
+    //!   g.g^T by adjugate rather than by LAPACK LU. See the warning in
+    //!   EoS/TensorEOSDev.hpp for measured deviations.
+    EOS_FN tk::real elasticEnergyDev(
+      const tk::real defgrad[3][3],
+      tk::real devH[3][3] ) const
+    {
+      // Compute deviatoric part of Hencky tensor
+      tk::devHenckyEOS(defgrad, devH);
+
+      // Compute elastic energy
+      tk::real rhoEe = 0.0;
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+          rhoEe += m_mu*devH[i][j]*devH[i][j];
+
+      return rhoEe;
+    }
 
   public:
     //! Default constructor
@@ -77,24 +115,40 @@ class WilkinsAluminum {
       tk::real apr,
       tk::real alpha=1.0,
       std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const//;
+      const std::array< std::array< tk::real, 3 >, 3 >& /*adefgrad*/={{}} ) const
     {
-#if defined(__CUDA_ARCH__)
-      // Not supported on device so throw an extremely loud error if reached
-      // buildEOSDevice refused JWL on host
-      (void)apr; (void)alpha; (void)imat; (void)adefgrad;
-      tk::real z=0.0;
-      return z/z; //NaN
+      tk::real a = 0.0;
+
+      // Hydro contribution
+      auto al_eff = fmax( 1.0e-14, alpha );
+      tk::real rho0 = m_rho0;
+      tk::real rho = arho/al_eff;
+      a += fmax( 1.0e-15, 6*e2*std::pow(rho/rho0,2.0)/rho0
+                     + 2*e3*rho/(rho0*rho0) - e5/rho0 );
+
+      // Shear contribution
+      a += (4.0/3.0) * m_mu / (arho/al_eff);
+
+      // Compute square root
+      a = std::sqrt(a);
+
+#if !defined(__CUDA_ARCH__)
+      // check sound speed divergence
+      if (!std::isfinite(a)) {
+        std::cout << "Material-id:      " << imat << std::endl;
+        std::cout << "Volume-fraction:  " << alpha << std::endl;
+        std::cout << "Partial density:  " << arho << std::endl;
+        std::cout << "Partial pressure: " << apr << std::endl;
+        Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
+          + std::to_string(a) + ", material volume fraction: " +
+          std::to_string(alpha));
+      }
 #else
-      return soundspeedHost( arho, apr, alpha, imat, adefgrad );
+      (void)imat; (void)apr;
 #endif
+
+      return a;
     }
-    tk::real soundspeedHost(
-      tk::real arho,
-      tk::real apr,
-      tk::real alpha=1.0,
-      std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const;
 
     //! Calculate speed of shear waves
     tk::real shearspeed(
@@ -112,6 +166,34 @@ class WilkinsAluminum {
       tk::real apr,
       tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of totalenergy
+    //! \details Takes defgrad as a raw C array; see the note on the
+    //!   StiffenedGas equivalent. apr is unused, as in the host version
+    //!   (where the parameter is unnamed). Arithmetic and its ordering are
+    //!   identical to WilkinsAluminum::totalenergy in WilkinsAluminum.cpp.
+    //! \warning Not bit-identical to the host version, via elasticEnergyDev.
+    EOS_FN tk::real totalenergy(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real /*apr*/,
+      tk::real alpha,
+      const tk::real defgrad[3][3] ) const
+    {
+      // obtain hydro contribution to energy
+      tk::real rho0 = m_rho0;
+      tk::real rho = arho/alpha;
+      tk::real rhoEh = (e1+e2*std::pow(rho/rho0,2.0)+e3*(rho/rho0)
+                        +e4*std::pow(rho/rho0,-1.0)-e5*std::log(rho/rho0))/rho0
+                       + 0.5*rho*(u*u + v*v + w*w);
+      // obtain elastic contribution to energy
+      tk::real devH[3][3];
+      tk::real rhoEe = elasticEnergyDev(defgrad, devH);
+
+      return alpha*(rhoEh + rhoEe);
+    }
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy

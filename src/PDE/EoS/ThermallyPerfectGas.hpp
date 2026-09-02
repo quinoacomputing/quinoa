@@ -212,6 +212,31 @@ class ThermallyPerfectGas {
                           tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
+    //! \brief Device overload of totalenergy: not implemented
+    //! \details Exists only so that EOS::compute< EOS::totalenergy > can be
+    //!   instantiated for device code. compute() selects the material with a
+    //!   runtime if, so every branch must compile even though multimat never
+    //!   constructs a ThermallyPerfectGas. There is no TPG totalenergy to port
+    //!   -- the host version above is [[noreturn]] and throws.
+    //!   checkDeviceEOSSupport() rejects this material on the host before any
+    //!   device kernel runs, so the NaN below should be unreachable.
+    EOS_FN tk::real totalenergy( tk::real arho,
+                                 tk::real u,
+                                 tk::real v,
+                                 tk::real w,
+                                 tk::real apr,
+                                 tk::real alpha,
+      const tk::real /*defgrad*/[3][3] ) const
+    {
+#if defined(__CUDA_ARCH__)
+      (void)arho; (void)u; (void)v; (void)w; (void)apr; (void)alpha;
+      tk::real z=0.0;
+      return z/z; //loud NaN will yell at us if reached
+#else
+      Throw("Direct call to TPG totalenergy should not occur. Use Mixture class.");
+#endif
+    }
+
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
     [[noreturn]] tk::real temperature( tk::real rho,

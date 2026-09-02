@@ -109,6 +109,11 @@ void checkDeviceEOSSupport()
 //!   Throws for material types soundspeedDevice() does not implement
 //!   Therefore unsupported configs will fail on the host
 //!   Rather than failing/returning wrong value silently on device side 
+//!   NOTE: JWL, LinearMieGruneisen and WilkinsAluminum have device soundspeed
+//!   bodies transcribed from their host originals, but have NOT been verified
+//!   numerically host-vs-device -- no test deck exercises them. The device
+//!   path has no isfinite check (host-only), so a transcription error would
+//!   propagate silently. Verify before relying on these three.
 // *****************************************************************************
 {
   auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
@@ -119,7 +124,10 @@ void checkDeviceEOSSupport()
     auto mateos = matprop[matidxmap.get< tag::eosidx >()[k]].get< tag::eos >();
     if (mateos != ctr::MaterialType::STIFFENEDGAS &&
         mateos != ctr::MaterialType::SMALLSHEARSOLID &&
-        mateos != ctr::MaterialType::GODUNOVROMENSKI)
+        mateos != ctr::MaterialType::GODUNOVROMENSKI &&
+        mateos != ctr::MaterialType::JWL &&
+        mateos != ctr::MaterialType::LINEARMIEGRUNEISEN &&
+        mateos != ctr::MaterialType::WILKINSALUMINUM)
     {
       Throw( "Material-" + std::to_string(k) + " uses a device-unimplemented EOS." );
     }

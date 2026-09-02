@@ -20,6 +20,7 @@
 #include <cmath>
 #include <iostream>
 #include "EoS/EOSDeviceFn.hpp"
+#include "EoS/TensorEOSDev.hpp"
 
 namespace inciter {
 
@@ -34,9 +35,39 @@ class GodunovRomenski {
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
       std::array< std::array< tk::real, 3 >, 3 >& devH ) const;
 
+    //! \brief Device version of elasticEnergy
+    //! \details Mirror of GodunovRomenski::elasticEnergy in
+    //!   GodunovRomenski.cpp, with tk::getDevHencky -> tk::devHenckyEOS.
+    //!   Distinct name rather than an overload, for the reason given in
+    //!   SmallShearSolid.hpp.
+    //! \warning Not bit-identical to the host version: devHenckyEOS inverts
+    //!   g.g^T by adjugate rather than by LAPACK LU. See the warning in
+    //!   EoS/TensorEOSDev.hpp for measured deviations.
+    EOS_FN tk::real elasticEnergyDev(
+      const tk::real defgrad[3][3],
+      tk::real devH[3][3] ) const
+    {
+      // Compute deviatoric part of Hencky tensor
+      tk::devHenckyEOS(defgrad, devH);
+
+      // Compute elastic energy
+      tk::real rhoEe = 0.0;
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j)
+          rhoEe += m_mu*devH[i][j]*devH[i][j];
+
+      return rhoEe;
+    }
+
     //! \brief Calculate cold-compression contribution to material energy from
     //!   the material density
-    tk::real coldcomprEnergy( tk::real rho ) const;
+    //! \details Moved inline (from a .cpp definition) so the device overload
+    //!   of totalenergy() below can call it from device code.
+    EOS_FN tk::real coldcomprEnergy( tk::real rho ) const
+    {
+      auto rrho0a = std::pow(rho/m_rho0, m_alpha);
+      return ( rho * m_K0/(2.0*m_rho0*m_alpha*m_alpha) * (rrho0a-1.0)*(rrho0a-1.0) );
+    }
 
     //! Calculate the derivative of the cold compression pressure wrt. density
     EOS_FN tk::real DpccDrho( tk::real rho ) const
@@ -139,6 +170,33 @@ class GodunovRomenski {
       tk::real apr,
       tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of totalenergy
+    //! \details Takes defgrad as a raw C array; see the note on the
+    //!   StiffenedGas equivalent. Arithmetic and its ordering are identical to
+    //!   GodunovRomenski::totalenergy in GodunovRomenski.cpp.
+    //! \warning Not bit-identical to the host version, via elasticEnergyDev.
+    EOS_FN tk::real totalenergy(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real apr,
+      tk::real alpha,
+      const tk::real defgrad[3][3] ) const
+    {
+      // obtain thermal and kinetic energy
+      auto apt = apr - pressure_coldcompr(arho, alpha);
+      // in the above expression, shear pressure is not included in pr in the
+      // first place, so should not subtract it
+      auto arhoEh = apt/m_gamma + 0.5*arho*(u*u + v*v + w*w);
+      // obtain elastic contribution to energy
+      tk::real devH[3][3];
+      auto arhoEe = alpha*elasticEnergyDev(defgrad, devH);
+      auto arhoEc = alpha*coldcomprEnergy(arho/alpha);
+
+      return (arhoEh + arhoEe + arhoEc);
+    }
 
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy

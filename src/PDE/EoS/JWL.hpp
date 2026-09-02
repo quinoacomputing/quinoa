@@ -15,6 +15,8 @@
 #define JWL_h
 
 #include "Data.hpp"
+#include <cmath>
+#include <iostream>
 #include "EoS/EOSDeviceFn.hpp"
 
 namespace inciter {
@@ -25,7 +27,16 @@ class JWL {
     tk::real m_w, m_cv, m_rho0, m_de, m_rhor, m_tr, m_pr, m_a, m_b, m_r1, m_r2;
 
     //! Calculate specific internal energy
-    tk::real intEnergy( tk::real rho, tk::real pr ) const;
+    //! \details Moved inline (from a .cpp definition) so the device overload
+    //!   of totalenergy() below can call it from device code.
+    EOS_FN tk::real intEnergy( tk::real rho, tk::real pr ) const
+    {
+      tk::real e = - m_de + 1.0/m_w/rho*( pr
+                    - m_a*(1.0 - m_w*rho/m_r1/m_rho0)*exp(-m_r1*m_rho0/rho)
+                    - m_b*(1.0 - m_w*rho/m_r2/m_rho0)*exp(-m_r2*m_rho0/rho) );
+
+      return e;
+    }
 
     //! \brief Calculate density from known pressure and temperature using
     //!   bisection root finding method
@@ -80,25 +91,42 @@ class JWL {
                          tk::real apr,
                          tk::real alpha=1.0,
                          std::size_t imat=0,
-      const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}} ) const//;
+      const std::array< std::array< tk::real, 3 >, 3 >& /*adefgrad*/={{}} ) const
     {
-#if defined(__CUDA_ARCH__)
-      // Not supported on device so throw an extremely loud error if reached
-      // buildEOSDevice refused JWL on host
-      (void)apr; (void)alpha; (void)imat; (void)adefgrad;
-      tk::real z=0.0;
-      return z/z; //NaN
-#else
-      return soundspeedHost( arho, apr, alpha, imat, adefgrad );
-#endif
-    }
+      alpha = fmax(1e-14,alpha);
+      // limiting pressure to near-zero
+      auto apr_eff = fmax(alpha*
+        min_eff_pressure(1e-4*fabs(apr/alpha), arho, alpha), apr);
 
-    //! Host implementation of soundspeed (outofline)
-    tk::real soundspeedHost( tk::real arho,
-                             tk::real apr,
-                             tk::real alpha=1.0,
-                             std::size_t imat=0,
-                             const std::array< std::array< tk::real, 3 >, 3>& adefgrad={{}} ) const;
+      auto co1 = m_rho0*alpha*alpha/(arho*arho);
+      auto co2 = alpha*(1.0+m_w)/arho;
+
+      tk::real ss = m_a*(m_r1*co1 - co2) * exp(-m_r1*alpha*m_rho0/arho)
+                  + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho)
+                  + (1.0+m_w)*apr_eff/arho;
+
+      auto ss2 = ss;
+      ss = std::sqrt(ss);
+
+#if !defined(__CUDA_ARCH__)
+      // check sound speed divergence
+      if (!std::isfinite(ss)) {
+        std::cout << "Material-id:      " << imat << std::endl;
+        std::cout << "Volume-fraction:  " << alpha << std::endl;
+        std::cout << "Partial density:  " << arho << std::endl;
+        std::cout << "Partial pressure: " << apr << std::endl;
+        std::cout << "Min allowed pres: " << alpha*min_eff_pressure(0.0, arho,
+          alpha) << std::endl;
+        Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed. "
+          "ss^2: " + std::to_string(ss2) + ", material volume fraction: " +
+          std::to_string(alpha));
+      }
+#else
+      (void)imat; (void)ss2;
+#endif
+
+      return ss;
+    }
 
     //! Calculate speed of shear waves
     tk::real shearspeed(
@@ -116,6 +144,25 @@ class JWL {
                           tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
+    //! \brief Device overload of totalenergy
+    //! \details Takes defgrad as a raw C array; see the note on the
+    //!   StiffenedGas equivalent. defgrad is unused here, as in the host
+    //!   version. Arithmetic and its ordering are identical to
+    //!   JWL::totalenergy in JWL.cpp.
+    EOS_FN tk::real totalenergy( tk::real arho,
+                                 tk::real u,
+                                 tk::real v,
+                                 tk::real w,
+                                 tk::real apr,
+                                 tk::real alpha,
+      const tk::real /*defgrad*/[3][3] ) const
+    {
+      tk::real arhoE = arho*intEnergy( arho/alpha, apr/alpha )
+                    + 0.5*arho*(u*u + v*v + w*w);
+
+      return arhoE;
+    }
+
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
     tk::real temperature( tk::real arho,
@@ -127,10 +174,24 @@ class JWL {
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
     //! Compute the minimum allowed pressure
-    tk::real min_eff_pressure(
+    //! \details Moved inline (from a .cpp definition) so soundspeed() below
+    //!   can call it from device code.
+    EOS_FN tk::real min_eff_pressure(
       tk::real min,
       tk::real arho,
-      tk::real alpha ) const;
+      tk::real alpha ) const
+    {
+      alpha = fmax(1e-14,alpha);
+      auto co1 = m_rho0*alpha*alpha/(arho*arho);
+      auto co2 = alpha*(1.0+m_w)/arho;
+
+      // minimum pressure is constrained by zero soundspeed.
+      auto apr = -(m_a*(m_r1*co1 - co2) * exp(-m_r1*alpha*m_rho0/arho)
+                 + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho))
+        * arho/(1.0+m_w);
+
+      return apr/alpha + min;
+    }
 
     //! Compute the reference density
     //! \details Returns the reference density

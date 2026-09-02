@@ -32,12 +32,6 @@
 
 // }
 
-static const tk::real e1 = -13.0e+09;
-static const tk::real e2 = 20.0e+09;
-static const tk::real e3 = 52.0e+09;
-static const tk::real e4 = -59.0e+09;
-static const tk::real e5 = 151.0e+09;
-
 using inciter::WilkinsAluminum;
 
 WilkinsAluminum::WilkinsAluminum(
@@ -193,62 +187,6 @@ WilkinsAluminum::CauchyStress(
   }
 
   return asig;
-}
-
-tk::real
-WilkinsAluminum::soundspeedHost(
-  tk::real arho,
-  tk::real apr,
-  tk::real alpha,
-  std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& /*defgrad*/ ) const
-// *************************************************************************
-//! Calculate speed of sound from the material density and material pressure
-//! \param[in] arho Material partial density (alpha_k * rho_k)
-//! \param[in] apr Material partial pressure (alpha_k * p_k)
-//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
-//!   the single-material system, this argument can be left unspecified by
-//!   the calling code
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified
-//!   by the calling code
-//!   (alpha * sigma_ij * n_j) projected onto the normal vector. Default is 0,
-//!   so that for the single-material system, this argument can be left
-//!   unspecified by the calling code
-// //! \param[in] defgrad Material inverse deformation gradient tensor
-// //!   (g_k) with the first dimension aligned to direction in which
-// //!   wave speeds are required. Default is 0, so that for the single-material
-// //!   system, this argument can be left unspecified by the calling code
-//! \return Material speed of sound using the WilkinsAluminum EoS
-// *************************************************************************
-{
-  tk::real a = 0.0;
-
-  // Hydro contribution
-  auto al_eff = std::max( 1.0e-14, alpha );
-  tk::real rho0 = m_rho0;
-  tk::real rho = arho/al_eff;
-  a += std::max( 1.0e-15, 6*e2*std::pow(rho/rho0,2.0)/rho0
-                 + 2*e3*rho/(rho0*rho0) - e5/rho0 );
-
-  // Shear contribution
-  a += (4.0/3.0) * m_mu / (arho/al_eff);
-
-  // Compute square root
-  a = std::sqrt(a);
-
-  // check sound speed divergence
-  if (!std::isfinite(a)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Partial pressure: " << apr << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed: "
-      + std::to_string(a) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
-  return a;
 }
 
 tk::real
