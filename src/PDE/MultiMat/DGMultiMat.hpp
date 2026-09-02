@@ -863,13 +863,12 @@ class MultiMat {
           }
         }
 
-        // Volume fraction redistribution for highly damaged solids (spallation)
-        // When solid is critically damaged AND in tension, transfer volume to fluid
-        // (void formation/spallation). Only proceed if there's at least one fluid
-        // material in the system.
+        // Volume fraction redistribution for highly damaged solids (spallation/erosion)
+        // When solid is critically damaged, transfer volume to fluid (void formation).
+        // Only proceed if there's at least one fluid material in the system.
         if (has_fluid)
         {
-          tk::real damage_threshold = 0.95;
+          tk::real damage_threshold = 0.75;
           for (std::size_t k=0; k<nmat; ++k)
           {
             if (solidx[k] > 0)
@@ -878,14 +877,11 @@ class MultiMat {
               tk::real damage = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) /
                                std::max(1.0e-12, U(e, densityDofIdx(nmat, k, rdof, 0)));
 
-              // Get pressure to check for tension
-              tk::real pressure_k = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alpha_k;
+              // Erode damaged material regardless of stress state
+              // Fragments and heavily damaged material restrict timestep
+              // Removing them improves stability without losing physics
 
-              // Only allow spallation in TENSION (p < 0) with high damage
-              // Compression + damage = crushed material (stays solid)
-              // Tension + damage = spallation (voids open)
-
-              if (damage > damage_threshold && alpha_k > 1.0e-03 && pressure_k < 0.0)
+              if (damage > damage_threshold && alpha_k > 1.0e-03)
               {
                 // Compute how much volume to transfer based on excess damage
                 tk::real excess_damage = std::min(damage - damage_threshold, 0.05);
