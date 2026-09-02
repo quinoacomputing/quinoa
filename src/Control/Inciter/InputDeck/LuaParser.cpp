@@ -159,8 +159,7 @@ LuaParser::storeInputDeck(
     lua_ideck, "operator_split_plasticity",
     gideck.get< tag::operator_split_plasticity >(), 0);
 
-  // Operator-split plasticity wraps SSP-RK3 and owns the stiff plasticity eqs by
-  // itself; it cannot coexist with the fully-coupled IMEX or the BDF1 solvers.
+  // Operator-split plasticity cannot coexist with unsplit IMEX or BDF1
   if (gideck.get< tag::operator_split_plasticity >() &&
       (gideck.get< tag::imex_runge_kutta >() ||
        gideck.get< tag::implicit_timestepping >()))

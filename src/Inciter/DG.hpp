@@ -255,7 +255,6 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_nstage;
       p | m_stage;
-      //PUP::pup_bytes( &p, &m_stiffSolverMode, sizeof(m_stiffSolverMode) );
       p | m_stiffSolverMode;
       p | m_ndof;
       p | m_interface;
