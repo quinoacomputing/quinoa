@@ -16,12 +16,15 @@
 #define Boundary_h
 
 #include "Basis.hpp"
+#include "Kokkos_Core.hpp"
+#include "KokkosDevice.hpp"
 #include "Surface.hpp"
 #include "Fields.hpp"
 #include "FaceData.hpp"
 #include "UnsMesh.hpp"
 #include "FunctionPrototypes.hpp"
 #include "EoS/EOS.hpp"
+#include "MultiMat/BCFunctionsDev.hpp"
 
 namespace tk {
 
@@ -90,6 +93,34 @@ bndSurfInt_constP(
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp=0 );
+
+// Persistent device-resident scratch for bndSurfIntMultiMat_constP
+// See tk::KokkosDeviceViews (src/PDE/KokkosDevice.hpp) for more info
+using BndSurfIntDeviceViews = KokkosDeviceViews;
+
+//! \brief Compute boundary surface flux integrals for const-order multi-material
+//!   DG (not p-adaptive)
+void
+bndSurfIntMultiMat_constP(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< std::pair< std::vector< std::size_t >, int > >& bcsets,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const Fields& U,
+  const Fields& P,
+  const Fields& W,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp=0,
+  BndSurfIntDeviceViews* dev=nullptr, bool prestaged=false,
+  const inciter::BCParamsDev& bcparams = inciter::BCParamsDev{} );
 
 //! Compute boundary surface flux integrals for a given boundary type for FV
 void

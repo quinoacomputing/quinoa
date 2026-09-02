@@ -25,6 +25,7 @@
 #include "EoS/GetMatProp.hpp"
 #include "Riemann/HLLCMultiMatConstP.hpp"
 #include "Inciter/Options/Flux.hpp"
+#include "RhsAccum.hpp"
 
 namespace {
 // Accumulators used by update_rhs_fa_constP so that one templated body can write either
@@ -43,39 +44,6 @@ auto changeToView( T* object, std::size_t n ) {
   return object_view;
 }
 
-// Accumulate into R, host tk::Fields
-inline void
-rhsAccum( tk::Fields& R, std::size_t e, std::size_t /*nprop*/,
-          std::size_t idx, tk::real v )
-{
-  R(e,idx) += v;
-}  
-
-// Accumulate into R, Kokkos::Views (device)
-KOKKOS_INLINE_FUNCTION
-void
-rhsAccum( const Kokkos::View< tk::real*, memory_space >& R, std::size_t e,
-          std::size_t nprop, std::size_t idx, tk::real v )
-{
-  Kokkos::atomic_add( &R(e*nprop + idx), v );
-}
-
-// Accumulate into riemannDeriv, host vector of vectors
-inline void
-rdAccum( std::vector< std::vector< tk::real > >& rd, std::size_t row,
-         std::size_t col, std::size_t /*ncol*/, tk::real v )
-{
-  rd[row][col] += v;
-}
-
-// Accumulate into riemannDeriv, device view (atomic)
-KOKKOS_INLINE_FUNCTION
-void
-rdAccum( const Kokkos::View< tk::real*, memory_space >& rd, std::size_t row,
-         std::size_t col, std::size_t ncol, tk::real v )
-{
-  Kokkos::atomic_add( &rd(row*ncol + col), v );
-}
 }//namespace
 
 namespace inciter {
@@ -1142,15 +1110,8 @@ surfInt_constP(
   if (ensureDeviceCapacity( dv.eos, "surf_eos_d_view", eos_bytes ))
     Kokkos::deep_copy( dv.eos, eos_h );
 
-  // riemannDeriv arrives holding the boundary-face contributions computed on
-  // the host. Flatten and upload so the kernel adds internal faces on top.
-  const std::size_t rd_size = rd_nrow*rd_ncol;
-  std::vector< real > rd_flat( rd_size );
-  for (std::size_t row=0; row<rd_nrow; ++row)
-    for (std::size_t col=0; col<rd_ncol; ++col)
-      rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
-  uploadStaged( exec, dv.riemannDeriv, dv.stage_rd, rd_flat.data(), rd_size,
-                "surf_rd_d_view" );
+  // riemannDeriv is zeroed on the device by rhs() and accumulated into by the
+  // boundary kernel before this one runs, so there is nothing to upload here.
 
   // Quadrature in device storage, kept in the closure as for the volume
   // kernels: the access is a pure broadcast across the warp.

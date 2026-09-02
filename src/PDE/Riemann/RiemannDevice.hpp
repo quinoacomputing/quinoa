@@ -183,6 +183,34 @@ Mat3Dev unrotateTensorDev( const Mat3Dev& mat, const Vec3Dev& r )
   return out;
 }
 
+//! Reflect a second order tensor: returns R^T*mat*R
+//! \details Mirror of tk::reflectTensor in Base/Vector.hpp, which issues two
+//!   cblas_dgemm calls with m=n=k=3. Same operation ordering, so results are
+//!   bitwise identical. Note this takes the reflection matrix directly, not a
+//!   normal vector, matching the host signature: the symmetry boundary state
+//!   function builds reflectMat itself as I - 2*n_i*n_j.
+KOKKOS_INLINE_FUNCTION
+Mat3Dev reflectTensorDev( const Mat3Dev& mat, const Mat3Dev& reflectMat )
+{
+  if (is_matrix_emptyDev(mat)) return zeroMat3Dev();
+
+  tk::real M[9], R[9], Rt[9], T[9], O[9];
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j) {
+      M[i*3+j] = mat[i][j];
+      R[i*3+j] = reflectMat[i][j];
+      Rt[j*3+i] = reflectMat[i][j];
+    }
+
+  mat3mulDev( M, R, T );    // T = mat*R
+  mat3mulDev( Rt, T, O );   // O = R^T*T
+
+  Mat3Dev out;
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j) out[i][j] = O[i*3+j];
+  return out;
+}
+
 //! Rotate a vector: returns R*v
 //! \details Mirror of tk::rotateVector in Base/Vector.hpp
 KOKKOS_INLINE_FUNCTION Vec3Dev rotateVectorDev( const Vec3Dev& v,

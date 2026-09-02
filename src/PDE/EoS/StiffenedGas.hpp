@@ -39,8 +39,19 @@ class StiffenedGas {
     void setRho0(tk::real) {}
 
     //! Calculate density from the material pressure and temperature
-    tk::real density( tk::real pr,
-                      tk::real temp ) const;
+    //! \details Moved inline as EOS_FN (from a .cpp definition). Unlike
+    //!   totalenergy(), density() takes only scalars, so no separate device
+    //!   overload is needed: one body serves host and device.
+    EOS_FN tk::real density( tk::real pr,
+                             tk::real temp ) const
+    {
+      tk::real g = m_gamma;
+      tk::real p_c = m_pstiff;
+      tk::real c_v = m_cv;
+
+      tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
+      return rho;
+    }
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure( tk::real arho,
@@ -106,6 +117,28 @@ class StiffenedGas {
                           tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
+    //! \brief Device overload of totalenergy
+    //! \details Takes defgrad as a raw C array rather than a std::array:
+    //!   std::array::operator[] is constexpr in libstdc++ and nvcc rejects
+    //!   calls to it from device code without --expt-relaxed-constexpr, which
+    //!   this build does not pass. defgrad is unused here, as in the host
+    //!   version. Arithmetic and its ordering are identical to
+    //!   StiffenedGas::totalenergy in StiffenedGas.cpp.
+    EOS_FN tk::real totalenergy( tk::real arho,
+                                 tk::real u,
+                                 tk::real v,
+                                 tk::real w,
+                                 tk::real apr,
+                                 tk::real alpha,
+      const tk::real /*defgrad*/[3][3] ) const
+    {
+      auto g = m_gamma;
+      auto p_c = m_pstiff;
+
+      tk::real arhoE = (apr + alpha*g*p_c) / (g-1.0) + 0.5 * arho * (u*u + v*v + w*w);
+      return arhoE;
+    }
+
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
     tk::real temperature( tk::real arho,
@@ -115,6 +148,27 @@ class StiffenedGas {
                           tk::real arhoE,
                           tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of temperature
+    //! \details Takes defgrad as a raw C array; see the note on the device
+    //!   totalenergy overload. defgrad is unused here, as in the host version.
+    //!   Arithmetic and its ordering are identical to
+    //!   StiffenedGas::temperature in StiffenedGas.cpp.
+    EOS_FN tk::real temperature( tk::real arho,
+                                 tk::real u,
+                                 tk::real v,
+                                 tk::real w,
+                                 tk::real arhoE,
+                                 tk::real alpha,
+      const tk::real /*defgrad*/[3][3] ) const
+    {
+      auto c_v = m_cv;
+      auto p_c = m_pstiff;
+
+      tk::real t = (arhoE - 0.5 * arho * (u*u + v*v + w*w) - alpha*p_c)
+                   / (arho*c_v);
+      return t;
+    }
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(

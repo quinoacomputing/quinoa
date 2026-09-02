@@ -43,6 +43,7 @@
 #include "Problem/BoxInitialization.hpp"
 #include "PrefIndicator.hpp"
 #include "MultiMat/BCFunctions.hpp"
+#include "MultiMat/BCFunctionsDev.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
 #include "EoS/GetMatProp.hpp"
 
@@ -999,15 +1000,132 @@ class MultiMat {
         // they must precede the device internal-face kernel: R and riemannDeriv
         // are uploaded with those contributions already in them, and the kernel
         // atomically adds the internal faces on top.
-        for (const auto& b : m_bc)
-          tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
-            std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-            m_riemann, velfn, std::get<1>(b), U, P, W, R,
-            riemannDeriv, intsharp );
+        // Select the device-shaped boundary state function by comparing the
+        // stored target of the std::function against the two supported state
+        // functions. BCStateFn carries no type tag, so this is the only way to
+        // identify a boundary condition without changing the shared ConfigBC.
+        // Anything else falls through to the host path, which is unchanged.
+        using SFnPtr = tk::StateFn::result_type (*)( ncomp_t,
+          const std::vector< inciter::EOS >&, const std::vector< tk::real >&,
+          tk::real, tk::real, tk::real, tk::real,
+          const std::array< tk::real, 3 >& );
 
-        // R holds the boundary surface contributions; upload before the kernel.
-        // riemannDeriv is uploaded inside surfInt_constP.
+        // Collect every boundary condition with a device-callable state
+        // function into one list, so the const-order path handles them all in
+        // a single pass. Anything unsupported keeps the untouched host path.
+        std::vector< std::pair< std::vector< std::size_t >, int > > bcsets;
+        // Set if any boundary condition fell through to the host path, which
+        // writes into the host riemannDeriv and so must be carried to device
+        bool hostBC = false;
+        for (const auto& b : m_bc) {
+          auto tgt = std::get<1>(b).target< SFnPtr >();
+          int bckind = -1;
+          if (tgt) {
+            if (*tgt == &inciter::symmetry)
+              bckind = static_cast< int >( inciter::BCKind::Symmetry );
+            else if (*tgt == &inciter::extrapolate)
+              bckind = static_cast< int >( inciter::BCKind::Extrapolate );
+            else if (*tgt == &inciter::noslipwall)
+              bckind = static_cast< int >( inciter::BCKind::NoSlipWall );
+            else if (*tgt == &inciter::farfield)
+              bckind = static_cast< int >( inciter::BCKind::Farfield );
+            else if (*tgt == &inciter::inlet)
+              bckind = static_cast< int >( inciter::BCKind::Inlet );
+            else if (*tgt == &inciter::back_pressure)
+              bckind = static_cast< int >( inciter::BCKind::BackPressure );
+          }
+          // A boundary state function that needs compute< EOS::density > or
+          // compute< EOS::totalenergy > cannot run on the device if any
+          // material's density() is host-only -- JWL's device branch returns
+          // NaN, and the isfinite diagnostics are host-only, so the NaN would
+          // propagate silently. Send such boundary conditions back to the host
+          // fallback below, where JWL::densityHost works, rather than refusing
+          // the case outright: a JWL run with an inlet/farfield/back_pressure
+          // boundary works correctly today via that path and must keep working.
+          if (bckind >= 0 &&
+              inciter::bcKindNeedsDensity(
+                static_cast< inciter::BCKind >( bckind ) ) &&
+              anyMaterialLacksDeviceDensity())
+            bckind = -1;
+
+          if (bckind >= 0)
+            bcsets.emplace_back( std::get<0>(b), bckind );
+          else {
+            hostBC = true;
+            tk::bndSurfInt( false, nmat, m_mat_blk, ndof, rdof,
+              std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
+              m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
+              riemannDeriv, intsharp );
+          }
+        }
+        // R is zeroed on the host above and now carries only whatever the
+        // unsupported-BC host fallback added; upload before the boundary
+        // kernel, which accumulates into it on the device from here on.
         tk::uploadStaged( exec, m_dev.R, m_dev.stage_R, R.getPointer(), R.getSize(), "R_d_view" );
+
+        // riemannDeriv is accumulated into by both the boundary and the
+        // internal-face kernels, so the device copy has to start from the host
+        // state. It is constructed zeroed each call, so when every boundary
+        // condition ran on the device a device-side memset is equivalent and
+        // avoids a ~5 MB flatten and PCIe transfer per rhs() call. When
+        // something fell through to the host path, the host copy carries its
+        // contributions and must be uploaded instead: zeroing would discard
+        // them. Either branch sizes the view first, since nothing else
+        // allocates it any more.
+        {
+          const std::size_t rd_nrow = riemannDeriv.size();
+          const std::size_t rd_ncol = rd_nrow ? riemannDeriv[0].size() : 0;
+          const std::size_t rd_size = rd_nrow*rd_ncol;
+          if (hostBC) {
+            std::vector< tk::real > rd_flat( rd_size );
+            for (std::size_t row=0; row<rd_nrow; ++row)
+              for (std::size_t col=0; col<rd_ncol; ++col)
+                rd_flat[row*rd_ncol + col] = riemannDeriv[row][col];
+            tk::uploadStaged( exec, m_dev.riemannDeriv, m_dev.stage_rd,
+                              rd_flat.data(), rd_size, "riemannDeriv_d_view" );
+          } else {
+            tk::ensureDeviceCapacity( m_dev.riemannDeriv,
+                                      "riemannDeriv_d_view", rd_size );
+            Kokkos::deep_copy( exec, m_dev.riemannDeriv, 0.0 );
+          }
+        }
+
+        if (!bcsets.empty()) {
+          // Gather the scalar boundary condition parameters the device state
+          // functions need. The input deck is not reachable from device code,
+          // so these are read once here per rhs() call rather than per face.
+          // Mirrors exactly what the host inlet/farfield/back_pressure read:
+          // both use block [0] only, so per-sideset parameters are no more
+          // supported here than on the host.
+          inciter::BCParamsDev bcparams;
+          bcparams.alphamin =
+            g_inputdeck.get< tag::multimat, tag::min_volumefrac >();
+          const auto& bc0 = g_inputdeck.get< tag::bc >()[0];
+          // farfield
+          bcparams.fp = bc0.get< tag::pressure >();
+          bcparams.ft = bc0.get< tag::temperature >();
+          const auto& fuv = bc0.get< tag::velocity >();
+          for (std::size_t i=0; i<3 && i<fuv.size(); ++i)
+            bcparams.fu[i] = fuv[i];
+          bcparams.fmat = bc0.get< tag::materialid >() - 1;
+          // inlet
+          const auto& inbc = bc0.get< tag::inlet >();
+          if (!inbc.empty()) {
+            bcparams.p_in = inbc[0].get< tag::pressure >();
+            bcparams.t_in = inbc[0].get< tag::temperature >();
+            const auto& uiv = inbc[0].get< tag::velocity >();
+            for (std::size_t i=0; i<3 && i<uiv.size(); ++i)
+              bcparams.u_in[i] = uiv[i];
+            bcparams.mat_in = inbc[0].get< tag::materialid >() - 1;
+          }
+          // back pressure
+          bcparams.fbp =
+            bc0.get< tag::back_pressure >().get< tag::pressure >();
+
+          tk::bndSurfIntMultiMat_constP( nmat, m_mat_blk, ndof, rdof,
+            bcsets, fd, geoFace, geoElem, inpoel, coord, t,
+            U, P, W, R, riemannDeriv, intsharp, &m_dev, true, bcparams );
+        }
 
         // compute internal surface flux integrals on device. Also performs the
         // riemannDeriv /= geoElem(e,0) division, so it stays device resident.

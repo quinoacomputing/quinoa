@@ -24,10 +24,28 @@
 #include "MultiMat/MultiMatIndexing.hpp"
 #include "Reconstruction.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
+#include "RhsAccum.hpp"
+#include "MultiMat/BCFunctionsDev.hpp"
+#include "Riemann/HLLCMultiMatConstP.hpp"
 
 namespace inciter {
 extern ctr::InputDeck g_inputdeck;
 }
+
+namespace {
+
+using UnManagedMem = Kokkos::MemoryTraits<Kokkos::Unmanaged>;
+
+// Wrap a host raw pointer in an unmanaged host view. Same helper as in
+// Surface.cpp and MultiMatTerms.cpp, which keep it in anonymous namespaces.
+template< typename T >
+auto changeToView( T* object, std::size_t n ) {
+  Kokkos::View< T*, Kokkos::LayoutLeft, Kokkos::HostSpace, UnManagedMem >
+    object_view( object, n );
+  return object_view;
+}
+
+} // anonymous namespace
 
 namespace tk {
 
@@ -672,6 +690,125 @@ update_rhs_bc ( ncomp_t ncomp,
   }
 }
 
+//! \details Copy of update_rhs_bc, templated on its container types so one body
+//!   serves the host loop and the device kernel. solidx and nsld are passed in
+//!   rather than read from the input deck (a lookup per quadrature point, and
+//!   unreachable from device code), and the logical length of fl arrives as
+//!   nflx, since a fixed-size buffer's size() is its capacity. update_rhs_bc
+//!   itself is untouched, so the p-adaptive path is unaffected.
+//! \note A boundary face writes to one element only, so no atomics are
+//!   required here; the accumulators still route through rhsAccum/rdAccum so
+//!   that one body serves host containers and device views alike.
+template< class FnT, class FlT, class BT, class SolidxT, class RT,
+          class RiemannDerivT >
+KOKKOS_INLINE_FUNCTION void
+update_rhs_bc_constP ( ncomp_t ncomp,
+                std::size_t nmat,
+                const std::size_t ndof,
+                const std::size_t ndof_l,
+                const tk::real wt,
+                const FnT& fn,
+                const std::size_t el,
+                const FlT& fl,
+                const std::size_t nflx,
+                const BT& B_l,
+                const SolidxT& solidx,
+                const std::size_t nsld,
+                RT& R,
+                const std::size_t r_nprop,
+                RiemannDerivT& riemannDeriv,
+                const std::size_t rd_ncol )
+// *****************************************************************************
+//  Update the rhs by adding the boundary surface integration term
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] ndof_l Number of degrees of freedom for the left element
+//! \param[in] wt Weight of gauss quadrature point
+//! \param[in] fn Face/Surface normal
+//! \param[in] el Left element index
+//! \param[in] fl Surface flux
+//! \param[in] B_l Basis function for the left element
+//! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
+// *****************************************************************************
+{
+  // following line commented until rdofel is made available.
+  //Assert( B_l.size() == ndof_l, "Size mismatch" );
+
+  using inciter::newSolidsAccFn;
+
+
+  for (ncomp_t c=0; c<ncomp; ++c)
+  {
+    auto mark = c*ndof;
+    rhsAccum( R, el, r_nprop, mark, -wt * fl[c] );
+
+    if(ndof_l > 1)          //DG(P1)
+    {
+      rhsAccum( R, el, r_nprop, mark+1, -wt * fl[c] * B_l[1] );
+      rhsAccum( R, el, r_nprop, mark+2, -wt * fl[c] * B_l[2] );
+      rhsAccum( R, el, r_nprop, mark+3, -wt * fl[c] * B_l[3] );
+    }
+
+    if(ndof_l > 4)          //DG(P2)
+    {
+      rhsAccum( R, el, r_nprop, mark+4, -wt * fl[c] * B_l[4] );
+      rhsAccum( R, el, r_nprop, mark+5, -wt * fl[c] * B_l[5] );
+      rhsAccum( R, el, r_nprop, mark+6, -wt * fl[c] * B_l[6] );
+      rhsAccum( R, el, r_nprop, mark+7, -wt * fl[c] * B_l[7] );
+      rhsAccum( R, el, r_nprop, mark+8, -wt * fl[c] * B_l[8] );
+      rhsAccum( R, el, r_nprop, mark+9, -wt * fl[c] * B_l[9] );
+    }
+  }
+
+  // Prep for non-conservative terms in multimat
+  if (nflx > ncomp)
+  {
+    // Gradients of partial pressures
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      for (std::size_t idir=0; idir<3; ++idir)
+        rdAccum( riemannDeriv, 3*k+idir, el, rd_ncol,
+            wt * fl[ncomp+k] * fn[idir] );
+    }
+
+    // Divergence of velocity multiples basis fucntion( d(uB) / dx )
+    for(std::size_t idof = 0; idof < ndof_l; idof++)
+      rdAccum( riemannDeriv, 3*nmat+idof, el, rd_ncol,
+            wt * fl[ncomp+nmat] * B_l[idof] );
+
+    // Divergence of asigma: d(asig_ij)/dx_j
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+      {
+        std::size_t mark = ncomp+nmat+1+3*(solidx[k]-1);
+
+        for (std::size_t i=0; i<3; ++i)
+          rdAccum( riemannDeriv, 3*nmat+ndof+3*(solidx[k]-1)+i, el, rd_ncol,
+            -wt * fl[mark+i] );
+      }
+
+    // Derivatives of g: d(g_il)/d(x_j)-d(g_ij)/d(x_l)
+    // for i=1,2,3; j=1,2,3; l=1,2,3. Total = 3x3x3 (per solid)
+    for (std::size_t k=0; k<nmat; ++k)
+      if (solidx[k] > 0)
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j)
+            for (std::size_t l=0; l<3; ++l)
+              if (j != l)
+              {
+                std::size_t mark1 = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+l;
+                std::size_t mark2 = ncomp+nmat+1+3*nsld+9*(solidx[k]-1)+3*i+j;
+                rdAccum( riemannDeriv, 3*nmat+ndof+3*nsld+newSolidsAccFn(k,i,j,l), el, rd_ncol,
+            -wt * ( fl[mark1] * fn[j] - fl[mark2] * fn[l]) );
+              }
+  }
+}
+
 void
 bndSurfInt_constP(
   std::size_t nmat,
@@ -838,6 +975,330 @@ bndSurfInt_constP(
       }
     }
   }
+}
+void
+bndSurfIntMultiMat_constP(
+  std::size_t nmat,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::size_t rdof,
+  const std::vector< std::pair< std::vector< std::size_t >, int > >& bcsets,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  real t,
+  const Fields& U,
+  const Fields& P,
+  const Fields& W,
+  Fields& R,
+  std::vector< std::vector< tk::real > >& riemannDeriv,
+  int intsharp,
+  BndSurfIntDeviceViews* dev,
+  [[maybe_unused]] bool prestaged,
+  const inciter::BCParamsDev& bcparams )
+// *****************************************************************************
+//! \brief Compute boundary surface flux integrals for const-order multi-material
+//!   DG (not p-adaptive)
+//! \details MultiMat-specific: the Riemann solver is fixed to HLLC and the
+//!   boundary state comes from inciter::bcStateDev, so the flux, vel and state
+//!   function arguments the shared bndSurfInt_constP takes are not needed here.
+//!   bndSurfInt_constP is left untouched for CompFlow, MultiSpecies and
+//!   Transport, which pass their own state functions.
+//! \details This function computes contributions from surface integrals along
+//!   all faces for a particular boundary condition type, configured by the state
+//!   function
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] mat_blk EOS material block
+//! \param[in] ndof Maximum number of degrees of freedom
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+//! \param[in] bcsets Supported boundary conditions for this mesh: for each,
+//!   the side sets it applies to and its inciter::BCKind. All of them are
+//!   handled in one pass so that the device version is a single launch rather
+//!   than one per boundary condition.
+//! \param[in] fd Face connectivity and boundary conditions object
+//! \param[in] geoFace Face geometry array
+//! \param[in] geoElem Element geometry array
+//! \param[in] inpoel Element-node connectivity
+//! \param[in] coord Array of nodal coordinates
+//! \param[in] t Physical time
+//! \param[in] flux Riemann flux function to use
+//! \param[in] vel Function to use to query prescribed velocity (if any)
+//! \param[in] state Function to evaluate the left and right solution state at
+//!   boundaries
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
+//! \param[in,out] R Right-hand side vector computed
+//! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
+//!   computed from the Riemann solver for use in the non-conservative terms.
+//!   These derivatives are used only for multi-material hydro and unused for
+//!   single-material compflow and linear transport.
+//! \param[in] intsharp Interface compression tag, an optional argument, with
+//!   default 0, so that it is unused for single-material and transport.
+// *****************************************************************************
+{
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
+  const auto& bface = fd.Bface();
+  const auto& esuf = fd.Esuf();
+  const auto& inpofa = fd.Inpofa();
+
+  // Loop-invariants for the _constP path. solidx and nsld were read from the
+  // input deck inside the state function and update_rhs_bc, once per
+  // quadrature point; flx replaces a per-point heap allocation.
+  const auto& solidx =
+    inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nsld = inciter::numSolids(nmat, solidx);
+  const std::size_t r_nprop = R.nprop();
+  const std::size_t rd_ncol = riemannDeriv.empty() ? 0 : riemannDeriv[0].size();
+  Kokkos::Array< tk::real, inciter::HLLCMultiMatConstP::NFLX_MAX > flx;
+
+  const auto& cx = coord[0];
+  const auto& cy = coord[1];
+  const auto& cz = coord[2];
+
+  auto ncomp = U.nprop()/rdof;
+  auto nprim = P.nprop()/rdof;
+
+  //Assert( (nmat==1 ? riemannDeriv.empty() : true), "Non-empty Riemann "
+  //        "derivative vector for single material compflow" );
+
+  // Quadrature points
+  auto ng = tk::NGfa(ndof);
+
+  // arrays for quadrature points
+  std::array< std::vector< real >, 2 > coordgp;
+  std::vector< real > wgp;
+
+  coordgp[0].resize( ng );
+  coordgp[1].resize( ng );
+  wgp.resize( ng );
+
+  // get quadrature point weights and coordinates for triangle
+  GaussQuadratureTri( ng, coordgp, wgp );
+
+  // Allocate memory
+  std::vector< tk::real > B_l(rdof, 1.0), ugp(ncomp+nprim);
+
+  // Flatten every supported boundary condition into one face list, paired
+  // with the state function each face needs. Visitation order is preserved
+  // exactly: bcsets order, then side set order within each (std::map iterates
+  // by id, as the previous nested loop did), then face order within each side
+  // set. Preserving it keeps the accumulation into R bit-identical.
+  std::vector< std::size_t > bfaces;
+  std::vector< int > bfkind;
+  for (const auto& bs : bcsets)
+    for (const auto& s : bs.first) {
+      auto bc = bface.find(static_cast<int>(s));
+      if (bc != end(bface))
+        for (const auto& f : bc->second) {
+          bfaces.push_back( f );
+          bfkind.push_back( bs.second );
+        }
+    }
+
+  // ---------------------------------------------------------------------------
+  // Device path. One launch covers every supported boundary condition: bfaces
+  // holds the flattened face list and bfkind the state function each face
+  // needs, so bcStateDev's branch is uniform within a side set.
+  //
+  // A boundary face writes to one element only, so no atomics are required;
+  // rhsAccum/rdAccum still route through the view overloads, whose atomicity
+  // is harmless here.
+  //
+  // U, P and R must already be resident: rhs() owns that round trip. This
+  // kernel writes riemannDeriv, which rhs() zeroes on the device beforehand.
+  // ---------------------------------------------------------------------------
+  ErrChk( !ale, "bndSurfIntMultiMat_constP device path does not support ALE: "
+          "evaluateMeshVelTri has no device overload and W has no device view" );
+  ErrChk( dev != nullptr, "bndSurfIntMultiMat_constP requires device views" );
+  auto& dv = *dev;
+
+  if (bfaces.empty()) return;
+
+  auto bparam =
+    inciter::g_inputdeck.get< tag::multimat, tag::intsharp_param >();
+
+  const std::size_t m_nprop = U.nprop();
+  const std::size_t p_nprop = P.nprop();
+  const std::size_t geo_nprop = geoElem.nprop();
+  const std::size_t gf_nprop = geoFace.nprop();
+  const std::size_t nelem = fd.Esuel().size()/4;
+  const std::size_t nbf = bfaces.size();
+  const std::size_t nstate = ncomp+nprim;
+
+  auto exec = Kokkos::DefaultExecutionSpace();
+
+  // Mesh residency
+  const bool mesh_ok = meshResident( dv, inpoel, coord, geoElem, nelem, nmat );
+
+  auto solidx_h = changeToView( solidx.data(), solidx.size() );
+  if (ensureDeviceCapacity( dv.solidx, "bnd_solidx_d_view", solidx.size() )
+      || !mesh_ok)
+    Kokkos::deep_copy( dv.solidx, solidx_h );
+
+  auto inpoel_h = changeToView( inpoel.data(), inpoel.size() );
+  if (ensureDeviceCapacity( dv.inpoel, "bnd_inpoel_d_view", inpoel.size() )
+      || !mesh_ok)
+    Kokkos::deep_copy( dv.inpoel, inpoel_h );
+
+  auto cx_h = changeToView( cx.data(), cx.size() );
+  if (ensureDeviceCapacity( dv.cx, "bnd_cx_d_view", cx.size() ) || !mesh_ok)
+    Kokkos::deep_copy( dv.cx, cx_h );
+  auto cy_h = changeToView( cy.data(), cy.size() );
+  if (ensureDeviceCapacity( dv.cy, "bnd_cy_d_view", cy.size() ) || !mesh_ok)
+    Kokkos::deep_copy( dv.cy, cy_h );
+  auto cz_h = changeToView( cz.data(), cz.size() );
+  if (ensureDeviceCapacity( dv.cz, "bnd_cz_d_view", cz.size() ) || !mesh_ok)
+    Kokkos::deep_copy( dv.cz, cz_h );
+
+  const std::size_t geoElem_size = geoElem.getSize();
+  auto geoElem_h = changeToView( geoElem.getPointer(), geoElem_size );
+  if (ensureDeviceCapacity( dv.geoElem, "bnd_geoElem_d_view", geoElem_size )
+      || !mesh_ok)
+    Kokkos::deep_copy( dv.geoElem, geoElem_h );
+
+  // Face residency
+  const bool face_ok = faceResident( dv, esuf, inpofa, geoFace );
+
+  auto esuf_h = changeToView( esuf.data(), esuf.size() );
+  if (ensureDeviceCapacity( dv.esuf, "bnd_esuf_d_view", esuf.size() )
+      || !face_ok)
+    Kokkos::deep_copy( dv.esuf, esuf_h );
+
+  auto inpofa_h = changeToView( inpofa.data(), inpofa.size() );
+  if (ensureDeviceCapacity( dv.inpofa, "bnd_inpofa_d_view", inpofa.size() )
+      || !face_ok)
+    Kokkos::deep_copy( dv.inpofa, inpofa_h );
+
+  const std::size_t geoFace_size = geoFace.getSize();
+  auto geoFace_h = changeToView( geoFace.getPointer(), geoFace_size );
+  if (ensureDeviceCapacity( dv.geoFace, "bnd_geoFace_d_view", geoFace_size )
+      || !face_ok)
+    Kokkos::deep_copy( dv.geoFace, geoFace_h );
+
+  // EOS block: constant for the run
+  const std::size_t eos_bytes = nmat*sizeof(inciter::EOS);
+  auto eos_h = changeToView(
+    reinterpret_cast< char* >( const_cast< inciter::EOS* >( mat_blk.data() ) ),
+    eos_bytes );
+  if (ensureDeviceCapacity( dv.eos, "bnd_eos_d_view", eos_bytes ))
+    Kokkos::deep_copy( dv.eos, eos_h );
+
+  // The flattened face list changes whenever the boundary configuration does,
+  // so it is uploaded every call. It is O(nbfac), far smaller than the mesh.
+  auto bfaces_h = changeToView( bfaces.data(), nbf );
+  ensureDeviceCapacity( dv.bfaces, "bnd_bfaces_d_view", nbf );
+  Kokkos::deep_copy( dv.bfaces, bfaces_h );
+  auto bfkind_h = changeToView( bfkind.data(), nbf );
+  ensureDeviceCapacity( dv.bfkind, "bnd_bfkind_d_view", nbf );
+  Kokkos::deep_copy( dv.bfkind, bfkind_h );
+
+  // Quadrature in device storage
+  Kokkos::Array< Kokkos::Array< real, NQUAD_MAX >, 3 > coordgpD{};
+  Kokkos::Array< real, NQUAD_MAX > wgpD{};
+  for (std::size_t igp=0; igp<ng; ++igp) {
+    coordgpD[0][igp] = coordgp[0][igp];
+    coordgpD[1][igp] = coordgp[1][igp];
+    wgpD[igp] = wgp[igp];
+  }
+
+  // Shallow copies so the closure captures views, not dv
+  auto solidx_d = dv.solidx;
+  auto inpoel_d = dv.inpoel;
+  auto cx_d = dv.cx;
+  auto cy_d = dv.cy;
+  auto cz_d = dv.cz;
+  auto geoElem_d = dv.geoElem;
+  auto geoFace_d = dv.geoFace;
+  auto esuf_d = dv.esuf;
+  auto inpofa_d = dv.inpofa;
+  auto bfaces_d = dv.bfaces;
+  auto bfkind_d = dv.bfkind;
+  auto U_d = dv.U;
+  auto P_d = dv.P;
+  auto R_d = dv.R;
+  auto rd_d = dv.riemannDeriv;
+  auto eos_p = reinterpret_cast< const inciter::EOS* >( dv.eos.data() );
+  // Local copy so the closure captures the POD by value, not a host reference
+  const auto bcp = bcparams;
+
+  Kokkos::parallel_for( "bndSurfIntMultiMat_constP",
+    Kokkos::RangePolicy< execution_space >( exec, 0, nbf ),
+    KOKKOS_LAMBDA( const std::size_t ifa )
+  {
+    const std::size_t f = bfaces_d(ifa);
+    const auto bck = static_cast< inciter::BCKind >( bfkind_d(ifa) );
+    const std::size_t el = static_cast< std::size_t >( esuf_d(2*f) );
+
+    // Extract the left element coordinates
+    Kokkos::Array< Kokkos::Array< real, 3 >, 4 > coordel_l;
+    for (std::size_t i=0; i<4; ++i) {
+      const auto n = inpoel_d(4*el+i);
+      coordel_l[i][0] = cx_d(n);
+      coordel_l[i][1] = cy_d(n);
+      coordel_l[i][2] = cz_d(n);
+    }
+
+    // Compute the determinant of Jacobian matrix
+    const auto detT_l =
+      Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
+
+    // Extract the face coordinates
+    Kokkos::Array< Kokkos::Array< real, 3 >, 3 > coordfa;
+    for (std::size_t i=0; i<3; ++i) {
+      const auto n = inpofa_d(3*f+i);
+      coordfa[i][0] = cx_d(n);
+      coordfa[i][1] = cy_d(n);
+      coordfa[i][2] = cz_d(n);
+    }
+
+    Kokkos::Array< real, 3 > fn{{ geoFace_d(f*gf_nprop+1),
+                                  geoFace_d(f*gf_nprop+2),
+                                  geoFace_d(f*gf_nprop+3) }};
+
+    Kokkos::Array< real, NDOF_MAX > B_l;
+    Kokkos::Array< Kokkos::Array< real, NSTATE_MAX >, 2 > var;
+    Kokkos::Array< real, inciter::HLLCMultiMatConstP::NFLX_MAX > flx;
+
+    // Gaussian quadrature
+    for (std::size_t igp=0; igp<ng; ++igp)
+    {
+      // Compute the coordinates of quadrature point at physical domain
+      auto gp = eval_gp( igp, coordfa, coordgpD );
+
+      Kokkos::Array< real, 3 > ref_gp_l{{
+        Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
+        Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
+        Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l }};
+
+      // The host overload receives a vector pre-filled with 1.0; eval_basis
+      // writes only the entries above the first, so reproduce the fill
+      for (std::size_t i=0; i<NDOF_MAX; ++i) B_l[i] = 1.0;
+      eval_basis( rdof, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
+
+      const auto wt = wgpD[igp] * geoFace_d(f*gf_nprop+0);
+
+      // Compute the state variables at the left element
+      evalPolynomialSol( intsharp, ncomp, nprim, rdof, nmat, el, rdof,
+        m_nprop, p_nprop, geo_nprop, bparam, solidx_d, inpoel_d,
+        cx_d, cy_d, cz_d, geoElem_d, ref_gp_l, B_l, U_d, P_d, var[0] );
+
+      // Ghost state
+      inciter::bcStateDev( bck, ncomp, nmat, nstate, solidx_d, fn,
+                           var[0], var[1], eos_p, bcp );
+
+      // Compute the numerical flux. ALE is refused above, so wn is zero.
+      auto nflx = inciter::HLLCMultiMatConstP::flux( eos_p, fn, var, 0.0,
+                    nmat, nsld, ncomp, nstate, solidx_d, flx );
+
+      // Add the surface integration term to the rhs
+      update_rhs_bc_constP( ncomp, nmat, ndof, ndof, wt, fn, el, flx,
+                            nflx, B_l, solidx_d, nsld,
+                            R_d, r_nprop, rd_d, rd_ncol );
+    }
+  });
 }
 
 void

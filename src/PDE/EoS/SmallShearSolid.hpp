@@ -22,6 +22,7 @@
 #include <cmath>
 #include <iostream>
 #include "EoS/EOSDeviceFn.hpp"
+#include "EoS/TensorEOSDev.hpp"
 
 namespace inciter {
 
@@ -36,6 +37,32 @@ class SmallShearSolid {
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
       tk::real& eps2 ) const;
 
+    //! \brief Device version of elasticEnergy
+    //! \details Deliberately a distinct name rather than an overload: the
+    //!   host/device overload pairs elsewhere in this codebase have repeatedly
+    //!   caused a count=1 string replace to hit the wrong call site. Mirror of
+    //!   SmallShearSolid::elasticEnergy in SmallShearSolid.cpp, with
+    //!   tk::getIsochorRightCauchyGreen -> tk::isochorRightCauchyGreenEOS.
+    //! \warning Not bit-identical to the host version: the replacement inverts
+    //!   g.g^T by adjugate rather than by LAPACK LU. See the warning in
+    //!   EoS/TensorEOSDev.hpp for measured deviations.
+    EOS_FN tk::real elasticEnergyDev(
+      const tk::real defgrad[3][3],
+      tk::real& eps2 ) const
+    {
+      // compute volume-preserving part of Right Cauchy-Green strain tensor
+      tk::real Ct[3][3];
+      tk::isochorRightCauchyGreenEOS(defgrad, Ct);
+
+      // compute elastic shear distortion
+      eps2 = 0.5 * (Ct[0][0]+Ct[1][1]+Ct[2][2] - 3.0);
+
+      // compute elastic energy
+      auto rhoEe = m_mu * eps2;
+
+      return rhoEe;
+    }
+
   public:
     //! Default constructor
     SmallShearSolid() = default;
@@ -47,8 +74,18 @@ class SmallShearSolid {
     void setRho0(tk::real rho0);
 
     //! Calculate density from the material pressure and temperature
-    tk::real density( tk::real pr,
-                      tk::real temp ) const;
+    //! \details Moved inline as EOS_FN; see the note on the StiffenedGas
+    //!   equivalent. Takes only scalars, so no device overload is needed.
+    EOS_FN tk::real density( tk::real pr,
+                             tk::real temp ) const
+    {
+      tk::real g = m_gamma;
+      tk::real p_c = m_pstiff;
+      tk::real c_v = m_cv;
+
+      tk::real rho = (pr + p_c) / ((g-1.0) * c_v * temp);
+      return rho;
+    }
 
     //! Calculate pressure from the material density, momentum and total energy
     tk::real pressure(
@@ -119,6 +156,30 @@ class SmallShearSolid {
       tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
 
+    //! \brief Device overload of totalenergy
+    //! \details Takes defgrad as a raw C array; see the note on the
+    //!   StiffenedGas equivalent. Arithmetic and its ordering are identical to
+    //!   SmallShearSolid::totalenergy in SmallShearSolid.cpp.
+    //! \warning Not bit-identical to the host version, via elasticEnergyDev.
+    EOS_FN tk::real totalenergy(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real apr,
+      tk::real alpha,
+      const tk::real defgrad[3][3] ) const
+    {
+      // obtain hydro contribution to energy
+      tk::real arhoEh = (apr + alpha*m_gamma*m_pstiff) / (m_gamma-1.0) + 0.5 * arho *
+        (u*u + v*v + w*w);
+      // obtain elastic contribution to energy
+      tk::real eps2;
+      tk::real arhoEe = alpha*elasticEnergyDev(defgrad, eps2);
+
+      return (arhoEh + arhoEe);
+    }
+
     //! \brief Calculate material temperature from the material density, and
     //!   material specific total energy
     tk::real temperature(
@@ -129,6 +190,31 @@ class SmallShearSolid {
       tk::real arhoE,
       tk::real alpha=1.0,
       const std::array< std::array< tk::real, 3 >, 3 >& defgrad={{}} ) const;
+
+    //! \brief Device overload of temperature
+    //! \details Takes defgrad as a raw C array; see the note on the device
+    //!   totalenergy overload. Arithmetic and its ordering are identical to
+    //!   SmallShearSolid::temperature in SmallShearSolid.cpp.
+    //! \warning Not bit-identical to the host version, via elasticEnergyDev.
+    EOS_FN tk::real temperature(
+      tk::real arho,
+      tk::real u,
+      tk::real v,
+      tk::real w,
+      tk::real arhoE,
+      tk::real alpha,
+      const tk::real defgrad[3][3] ) const
+    {
+      // obtain elastic contribution to energy
+      tk::real eps2;
+      auto arhoEe = alpha*elasticEnergyDev(defgrad, eps2);
+      // obtain hydro contribution to energy
+      auto arhoEh = arhoE - arhoEe;
+
+      tk::real t = (arhoEh - 0.5 * arho * (u*u + v*v + w*w) - alpha*m_pstiff)
+                   / (arho*m_cv);
+      return t;
+    }
 
     //! Compute the minimum allowed pressure
     tk::real min_eff_pressure(

@@ -30,6 +30,13 @@ void initializeMaterialEoS( std::vector< EOS >& mat_blk );
 //! Mirror the per-material EOS constants needed by device kernels
 void checkDeviceEOSSupport();
 
+//! \brief Whether any configured material lacks a device-callable density()
+//! \details True if any material uses an EOS whose density() has no device
+//!   implementation. Currently that is JWL alone: JWL::density goes through
+//!   bisection() and its device branch returns NaN (see JWL.hpp). Used to keep
+//!   density-dependent boundary conditions on the host path for such cases.
+bool anyMaterialLacksDeviceDensity();
+
 //! Clean up the state of trace materials for multi-material PDE system
 bool
 cleanTraceMultiMat(

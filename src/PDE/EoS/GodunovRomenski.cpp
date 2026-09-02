@@ -44,34 +44,6 @@ GodunovRomenski::GodunovRomenski(
 { }
 
 tk::real
-GodunovRomenski::density(
-  tk::real pr,
-  tk::real ) const
-// *************************************************************************
-//! \brief Calculate density from the material pressure and temperature
-//!   using the GodunovRomenski equation of state
-//! \param[in] pr Material pressure
-//! \return Material density calculated using the cold compression pressure
-// *************************************************************************
-{
-  // Quick Newton
-  tk::real rho = m_rho0;
-  std::size_t maxiter = 50;
-  tk::real tol = 1.0e-04;
-  tk::real err = tol + 1;
-  for (std::size_t iter=0; iter<maxiter; ++iter)
-  {
-    tk::real p = pressure_coldcompr(rho) - pr;
-    auto dpdrho = DpccDrho(rho);
-    auto delta = p/dpdrho;
-    rho -= delta;
-    err = std::sqrt(std::pow(p,2.0));
-    if (err < tol) break;
-  }
-  return rho;
-}
-
-tk::real
 GodunovRomenski::pressure(
   tk::real arho,
   tk::real u,
@@ -362,19 +334,6 @@ GodunovRomenski::min_eff_pressure(
   return min;
     // - rho/(m_gamma+1) * DpccDrho(rho)
     // + pressure_coldcompr(arhoeff, aeff)/aeff;
-}
-
-tk::real
-GodunovRomenski::coldcomprEnergy( tk::real rho ) const
-// *************************************************************************
-//! \brief Calculate cold-compression contribution to material energy from the
-//!   material density
-//! \param[in] rho Material density
-//! \return Material cold compression energy using the GodunovRomenski EoS
-// *************************************************************************
-{
-  auto rrho0a = std::pow(rho/m_rho0, m_alpha);
-  return ( rho * m_K0/(2.0*m_rho0*m_alpha*m_alpha) * (rrho0a-1.0)*(rrho0a-1.0) );
 }
 
 /*

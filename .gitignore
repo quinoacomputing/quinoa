@@ -1,6 +1,7 @@
 *~
 *sw?
 /build
-/builddir
+/build*
 /install
 NOTE.md
+*.diff

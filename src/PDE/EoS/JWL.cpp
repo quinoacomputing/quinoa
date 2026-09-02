@@ -64,7 +64,7 @@ JWL::JWL( tk::real w, tk::real cv, tk::real rho0, tk::real de, tk::real rhor,
 }
 
 tk::real
-JWL::density(
+JWL::densityHost(
   tk::real pr,
   tk::real temp ) const
 // *************************************************************************
@@ -161,57 +161,6 @@ JWL::CauchyStress(
 }
 
 tk::real
-JWL::soundspeedHost(
-  tk::real arho,
-  tk::real apr,
-  tk::real alpha,
-  std::size_t imat,
-  const std::array< std::array< tk::real, 3 >, 3 >& ) const
-// *************************************************************************
-//! Calculate speed of sound from the material density and material pressure
-//! \param[in] arho Material partial density (alpha_k * rho_k)
-//! \param[in] apr Material partial pressure (alpha_k * p_k)
-//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
-//!   the single-material system, this argument can be left unspecified by
-//!   the calling code
-//! \param[in] imat Material-id who's EoS is required. Default is 0, so that
-//!   for the single-material system, this argument can be left unspecified
-//!   by the calling code
-//! \return Material speed of sound using the stiffened-gas EoS
-// *************************************************************************
-{
-  alpha = std::max(1e-14,alpha);
-  // limiting pressure to near-zero
-  auto apr_eff = std::max(alpha*
-    min_eff_pressure(1e-4*std::abs(apr/alpha), arho, alpha), apr);
-
-  auto co1 = m_rho0*alpha*alpha/(arho*arho);
-  auto co2 = alpha*(1.0+m_w)/arho;
-
-  tk::real ss = m_a*(m_r1*co1 - co2) * exp(-m_r1*alpha*m_rho0/arho)
-              + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho)
-              + (1.0+m_w)*apr_eff/arho;
-
-  auto ss2 = ss;
-  ss = std::sqrt(ss);
-
-  // check sound speed divergence
-  if (!std::isfinite(ss)) {
-    std::cout << "Material-id:      " << imat << std::endl;
-    std::cout << "Volume-fraction:  " << alpha << std::endl;
-    std::cout << "Partial density:  " << arho << std::endl;
-    std::cout << "Partial pressure: " << apr << std::endl;
-    std::cout << "Min allowed pres: " << alpha*min_eff_pressure(0.0, arho,
-      alpha) << std::endl;
-    Throw("Material-" + std::to_string(imat) + " has nan/inf sound speed. "
-      "ss^2: " + std::to_string(ss2) + ", material volume fraction: " +
-      std::to_string(alpha));
-  }
-
-  return ss;
-}
-
-tk::real
 JWL::totalenergy(
   tk::real arho,
   tk::real u,
@@ -279,53 +228,7 @@ JWL::temperature(
   return t;
 }
 
-tk::real
-JWL::min_eff_pressure(
-  tk::real min,
-  tk::real arho,
-  tk::real alpha ) const
-// *************************************************************************
-//! Compute the minimum allowed pressure
-//! \param[in] min Numerical threshold above which pressure needs to be limited
-//! \param[in] arho Material partial density (alpha_k * rho_k)
-//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
-//!   the single-material system, this argument can be left unspecified by
-//!   the calling code
-//! \return Minimum pressure allowed by physical constraints
-// *************************************************************************
-{
-  alpha = std::max(1e-14,alpha);
-  auto co1 = m_rho0*alpha*alpha/(arho*arho);
-  auto co2 = alpha*(1.0+m_w)/arho;
 
-  // minimum pressure is constrained by zero soundspeed.
-  auto apr = -(m_a*(m_r1*co1 - co2) * exp(-m_r1*alpha*m_rho0/arho)
-             + m_b*(m_r2*co1 - co2) * exp(-m_r2*alpha*m_rho0/arho))
-    * arho/(1.0+m_w);
-
-  return apr/alpha + min;
-}
-
-tk::real
-JWL::intEnergy(
-  tk::real rho,
-  tk::real pr ) const
-// *************************************************************************
-//! \brief Calculate specific internal energy using the JWL equation of
-//!   state
-//! \param[in] rho Material density
-//! \param[in] pr Material pressure
-//! \return Material internal energy calculated using the JWL EoS
-//! \details By inverting Eqn. 1 in 'JWL Equation of State', Menikoff,
-//!   LA-UR-15-29536
-// *************************************************************************
-{
-  tk::real e = - m_de + 1.0/m_w/rho*( pr
-                - m_a*(1.0 - m_w*rho/m_r1/m_rho0)*exp(-m_r1*m_rho0/rho)
-                - m_b*(1.0 - m_w*rho/m_r2/m_rho0)*exp(-m_r2*m_rho0/rho) );
-
-  return e;
-}
 
 tk::real
 JWL::bisection(
