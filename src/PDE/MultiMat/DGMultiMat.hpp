@@ -817,6 +817,33 @@ class MultiMat {
         coord, geoElem, prim, unk);
     }
 
+    //! Apply the configured physics source term to the solution
+    //! \param[in] t Physical time
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
+//    //! \param[in,out] U Solution vector at recent time step
+//    //! \param[in] P Vector of primitives at recent time step
+    //! \param[in,out] R Right-hand side vector
+    //! \param[in,out] srcFlag Whether the energy source was added
+    //! \details This is a public pass-through to the physics-policy source
+    //!   term. It is used by the IMEX-RK integrator to re-apply the
+    //!   physics source, which modifies the solution vector U in place
+    //!   (its effect is not carried through R); the IMEX explicit update
+    //!   rebuilds U from U_n + R only, and would otherwise discard it.
+    void physSrc( tk::real t,
+      const tk::Fields& geoElem,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblkid,
+      tk::Fields& /*U*/,
+      const tk::Fields& /*P*/,
+      tk::Fields& R,
+      std::vector< int >& srcFlag ) const
+    {
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      m_physics.physSrc(nmat, t, geoElem, elemblkid, R, srcFlag);
+    }
+
     //! Return cell-average deformation gradient tensor
     //! \param[in] unk Solution vector at recent time step
     //! \param[in] nielem Number of internal elements

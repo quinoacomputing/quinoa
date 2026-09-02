@@ -225,6 +225,15 @@ class Transport {
                              tk::Fields&,
                              std::size_t ) const {}
 
+    void physSrc( tk::real,
+                  const tk::Fields&,
+                  const std::unordered_map< std::size_t,
+                    std::set< std::size_t > >&,
+                  tk::Fields&,
+                  const tk::Fields&,
+                  tk::Fields&,
+                  std::vector< int >& ) const {}
+
     //! Reconstruct second-order solution from first-order
 //    //! \param[in] t Physical time
 //    //! \param[in] geoFace Face geometry array

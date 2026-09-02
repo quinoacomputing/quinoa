@@ -1545,6 +1545,18 @@ DG::solve( tk::real newdt )
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
     DG::imex_integrate();
+
+    // Re-apply the external source term after the IMEX update. Sources can
+    // modify the solution vector m_u in place rather than contributing through
+    // the RHS. The IMEX explicit update rebuilds m_u from m_un + RHS only (see
+    // imex_integrate()), which discards those in-place edits. Re-applying the
+    // source here reinstates them on the updated m_u.
+    // A scratch RHS is used so that the source's zeroing of RHS entries does
+    // not corrupt m_rhs/m_rhsprev used by subsequent stages.
+    tk::Fields srcrhs( m_rhs.nunk(), m_rhs.nprop() );
+    srcrhs.fill( 0.0 );
+    g_dgpde[d->MeshId()].physSrc( physT, myGhosts()->m_geoElem,
+      d->ElemBlockId(), m_u, m_p, srcrhs, m_srcFlag );
   }
   else if (implicit_ts) {
     // Implicit time-stepping using BDF1 to discretize time-derivative

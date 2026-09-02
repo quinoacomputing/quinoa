@@ -659,7 +659,14 @@ THINCFunction( std::size_t rdof,
       + dBdx[i][2] * alSol[kmax*rdof+2]
       + dBdx[i][3] * alSol[kmax*rdof+3];
 
-  auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
+  auto nMag = std::sqrt(tk::dot(nInt, nInt));
+
+  // If the majority material has no resolved gradient in this cell, the
+  // interface normal is undefined. Proceeding would form exp(0)/... = 0/0 in
+  // the tanh profile inversion below. In this degenerate case there is no
+  // interface to sharpen, so retain the TVD reconstruction already stored in
+  // alReco and return.
+  if (!std::isfinite(nMag) || nMag < 1.0e-8) return;
 
   for (std::size_t i=0; i<3; ++i)
     nInt[i] /= nMag;

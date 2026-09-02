@@ -220,6 +220,21 @@ cleanTraceMultiMat(
           U(e, densityDofIdx(nmat, k, rdof, 0)) = alk * rhok;
         }
 
+        // check for unphysical partial density: for a trace material the
+        // volume fraction can remain valid while the partial density (alpha*rho)
+        // goes negative/non-finite due to the (non-SSP IMEX) flux update. Reset
+        // it to a physical value consistent with the relaxation
+        // pressure/temperature, using the same recipe as the volume-fraction
+        // repair above. Done before the relaxation-pressure and energy
+        // computations below so that they see the corrected density.
+        // Once an SSP-IMEX scheme is implemented, this can be removed.
+        auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
+        if (arhok <= 0.0 || !std::isfinite(arhok)) {
+          auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+            std::max(1e-8,tmax));
+          U(e, densityDofIdx(nmat, k, rdof, 0)) = alk * rhok;
+        }
+
         // determine target relaxation pressure
         prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);

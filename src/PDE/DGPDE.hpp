@@ -224,6 +224,17 @@ class DGPDE {
                              std::size_t nielem ) const
     { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
 
+    //! Public interface to applying the physics source term
+    void physSrc( tk::real t,
+                  const tk::Fields& geoElem,
+                  const std::unordered_map< std::size_t,
+                    std::set< std::size_t > >& elemblkid,
+                  tk::Fields& unk,
+                  const tk::Fields& prim,
+                  tk::Fields& rhs,
+                  std::vector< int >& srcFlag ) const
+    { self->physSrc( t, geoElem, elemblkid, unk, prim, rhs, srcFlag ); }
+
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
                       const tk::Fields& geoFace,
@@ -485,6 +496,14 @@ class DGPDE {
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
+      virtual void physSrc( tk::real,
+                            const tk::Fields&,
+                            const std::unordered_map< std::size_t,
+                              std::set< std::size_t > >&,
+                            tk::Fields&,
+                            const tk::Fields&,
+                            tk::Fields&,
+                            std::vector< int >& ) const = 0;
       virtual void reconstruct( tk::real,
                                 const tk::Fields&,
                                 const tk::Fields&,
@@ -677,6 +696,16 @@ class DGPDE {
                                tk::Fields& prim,
                                std::size_t nielem )
       const override { data.cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
+      void physSrc( tk::real t,
+                    const tk::Fields& geoElem,
+                    const std::unordered_map< std::size_t,
+                      std::set< std::size_t > >& elemblkid,
+                    tk::Fields& unk,
+                    const tk::Fields& prim,
+                    tk::Fields& rhs,
+                    std::vector< int >& srcFlag )
+      const override
+      { data.physSrc( t, geoElem, elemblkid, unk, prim, rhs, srcFlag ); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,
