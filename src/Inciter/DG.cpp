@@ -2592,8 +2592,10 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
   std::size_t n = x.size();
 
   // m_u <- x
+  // m_numEqDof is indexed by global equation index, so the DOF count of a
+  // stiff equation is m_numEqDof[m_stiffEqIdx[ieq]] (not m_numEqDof[ieq]).
   for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-    for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    for (size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
     {
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
       m_u(e, stiffrmark) = x[ieq*ndof+idof];
