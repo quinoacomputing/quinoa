@@ -588,13 +588,14 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
 
       keywords.insert({"operator_split_plasticity",
         "Toggle use of operator-split plasticity around explicit SSP-RK3",
-        R"(This keyword turns on a Godunov (Lie) operator-split treatment of the
-        stiff plasticity source for solid materials in a multimat run, as a
-        non-SSP-free alternative to imex_runge_kutta. The explicit SSP-RK3 scheme
+        R"(This keyword toggles a Lie operator-split treatment of the
+        stiff plasticity source for solid materials in multimat, as an SSP
+        alternative to imex_runge_kutta. The explicit SSP-RK3 scheme
         advances all equations over the full time step, then the plastic terms
         are relaxed once per step by a per-element backward-Euler solve. The
         non-linear solver reuses imex_maxiter/imex_reltol/imex_abstol. Mutually
-        exclusive with imex_runge_kutta and implicit_timestepping.)", "uint 0/1"});
+        exclusive with imex_runge_kutta and implicit_timestepping.)",
+        "uint 0/1"});
 
       // -----------------------------------------------------------------------
       // MultiSpecies option to provide NASA9 DB filepath

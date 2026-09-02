@@ -255,7 +255,8 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_nstage;
       p | m_stage;
-      PUP::pup_bytes( &p, &m_stiffMode, sizeof(m_stiffMode) );
+      //PUP::pup_bytes( &p, &m_stiffSolverMode, sizeof(m_stiffSolverMode) );
+      p | m_stiffSolverMode;
       p | m_ndof;
       p | m_interface;
       p | m_numEqDof;
@@ -337,12 +338,9 @@ class DG : public CBase_DG {
     tk::Fields m_stiffrhsprev;
     //! Vectors that indicates which equations are stiff and non-stiff
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
-    //! \brief Which stiff-equation residual nonlinear_func() should assemble.
-    //!   IMEX: the fully-coupled Cavaglieri-Bewley residual; OperatorSplit: the
-    //!   pure backward-Euler relaxation residual used by the operator-split
-    //!   plasticity substep.
-    enum class StiffMode { IMEX=0, OperatorSplit=1 };
-    StiffMode m_stiffMode = StiffMode::IMEX;
+    //! Which stiff-equation residual nonlinear_func() should assemble.
+    enum class StiffSolverMode { IMEX=0, OperatorSplit=1 };
+    StiffSolverMode m_stiffSolverMode = StiffSolverMode::IMEX;
     //! \brief Post-RK stiff DOFs of the element currently being relaxed, used as
     //!   the constant term in the operator-split backward-Euler residual. Transient
     //!   per-element scratch (not PUPed).
@@ -495,7 +493,7 @@ class DG : public CBase_DG {
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
 
-    //! Perform the operator-split plasticity relaxation substep (post SSP-RK3)
+    //! Perform the operator-split plasticity relaxation substep
     void plasticity_split_integrate();
 
     //! Perform the BDF1 update

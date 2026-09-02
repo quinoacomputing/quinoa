@@ -336,6 +336,13 @@ DG::setup()
     d->histheader( std::move(histnames) );
   }
 
+  // Select the stiff-equation residual mode for the run. The schemes are
+  // mutually exclusive (enforced by the parser), so this is set once here.
+  if (g_inputdeck.get< tag::operator_split_plasticity >())
+    m_stiffSolverMode = StiffSolverMode::OperatorSplit;
+  else
+    m_stiffSolverMode = StiffSolverMode::IMEX;
+
   // If working with IMEX-RK or operator-split plasticity, store stiff equations
   // into m_stiffEqIdx (both schemes integrate the same stiff plasticity eqs)
   if (g_inputdeck.get< tag::imex_runge_kutta >() ||
@@ -1617,11 +1624,9 @@ DG::solve( tk::real newdt )
       }
     }
 
-  // Operator-split plasticity: after the explicit SSP-RK3 step has fully updated
-  // m_u (including the hyperbolically-advected deformation-gradient equations),
-  // relax the stiff plasticity source once per time step on the final RK stage.
-  // Runs on the post-RK m_u and before updatePrimitives so primitives and the
-  // trace-material cleanup below see the relaxed conserved state.
+  // Operator-split plasticity: after the explicit SSP-RK3 step has updated
+  // m_u using the hyperbolic operator, relax the stiff plasticity source at
+  // the final RK stage.
   if (op_split_plasticity && m_stage == m_nstage-1)
     DG::plasticity_split_integrate();
 
@@ -2493,14 +2498,13 @@ DG::imex_integrate()
 void
 DG::plasticity_split_integrate()
 // *****************************************************************************
-//  Perform the operator-split plasticity relaxation substep
-//! \details Godunov (Lie) operator split: the explicit SSP-RK3 step has already
-//!   advanced every equation over the full time step (including the
-//!   hyperbolically-advected inverse deformation-gradient equations). This
-//!   routine then relaxes the stiff plasticity source once, per element, by a
-//!   backward-Euler solve about the post-RK state, and balances the elastic
-//!   energy change. The plasticity source (DGMultiMat::stiff_rhs) is a purely
-//!   local relaxation ODE, so this substep requires no communication.
+// Perform the operator-split plasticity relaxation substep
+//! \details Lie operator split: the explicit SSP-RK3 step has already
+//!   advanced every equation over the full time step using the hyperbolic
+//!   operators. This routine relaxes the stiff plasticity source, locally per
+//!   element, by a backward-Euler solve about the post-RK state (after RK's
+//!   final stage in this time-step). Then, it balances the elastic energy
+//!   change.
 // *****************************************************************************
 {
   auto d = Disc();
@@ -2510,15 +2514,15 @@ DG::plasticity_split_integrate()
 
   // The split residual carries no tableau history; clear the stiff RHS register.
   m_stiffrhs.fill(0.0);
-  // Switch nonlinear_func() to the backward-Euler split residual.
-  m_stiffMode = StiffMode::OperatorSplit;
 
   for (std::size_t e=0; e<nelem; ++e)
   {
-    // Gather the post-RK stiff DOFs of this element as the relaxation state.
+    // Gather the stiff DOFs of this element as the relaxation state.
+    // m_numEqDof is indexed by global equation index, so the DOF count of a
+    // stiff equation is m_numEqDof[m_stiffEqIdx[ieq]] (not m_numEqDof[ieq]).
     std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
     for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-      for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
       {
         auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
         x[ieq*ndof+idof] = m_u(e, stiffrmark);
@@ -2530,7 +2534,7 @@ DG::plasticity_split_integrate()
     auto x_star = x;
 
     // Solve the local nonlinear system, first try Broyden then fall back to
-    // Newton, reusing the IMEX nonlinear solvers (m_stiffMode selects the
+    // Newton, reusing the IMEX nonlinear solvers (m_stiffSolverMode selects the
     // residual assembled in nonlinear_func()).
     bool solver_failed = false;
     x = DG::nonlinear_broyden(e, x, solver_failed);
@@ -2550,15 +2554,12 @@ DG::plasticity_split_integrate()
 
     // Update the state with the converged relaxed stiff DOFs.
     for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-      for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
       {
         auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
         m_u(e, stiffrmark) = x[ieq*ndof+idof];
       }
   }
-
-  // Restore the default residual mode.
-  m_stiffMode = StiffMode::IMEX;
 }
 
 void
@@ -2604,12 +2605,12 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
   // Operator-split plasticity: pure backward-Euler relaxation of the stiff
   // source about the post-RK state g_afterRK (m_gStar), with no IMEX tableau
   // history. Residual: F_i = x_i - g_afterRK_i - dt*stiff_rhs_i(x)/mm_i.
-  if (m_stiffMode == StiffMode::OperatorSplit) {
+  if (m_stiffSolverMode == StiffSolverMode::OperatorSplit) {
     g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
       m_u, m_ndof, m_stiffrhs );
     std::vector< tk::real > f(n, 0.0);
     for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-      for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
       {
         auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
         auto mm_i = vole * mass_dubiner[idof];
