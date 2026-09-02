@@ -155,6 +155,18 @@ LuaParser::storeInputDeck(
     lua_ideck, "imex_reltol", gideck.get< tag::imex_reltol >(), 1.0e-02);
   storeIfSpecd< tk::real >(
     lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-04);
+  storeIfSpecd< uint32_t >(
+    lua_ideck, "operator_split_plasticity",
+    gideck.get< tag::operator_split_plasticity >(), 0);
+
+  // Operator-split plasticity wraps SSP-RK3 and owns the stiff plasticity eqs by
+  // itself; it cannot coexist with the fully-coupled IMEX or the BDF1 solvers.
+  if (gideck.get< tag::operator_split_plasticity >() &&
+      (gideck.get< tag::imex_runge_kutta >() ||
+       gideck.get< tag::implicit_timestepping >()))
+    Throw("operator_split_plasticity is mutually exclusive with "
+      "imex_runge_kutta and implicit_timestepping. Enable only one time "
+      "integration scheme for the stiff plasticity terms.");
 
   if (gideck.get< tag::dt >() < 1e-12 && gideck.get< tag::cfl >() < 1e-12)
     Throw("No time step calculation policy has been selected in the "

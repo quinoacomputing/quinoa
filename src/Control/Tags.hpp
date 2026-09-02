@@ -165,6 +165,7 @@ DEFTAG(imex_runge_kutta);
 DEFTAG(imex_maxiter);
 DEFTAG(imex_reltol);
 DEFTAG(imex_abstol);
+DEFTAG(operator_split_plasticity);
 
 DEFTAG(nasa9_filepath);
 

@@ -336,8 +336,10 @@ DG::setup()
     d->histheader( std::move(histnames) );
   }
 
-  // If working with IMEX-RK, Store stiff equations into m_stiffEqIdx
-  if (g_inputdeck.get< tag::imex_runge_kutta >())
+  // If working with IMEX-RK or operator-split plasticity, store stiff equations
+  // into m_stiffEqIdx (both schemes integrate the same stiff plasticity eqs)
+  if (g_inputdeck.get< tag::imex_runge_kutta >() ||
+      g_inputdeck.get< tag::operator_split_plasticity >())
   {
     g_dgpde[Disc()->MeshId()].setStiffEqIdx(m_stiffEqIdx);
     g_dgpde[Disc()->MeshId()].setNonStiffEqIdx(m_nonStiffEqIdx);
@@ -1495,6 +1497,9 @@ DG::solve( tk::real newdt )
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
+  // Operator-split plasticity wraps a relaxation substep around explicit SSP-RK3
+  const auto op_split_plasticity =
+    g_inputdeck.get< tag::operator_split_plasticity >();
 
   // Physical time at time-stage for computing exact source terms.
   // The stage time must match the abscissae of the tableau actually in use:
@@ -1611,6 +1616,14 @@ DG::solve( tk::real newdt )
         }
       }
     }
+
+  // Operator-split plasticity: after the explicit SSP-RK3 step has fully updated
+  // m_u (including the hyperbolically-advected deformation-gradient equations),
+  // relax the stiff plasticity source once per time step on the final RK stage.
+  // Runs on the post-RK m_u and before updatePrimitives so primitives and the
+  // trace-material cleanup below see the relaxed conserved state.
+  if (op_split_plasticity && m_stage == m_nstage-1)
+    DG::plasticity_split_integrate();
 
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
@@ -2478,6 +2491,77 @@ DG::imex_integrate()
 }
 
 void
+DG::plasticity_split_integrate()
+// *****************************************************************************
+//  Perform the operator-split plasticity relaxation substep
+//! \details Godunov (Lie) operator split: the explicit SSP-RK3 step has already
+//!   advanced every equation over the full time step (including the
+//!   hyperbolically-advected inverse deformation-gradient equations). This
+//!   routine then relaxes the stiff plasticity source once, per element, by a
+//!   backward-Euler solve about the post-RK state, and balances the elastic
+//!   energy change. The plasticity source (DGMultiMat::stiff_rhs) is a purely
+//!   local relaxation ODE, so this substep requires no communication.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+
+  // The split residual carries no tableau history; clear the stiff RHS register.
+  m_stiffrhs.fill(0.0);
+  // Switch nonlinear_func() to the backward-Euler split residual.
+  m_stiffMode = StiffMode::OperatorSplit;
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // Gather the post-RK stiff DOFs of this element as the relaxation state.
+    std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        x[ieq*ndof+idof] = m_u(e, stiffrmark);
+      }
+
+    // g_afterRK (constant term of the backward-Euler residual) and the
+    // pre-relaxation state used to balance the plastic (elastic) energy.
+    m_gStar = x;
+    auto x_star = x;
+
+    // Solve the local nonlinear system, first try Broyden then fall back to
+    // Newton, reusing the IMEX nonlinear solvers (m_stiffMode selects the
+    // residual assembled in nonlinear_func()).
+    bool solver_failed = false;
+    x = DG::nonlinear_broyden(e, x, solver_failed);
+    if (solver_failed) {
+      solver_failed = false;
+      x = DG::nonlinear_newton(e, x, solver_failed);
+    }
+    if (solver_failed)
+      Throw("At element " + std::to_string(e) +
+            " operator-split plasticity nonlinear solver did not converge");
+
+    // Balance the elastic-energy change from the relaxation into total energy.
+    // Unlike IMEX (which defers the stiff combination to the final stage and
+    // deposits into m_un), the split writes the converged solution directly, so
+    // the correction goes into the live m_u.
+    g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_u);
+
+    // Update the state with the converged relaxed stiff DOFs.
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        m_u(e, stiffrmark) = x[ieq*ndof+idof];
+      }
+  }
+
+  // Restore the default residual mode.
+  m_stiffMode = StiffMode::IMEX;
+}
+
+void
 DG::BDF1_integrate()
 // *****************************************************************************
 //  Perform the BDF1 update
@@ -2516,6 +2600,25 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
 
   auto vole = myGhosts()->m_geoElem(e,0);
   auto vole_n = m_geoElemn(e,0);
+
+  // Operator-split plasticity: pure backward-Euler relaxation of the stiff
+  // source about the post-RK state g_afterRK (m_gStar), with no IMEX tableau
+  // history. Residual: F_i = x_i - g_afterRK_i - dt*stiff_rhs_i(x)/mm_i.
+  if (m_stiffMode == StiffMode::OperatorSplit) {
+    g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
+      m_u, m_ndof, m_stiffrhs );
+    std::vector< tk::real > f(n, 0.0);
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        auto mm_i = vole * mass_dubiner[idof];
+        f[ieq*ndof+idof] = m_u(e, stiffrmark)
+          - m_gStar[ieq*ndof+idof]
+          - d->Dt() * m_stiffrhs(e,ieq*ndof+idof) / mm_i;
+      }
+    return f;
+  }
 
   // Compute explicit terms (Should be computed once)
   std::vector< tk::real > expl_terms(n, 0.0);

@@ -318,6 +318,7 @@ using ConfigMembers = brigand::list<
   tag::imex_maxiter,     uint32_t,
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
+  tag::operator_split_plasticity, uint32_t,
 
   // NASA9 database location for MultiSpecies
   tag::nasa9_filepath, std::string,
@@ -584,6 +585,16 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the absolute tolerance that
         the non-linear solver uses to obtain the implicit unknowns within the
         Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      keywords.insert({"operator_split_plasticity",
+        "Toggle use of operator-split plasticity around explicit SSP-RK3",
+        R"(This keyword turns on a Godunov (Lie) operator-split treatment of the
+        stiff plasticity source for solid materials in a multimat run, as a
+        non-SSP-free alternative to imex_runge_kutta. The explicit SSP-RK3 scheme
+        advances all equations over the full time step, then the plastic terms
+        are relaxed once per step by a per-element backward-Euler solve. The
+        non-linear solver reuses imex_maxiter/imex_reltol/imex_abstol. Mutually
+        exclusive with imex_runge_kutta and implicit_timestepping.)", "uint 0/1"});
 
       // -----------------------------------------------------------------------
       // MultiSpecies option to provide NASA9 DB filepath
