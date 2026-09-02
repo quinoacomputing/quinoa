@@ -220,7 +220,8 @@ class Transport {
                        const tk::Fields&,
                        tk::Fields&,
                        tk::Fields&,
-                       std::size_t ) const {}
+                       std::size_t,
+                       std::vector< int >& ) const {}
 
     //! Reconstruct second-order solution from first-order
 //    //! \param[in] t Physical time

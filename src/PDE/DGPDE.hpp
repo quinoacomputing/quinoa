@@ -220,8 +220,9 @@ class DGPDE {
                        const tk::Fields& geoElem,
                        tk::Fields& U,
                        tk::Fields& P,
-                       std::size_t nelem ) const
-    { self->evolveDamage(dt, geoElem, U, P, nelem); }
+                       std::size_t nelem,
+                       std::vector< int >& srcFlag ) const
+    { self->evolveDamage(dt, geoElem, U, P, nelem, srcFlag); }
 
     //! Public interface to reconstructing the second-order solution
     void reconstruct( tk::real t,
@@ -483,7 +484,8 @@ class DGPDE {
                                  const tk::Fields&,
                                  tk::Fields&,
                                  tk::Fields&,
-                                 std::size_t ) const = 0;
+                                 std::size_t,
+                                 std::vector< int >& ) const = 0;
       virtual void reconstruct( tk::real,
                                 const tk::Fields&,
                                 const tk::Fields&,
@@ -674,8 +676,9 @@ class DGPDE {
                          const tk::Fields& geoElem,
                          tk::Fields& U,
                          tk::Fields& P,
-                         std::size_t nelem)
-      const override { data.evolveDamage( dt, geoElem, U, P, nelem); }
+                         std::size_t nelem,
+                         std::vector< int >& srcFlag)
+      const override { data.evolveDamage( dt, geoElem, U, P, nelem, srcFlag); }
       void reconstruct( tk::real t,
                         const tk::Fields& geoFace,
                         const tk::Fields& geoElem,

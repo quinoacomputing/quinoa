@@ -276,7 +276,8 @@ class CompFlow {
                        const tk::Fields&,
                        tk::Fields&,
                        tk::Fields&,
-                       std::size_t ) const {}
+                       std::size_t,
+                       std::vector< int >& ) const {}
 
     //! Reconstruct second-order solution from first-order using least-squares
 //    //! \param[in] t Physical time

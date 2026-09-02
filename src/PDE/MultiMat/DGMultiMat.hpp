@@ -613,7 +613,8 @@ class MultiMat {
                        const tk::Fields& geoElem,
                        tk::Fields& U,
                        tk::Fields& P,
-                       std::size_t nelem ) const
+                       std::size_t nelem,
+                       std::vector< int >& srcFlag ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -900,6 +901,10 @@ class MultiMat {
 
                 if (kfluid < nmat && dalpha > 1.0e-10)
                 {
+                  // Mark this element for THINC sharpening deactivation
+                  // Material replacement in this cell creates numerical issues with sharpening
+                  srcFlag[e] = 1;
+
                   // Get current state BEFORE modifying
                   tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
                   tk::real arhoE_k = U(e, energyDofIdx(nmat, k, rdof, 0));
