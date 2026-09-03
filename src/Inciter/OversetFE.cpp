@@ -667,12 +667,18 @@ OversetFE::transferSol()
 // Transfer solution to other solver and mesh if coupled
 // *****************************************************************************
 {
+  //std::cout << "Overset " << Disc()->MeshId()
+  //  << " in transferSol(), m_ixfer: " << m_ixfer << "\n";
+
   // Set up transfer-flags for receiving mesh
   if (m_ixfer == 1) {
     applySolTransfer(0);
   }
   setTransferFlags(m_ixfer);
   ++m_ixfer;
+
+  //std::cout << "Overset " << Disc()->MeshId()
+  //  << " transferflags set, m_ixfer: " << m_ixfer << "\n";
 
   // Initiate IC transfer (if coupled)
   Disc()->transfer( m_uc, m_ixfer-1,
@@ -1677,7 +1683,7 @@ OversetFE::out()
 void
 OversetFE::evalLB( int nrestart )
 // *****************************************************************************
-// Evaluate whether to do load balancing
+// Begins to evaluate whether to do load balancing, but actually just adds mesh
 //! \param[in] nrestart Number of times restarted
 // *****************************************************************************
 {
@@ -1685,7 +1691,23 @@ OversetFE::evalLB( int nrestart )
 
   // Detect if just returned from a checkpoint and if so, zero timers and
   // finished flag
-  if (d->restarted( nrestart )) m_finished = 0;
+  if (d->restarted( nrestart )) {
+    d->addRestartedMesh(
+      CkCallback(CkIndex_OversetFE::continueEvalLB(), thisProxy) );
+    m_finished = 0;
+  }
+  else
+    continueEvalLB();
+}
+
+void
+OversetFE::continueEvalLB()
+// *****************************************************************************
+// Continue evaluating whether to do load balancing and proceed to next step
+// *****************************************************************************
+{
+  auto d = Disc();
+  //std::cout << "Overset " << d->MeshId() << " in continueEvalLB. \n";
 
   const auto lbfreq = g_inputdeck.get< tag::cmd, tag::lbfreq >();
   const auto nonblocking = g_inputdeck.get< tag::cmd, tag::nonblocking >();

@@ -93,6 +93,12 @@ class Discretization : public CBase_Discretization {
     //! Configure Charm++ reduction types
     static void registerReducers();
 
+    //! Register mesh with mesh-transfer lib
+    void addRestartedMesh( CkCallback cb );
+
+    //! Barrier target: all PEs done with CollideSerialClientRestart
+    void collideRestartDone();
+
     //! Start computing new mesh veloctity for ALE mesh motion
     void meshvelStart(
       const tk::UnsMesh::Coords vel,
@@ -514,6 +520,8 @@ class Discretization : public CBase_Discretization {
     //! \brief Charm++ callback of the function to call after a mesh-to-mesh
     //!   solution transfer (to-and-fro) is complete
     CkCallback m_transfer_complete;
+    //! Callback stored during addRestartedMesh, forwarded by collideRestartDone
+    CkCallback m_restartcb;
     //! Solution/mesh transfer (coupling) information coordination propagation
     //! \details This has the same size with the same src/dst information on
     //!   all solvers.

@@ -80,19 +80,6 @@ class TransferDetails : public CBase_TransferDetails {
     //! Transfer the interpolated solution data back to destination mesh
     void transferSolution( const std::vector< SolutionData >& soln );
 
-    /** @name Charm++ pack/unpack serializer member functions */
-    ///@{
-    //! \brief Pack/Unpack serialize member function
-    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er &p ) override {
-      p | m_firstchunk;
-    }
-    //! \brief Pack/Unpack serialize operator|
-    //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    //! \param[in,out] i TransferDetails object reference
-    friend void operator|( PUP::er& p, TransferDetails& i ) { i.pup(p); }
-    //@}
-
   private:
     //! The ID of my first chunk (used for collision detection library)
     int m_firstchunk;

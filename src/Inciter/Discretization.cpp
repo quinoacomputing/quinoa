@@ -35,6 +35,12 @@ extern ctr::InputDeck g_inputdeck_defaults;
 
 } // inciter::
 
+namespace exam2m {
+
+extern CollideHandle collideHandle;
+
+} // exam2m::
+
 using inciter::Discretization;
 
 Discretization::Discretization(
@@ -175,11 +181,48 @@ Discretization::Discretization(
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-      //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+      //std::cout << "Disc: " << m_meshid << " called addMesh(). \n";
     }
+  }
+}
+
+void
+Discretization::addRestartedMesh( CkCallback cb )
+// *****************************************************************************
+// Register mesh with mesh-transfer lib on restart
+//! \param[in] cb Callback to call when mesh-registration is complete.
+// *****************************************************************************
+{
+  if (m_disc.size() == 1 || m_transfer.empty()) {
+    // skip transfer if single mesh or if not involved in coupling
+    cb.send();
+  } else {
+    // Store the callback so collideRestartDone() (element 0) can forward it
+    // to addMesh once all PEs have finished reinitClient.
+    m_restartcb = cb;
+    // Reinitialize the collision client on this PE's collideMgr branch.
+    // Contribute to a barrier so ALL PEs finish reinitClient before element 0
+    // calls addMesh.  Without this, collideMgr on some PEs may not yet be
+    // restored from checkpoint when the first collision messages arrive,
+    // causing "group proxy not initialized" (CmiAbort / SIGSEGV on restart).
+    CollideSerialClientRestart(exam2m::collideHandle, exam2m::collisionHandler,
+      0);
+    contribute( CkCallback(CkIndex_Discretization::collideRestartDone(), thisProxy) );
   }
   // Array elements must not use the chare_objs table
   chareIdx = -1;
+}
+
+void
+Discretization::collideRestartDone()
+// *****************************************************************************
+// Called on element 0 once every chare has finished CollideSerialClientRestart
+// *****************************************************************************
+{
+  if (thisIndex == 0) {
+    //std::cout << "Disc: on restart " << m_meshid << " called addMesh(). \n";
+    exam2m::addMesh( thisProxy, m_nchare, m_restartcb );
+  }
 }
 
 std::unordered_map< std::size_t, std::size_t >
@@ -204,6 +247,7 @@ Discretization::transferInit()
 // coupled to other solver)
 // *****************************************************************************
 {
+  //std::cout << "Disc: " << m_meshid << " completed addMesh(). \n";
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
   for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
@@ -345,6 +389,7 @@ Discretization::transfer(
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (fromMesh == m_meshid) {
+      //std::cout << "Disc: " << m_meshid << " setting source tets. \n";
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
       ++m_nsrc;
     } else {
@@ -352,6 +397,7 @@ Discretization::transfer(
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
     if (toMesh == m_meshid) {
+      //std::cout << "Disc: " << m_meshid << " setting destination pts. \n";
       exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
         cb_xfer );
       ++m_ndst;
