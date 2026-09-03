@@ -430,6 +430,10 @@ DG::next()
 // Advance equations to next time step
 // *****************************************************************************
 {
+  // Reset source flag for all elements at the beginning of each stage
+  // This flag is shared by multiple functions (rhs, evolveDamage, etc.)
+  std::fill(m_srcFlag.begin(), m_srcFlag.end(), 0);
+
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   auto d = Disc();

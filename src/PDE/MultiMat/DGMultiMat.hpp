@@ -907,7 +907,21 @@ class MultiMat {
                 {
                   // Mark this element for THINC sharpening deactivation
                   // Material replacement in this cell creates numerical issues with sharpening
-                  srcFlag[e] = 1;
+                  // Only mark if this material is the dominant phase in the cell
+                  // (has larger volume fraction than any other single material)
+                  bool is_dominant = true;
+                  for (std::size_t km=0; km<nmat; ++km) {
+                    if (km != k) {
+                      tk::real alpha_km = U(e, volfracDofIdx(nmat, km, rdof, 0));
+                      if (alpha_km > alpha_k) {
+                        is_dominant = false;
+                        break;
+                      }
+                    }
+                  }
+                  if (is_dominant) {
+                    srcFlag[e] = 1;
+                  }
 
                   // Get current state BEFORE modifying
                   tk::real arho_k = U(e, densityDofIdx(nmat, k, rdof, 0));
