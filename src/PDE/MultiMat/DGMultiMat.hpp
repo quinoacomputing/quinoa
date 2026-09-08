@@ -833,10 +833,26 @@ class MultiMat {
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) += arho*dD;
 
             // 7. Maintain bounds
-            // Upper bound: damage cannot exceed total density (D ≤ 1.0)
+            // Upper bound: damage capped at 99% to prevent numerical pathologies
+            // (D = 1.0 causes division by zero in stress, wave speeds, etc.)
             // Lower bound: damage ≥ 0 (natural physical bound)
+            tk::real D_max = 0.99 * arho;  // Cap at 99% of density (D_max = 0.99)
+            tk::real rhoD_uncapped = U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0));
             U(e, damageDofIdx(nmat, nsld, solidx[k], rdof, 0)) =
-              std::max(std::min(arho, U(e, damageDofIdx(nmat, nsld,  solidx[k], rdof, 0))), 0.0);
+              std::max(std::min(D_max, rhoD_uncapped), 0.0);
+
+            // Optional diagnostic: track when damage cap is hit
+            // Uncomment to see which elements reach maximum damage
+            /*
+            if (rhoD_uncapped > D_max && alpha_k > 1.0e-3) {
+              static int cap_count = 0;
+              if (++cap_count <= 100) {  // Only print first 100 times
+                std::cout << "Damage capped at 99% (element " << e
+                          << ", material " << k
+                          << ", alpha=" << alpha_k << ")" << std::endl;
+              }
+            }
+            */
           }
         }
 
