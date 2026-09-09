@@ -125,7 +125,7 @@ class SmallShearSolid {
       auto p_eff = fmax( 1.0e-15, apr+(al_eff*m_pstiff) );
       a += m_gamma * p_eff / arho;
       a = std::sqrt(a);
-#if !defined(__CUDA_ARCH__)
+#if !defined(EOS_DEVICE_PASS)
       if (!std::isfinite(a)) {
         std::cout << "Material-id: " << imat << std::endl;
         std::cout << "Volume fraction: " << alpha << std::endl;

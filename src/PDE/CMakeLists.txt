@@ -62,6 +62,6 @@ if (ENABLE_GPU)
           MultiSpeciesProblem
           MultiSpeciesMixture
           EOS)
-    quinoa_cuda_target(${_quinoa_pde_target})
+    quinoa_gpu_target(${_quinoa_pde_target})
   endforeach()
 endif()

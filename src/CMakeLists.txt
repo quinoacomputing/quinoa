@@ -112,16 +112,28 @@ message(STATUS "Third-party library dir: " ${TPL_DIR})
 find_package(Kokkos CONFIG QUIET
              PATHS "${TPL_DIR}"
              NO_DEFAULT_PATH)
+if (Kokkos_FOUND AND Kokkos_ENABLE_CUDA AND Kokkos_ENABLE_HIP)
+  message(FATAL_ERROR
+    "The Kokkos under ${TPL_DIR} enables both CUDA and HIP. Quinoa selects one "
+    "device compiler per build and cannot serve both.")
+endif()
 if (Kokkos_FOUND AND Kokkos_ENABLE_CUDA)
   set(ENABLE_GPU ON)
+  set(QUINOA_GPU_BACKEND "CUDA")
   message(STATUS "GPU support: enabled by Kokkos CUDA backend")
   message(STATUS "Kokkos CUDA architectures: ${Kokkos_ARCH}")
+elseif (Kokkos_FOUND AND Kokkos_ENABLE_HIP)
+  set(ENABLE_GPU ON)
+  set(QUINOA_GPU_BACKEND "HIP")
+  message(STATUS "GPU support: enabled by Kokkos HIP backend")
+  message(STATUS "Kokkos HIP architectures: ${Kokkos_HIP_ARCHITECTURES}")
 else()
   set(ENABLE_GPU OFF)
-  message(STATUS "GPU support: disabled (Kokkos CUDA backend not found)")
+  set(QUINOA_GPU_BACKEND "")
+  message(STATUS "GPU support: disabled (no Kokkos CUDA or HIP backend found)")
 endif()
 
-if (ENABLE_GPU)
+if (ENABLE_GPU AND QUINOA_GPU_BACKEND STREQUAL "CUDA")
   set(QUINOA_NVCC_WRAPPER "${TPL_DIR}/bin/nvcc_wrapper" CACHE FILEPATH
       "Path to Kokkos nvcc_wrapper" FORCE)
   if (NOT EXISTS "${QUINOA_NVCC_WRAPPER}")
@@ -169,9 +181,45 @@ if (ENABLE_GPU)
   if (NOT QUINOA_NVCC_WRAPPER_CHMOD_RESULT EQUAL 0)
     message(FATAL_ERROR "Could not make nvcc_wrapper launcher executable")
   endif()
+  set(QUINOA_GPU_LAUNCHER "${QUINOA_NVCC_WRAPPER_LAUNCHER}")
+  set(QUINOA_GPU_LINK_DRIVER "${QUINOA_NVCC_WRAPPER_LAUNCHER}")
   message(STATUS "GPU nvcc_wrapper: ${QUINOA_NVCC_WRAPPER}")
   message(STATUS "GPU host C++ compiler: ${QUINOA_HOST_CXX_COMPILER}")
   message(STATUS "CUDA toolkit root: ${QUINOA_CUDA_ROOT}")
+endif()
+
+if (ENABLE_GPU AND QUINOA_GPU_BACKEND STREQUAL "HIP")
+  set(QUINOA_HIP_COMPILER "" CACHE FILEPATH "Path to hipcc for Quinoa")
+  if (NOT QUINOA_HIP_COMPILER)
+    find_program(QUINOA_HIP_COMPILER_FOUND
+                 NAMES hipcc
+                 HINTS "$ENV{ROCM_PATH}/bin" "$ENV{HIP_PATH}/bin")
+    if (QUINOA_HIP_COMPILER_FOUND)
+      set(QUINOA_HIP_COMPILER "${QUINOA_HIP_COMPILER_FOUND}")
+    endif()
+  endif()
+  if (NOT EXISTS "${QUINOA_HIP_COMPILER}")
+    message(FATAL_ERROR
+      "Kokkos HIP was detected, but hipcc could not be located. Set "
+      "QUINOA_HIP_COMPILER or ROCM_PATH.")
+  endif()
+  set(QUINOA_HIP_COMPILER "${QUINOA_HIP_COMPILER}" CACHE FILEPATH
+      "Path to hipcc for Quinoa" FORCE)
+
+  if (NOT Kokkos_HIP_ARCHITECTURES)
+    message(FATAL_ERROR
+      "The installed Kokkos does not report Kokkos_HIP_ARCHITECTURES, so the "
+      "offload architecture cannot be derived. Rebuild the TPLs with an "
+      "explicit KOKKOS_ARCH.")
+  endif()
+
+  # The launcher that routes compilation through the MPI wrapper to hipcc is
+  # generated further down, once MPI has been detected. Compiling with hipcc
+  # directly is not an option: the wrapper is what contributes mpi.h, which
+  # Trilinos headers such as Teuchos_Time.hpp need, and which targets like
+  # ZoltanInterOp get no other way.
+  message(STATUS "GPU hipcc: ${QUINOA_HIP_COMPILER}")
+  message(STATUS "GPU offload architecture: ${Kokkos_HIP_ARCHITECTURES}")
 endif()
 
 # Detect compiler version
@@ -251,17 +299,33 @@ if (ENABLE_GPU)
   # RULE_LAUNCH_COMPILE.  Apply the launcher to a whole computational target
   # instead. CMAKE_CXX_COMPILER remains mpicxx for Control's PEGTL/Lua parser,
   # Charm++ modules, and every other host-only target.
-  macro(quinoa_cuda_target target)
-    target_compile_options(${target} PRIVATE
-      --expt-extended-lambda -I${QUINOA_CUDA_ROOT}/include)
+  macro(quinoa_gpu_target target)
+    if (QUINOA_GPU_BACKEND STREQUAL "CUDA")
+      target_compile_options(${target} PRIVATE
+        --expt-extended-lambda -I${QUINOA_CUDA_ROOT}/include)
+    else()
+      # hipcc compiles .cpp as HIP on its own, so only the offload
+      # architecture has to be restated here: it was stripped above along with
+      # the rest of the Kokkos interface options.
+      target_compile_options(${target} PRIVATE
+        --offload-arch=${Kokkos_HIP_ARCHITECTURES}
+        ${QUINOA_GCC_TOOLCHAIN_FLAG})
+    endif()
     # kokkos_launch_compiler uses this marker to redirect both compiler and
-    # linker invocations to nvcc_wrapper. Do not link Kokkos::kokkos here:
-    # with Quinoa's legacy transitive link interfaces, its CUDA-only compile
-    # flags otherwise leak into host-only targets such as Main/inciter.
+    # linker invocations to the device compiler. Do not link Kokkos::kokkos
+    # here: with Quinoa's legacy transitive link interfaces, its device-only
+    # compile flags otherwise leak into host-only targets such as
+    # Main/inciter.
     target_compile_definitions(${target} PRIVATE KOKKOS_DEPENDENCE)
     set_property(TARGET ${target} APPEND_STRING PROPERTY LINK_FLAGS
                  " -DKOKKOS_DEPENDENCE")
-    kokkos_compilation(TARGET ${target} COMPILER ${QUINOA_NVCC_WRAPPER_LAUNCHER})
+    kokkos_compilation(TARGET ${target} COMPILER ${QUINOA_GPU_LAUNCHER})
+  endmacro()
+
+  # Retained so that any caller written against the CUDA-only build keeps
+  # working; both backends go through quinoa_gpu_target().
+  macro(quinoa_cuda_target target)
+    quinoa_gpu_target(${target})
   endmacro()
 endif()
 
@@ -310,6 +374,103 @@ MESSAGE(STATUS "Linker compiler: " ${LINKER_COMPILER})
 
 if (EXTRA_LINK_ARGS)
   MESSAGE(STATUS "Extra linker args (EXTRA_LINK_ARGS): ${EXTRA_LINK_ARGS}")
+endif()
+
+if (ENABLE_GPU AND QUINOA_GPU_BACKEND STREQUAL "HIP")
+  # Pin clang to the GCC actually in use. Without it clang selects whichever
+  # GCC it finds first, resolving libstdc++ against an ABI that predates the
+  # headers the host-only objects were compiled with, which shows up at link
+  # time as undefined std::__throw_bad_array_new_length and
+  # basic_stringstream<char>::basic_stringstream(). The location is obtained by
+  # asking the underlying compiler rather than by taking apart a path, so it
+  # works whether CMAKE_CXX_COMPILER is a bare g++ or an MPI wrapper.
+  set(QUINOA_GCC_TOOLCHAIN "" CACHE PATH
+      "GCC installation prefix for clang/hipcc (derived if empty)")
+  set(QUINOA_GCC_TOOLCHAIN_FLAG "QUINOA-DERIVE" CACHE STRING
+      "Flag pinning clang/hipcc to a GCC installation (derived if unset)")
+  if (QUINOA_GCC_TOOLCHAIN_FLAG STREQUAL "QUINOA-DERIVE")
+    set(QUINOA_GCC_INSTALL_DIR "")
+    execute_process(
+      COMMAND "${UNDERLYING_CXX_COMPILER}" -print-search-dirs
+      OUTPUT_VARIABLE QUINOA_GCC_SEARCH_DIRS
+      ERROR_QUIET
+      RESULT_VARIABLE QUINOA_GCC_SEARCH_RESULT)
+    if (QUINOA_GCC_SEARCH_RESULT EQUAL 0 AND
+        QUINOA_GCC_SEARCH_DIRS MATCHES "install: ([^\n]+)")
+      string(REGEX REPLACE "/+$" "" QUINOA_GCC_INSTALL_DIR "${CMAKE_MATCH_1}")
+      set(QUINOA_GCC_PREFIX "${QUINOA_GCC_INSTALL_DIR}")
+      foreach (QUINOA_UP 1 2 3 4)
+        get_filename_component(QUINOA_GCC_PREFIX "${QUINOA_GCC_PREFIX}" DIRECTORY)
+      endforeach()
+      if (NOT QUINOA_GCC_TOOLCHAIN AND EXISTS "${QUINOA_GCC_PREFIX}/lib/gcc")
+        set(QUINOA_GCC_TOOLCHAIN "${QUINOA_GCC_PREFIX}")
+      endif()
+    endif()
+
+    # Keep the first candidate that actually compiles a standard header, so a
+    # layout clang cannot interpret fails here rather than mid-build.
+    set(QUINOA_GCC_PROBE "${CMAKE_BINARY_DIR}/CMakeFiles/quinoa_hip_probe.hip")
+    file(WRITE "${QUINOA_GCC_PROBE}" "#include <cmath>\nint main(){return 0;}\n")
+    set(QUINOA_GCC_CANDIDATES "")
+    if (QUINOA_GCC_INSTALL_DIR)
+      list(APPEND QUINOA_GCC_CANDIDATES
+           "--gcc-install-dir=${QUINOA_GCC_INSTALL_DIR}")
+    endif()
+    if (QUINOA_GCC_TOOLCHAIN)
+      list(APPEND QUINOA_GCC_CANDIDATES
+           "--gcc-toolchain=${QUINOA_GCC_TOOLCHAIN}")
+    endif()
+    list(APPEND QUINOA_GCC_CANDIDATES "")
+    set(QUINOA_GCC_TOOLCHAIN_FLAG "QUINOA-NONE-WORKED")
+    foreach (QUINOA_FLAG IN LISTS QUINOA_GCC_CANDIDATES)
+      execute_process(
+        COMMAND "${QUINOA_HIP_COMPILER}" ${QUINOA_FLAG}
+                --offload-arch=${Kokkos_HIP_ARCHITECTURES}
+                -x hip -c "${QUINOA_GCC_PROBE}" -o "${QUINOA_GCC_PROBE}.o"
+        OUTPUT_QUIET ERROR_VARIABLE QUINOA_GCC_PROBE_ERROR
+        RESULT_VARIABLE QUINOA_GCC_PROBE_RESULT)
+      if (QUINOA_GCC_PROBE_RESULT EQUAL 0)
+        set(QUINOA_GCC_TOOLCHAIN_FLAG "${QUINOA_FLAG}")
+        break()
+      endif()
+    endforeach()
+    if (QUINOA_GCC_TOOLCHAIN_FLAG STREQUAL "QUINOA-NONE-WORKED")
+      message(FATAL_ERROR
+        "hipcc cannot compile a TU including <cmath>, with or without a GCC "
+        "pin. Tried: ${QUINOA_GCC_CANDIDATES}. Last error:\n"
+        "${QUINOA_GCC_PROBE_ERROR}")
+    endif()
+    set(QUINOA_GCC_TOOLCHAIN_FLAG "${QUINOA_GCC_TOOLCHAIN_FLAG}" CACHE STRING
+        "Flag pinning clang/hipcc to a GCC installation" FORCE)
+  endif()
+
+  # One script serves as both compiler and link driver: it execs the MPI C++
+  # wrapper with every underlying-compiler variable pointed at hipcc. The
+  # wrapper contributes mpi.h and the MPI libraries; hipcc contributes the HIP
+  # runtime and the device pass. MPI_CXX_COMPILER is used rather than
+  # CMAKE_CXX_COMPILER because the latter is legitimately a bare g++, which
+  # ignores OMPI_CXX entirely. All four variables are set because MPI
+  # detection does not reliably report which language a wrapper serves.
+  set(QUINOA_HIP_LAUNCHER "${CMAKE_BINARY_DIR}/quinoa-hipcc-wrapper")
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/hipcc_launcher.sh.in"
+    "${QUINOA_HIP_LAUNCHER}"
+    @ONLY)
+  execute_process(
+    COMMAND chmod +x "${QUINOA_HIP_LAUNCHER}"
+    RESULT_VARIABLE QUINOA_HIP_LAUNCHER_CHMOD)
+  if (NOT QUINOA_HIP_LAUNCHER_CHMOD EQUAL 0)
+    message(FATAL_ERROR "Could not make the hipcc launcher executable")
+  endif()
+  set(QUINOA_GPU_LAUNCHER "${QUINOA_HIP_LAUNCHER}")
+  set(QUINOA_GPU_LINK_DRIVER "${QUINOA_HIP_LAUNCHER}")
+  if (QUINOA_GCC_TOOLCHAIN_FLAG STREQUAL "")
+    message(STATUS "GPU GCC pin: none needed")
+  else()
+    message(STATUS "GPU GCC pin: ${QUINOA_GCC_TOOLCHAIN_FLAG}")
+  endif()
+  message(STATUS "GPU launcher: ${QUINOA_HIP_LAUNCHER} -> "
+                 "${MPI_CXX_COMPILER} dispatching to ${QUINOA_HIP_COMPILER}")
 endif()
 
 add_definitions(-DQUINOA_CONFIG_MPI_ENABLED)
@@ -795,13 +956,13 @@ add_subdirectory(Main)
 
 if (ENABLE_GPU)
   # Non-PDE targets whose implementation or headers reach Kokkos.
-  foreach(_quinoa_cuda_target
+  foreach(_quinoa_gpu_target
           Mesh
           ZoltanInterOp
           LinearSolver
           Inciter
           MeshRefinement)
-    quinoa_cuda_target(${_quinoa_cuda_target})
+    quinoa_gpu_target(${_quinoa_gpu_target})
   endforeach()
 endif()
 

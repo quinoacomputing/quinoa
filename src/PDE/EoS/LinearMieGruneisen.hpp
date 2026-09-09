@@ -216,7 +216,7 @@ class LinearMieGruneisen {
       // Compute square root
       a = std::sqrt(fmax(1.0e-15, a));
 
-#if !defined(__CUDA_ARCH__)
+#if !defined(EOS_DEVICE_PASS)
       // check sound speed divergence
       if (!std::isfinite(a)) {
         std::cout << "Material-id:      " << imat << std::endl;

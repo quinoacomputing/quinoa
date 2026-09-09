@@ -153,7 +153,7 @@ class ThermallyPerfectGas {
     EOS_FN tk::real density( tk::real pr,
                              tk::real temp ) const
     {
-#if defined(__CUDA_ARCH__)
+#if defined(EOS_DEVICE_PASS)
       (void)pr; (void)temp;
       tk::real z=0.0;
       return z/z; //loud NaN will yell at us if reached
@@ -198,7 +198,7 @@ class ThermallyPerfectGas {
       const std::array< std::array< tk::real, 3 >, 3 >& adefgrad={{}},
       const std::array< tk::real, 3 >& asigman={{}} ) const//;
     {
-#if defined(__CUDA_ARCH__)
+#if defined(EOS_DEVICE_PASS)
       // Multimat never constructs a TPG so the host overload will throw
       (void)rho; (void)pr; (void)alpha; (void)imat;
       (void)adefgrad; (void)asigman;
@@ -248,7 +248,7 @@ class ThermallyPerfectGas {
                                  tk::real alpha,
       const tk::real /*defgrad*/[3][3] ) const
     {
-#if defined(__CUDA_ARCH__)
+#if defined(EOS_DEVICE_PASS)
       (void)arho; (void)u; (void)v; (void)w; (void)apr; (void)alpha;
       tk::real z=0.0;
       return z/z; //loud NaN will yell at us if reached
@@ -281,7 +281,7 @@ class ThermallyPerfectGas {
                                  tk::real alpha,
       const tk::real /*defgrad*/[3][3] ) const
     {
-#if defined(__CUDA_ARCH__)
+#if defined(EOS_DEVICE_PASS)
       (void)rho; (void)u; (void)v; (void)w; (void)rhoE; (void)alpha;
       tk::real z=0.0;
       return z/z; //loud NaN will yell at us if reached

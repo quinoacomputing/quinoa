@@ -48,9 +48,11 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${LIBCXXABI_LIBRARIES}) # only for static link with libc++
 
 if (ENABLE_GPU)
-  # Link Kokkos CUDA objects with nvcc_wrapper, but keep Charm++ host-built.
+  # Link Kokkos device objects with the device compiler, but keep Charm++
+  # host-built. For HIP this driver is the MPI wrapper dispatching to hipcc,
+  # which is what resolves Charm++'s libconverse references to MPI.
   set_property(TARGET ${INCITER_EXECUTABLE} APPEND_STRING PROPERTY LINK_FLAGS
-               " -ld++ ${QUINOA_NVCC_WRAPPER_LAUNCHER}")
+               " -ld++ ${QUINOA_GPU_LINK_DRIVER}")
 endif()
 
 # Add custom dependencies for Inciter's main Charm++ module

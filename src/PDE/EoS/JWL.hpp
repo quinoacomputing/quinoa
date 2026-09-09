@@ -76,7 +76,7 @@ class JWL {
     EOS_FN tk::real density( tk::real pr,
                              tk::real temp ) const
     {
-#if defined(__CUDA_ARCH__)
+#if defined(EOS_DEVICE_PASS)
       (void)pr; (void)temp;
       tk::real z=0.0;
       return z/z; //NaN
@@ -135,7 +135,7 @@ class JWL {
       auto ss2 = ss;
       ss = std::sqrt(ss);
 
-#if !defined(__CUDA_ARCH__)
+#if !defined(EOS_DEVICE_PASS)
       // check sound speed divergence
       if (!std::isfinite(ss)) {
         std::cout << "Material-id:      " << imat << std::endl;

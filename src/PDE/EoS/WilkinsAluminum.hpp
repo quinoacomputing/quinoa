@@ -157,7 +157,7 @@ class WilkinsAluminum {
       // Compute square root
       a = std::sqrt(a);
 
-#if !defined(__CUDA_ARCH__)
+#if !defined(EOS_DEVICE_PASS)
       // check sound speed divergence
       if (!std::isfinite(a)) {
         std::cout << "Material-id:      " << imat << std::endl;
