@@ -458,7 +458,7 @@ namespace inciter {
       gradInternalEnergy[0]*fn[0] + gradInternalEnergy[1]*fn[1] +
       gradInternalEnergy[2]*fn[2];
     for (std::size_t d=0; d<3; ++d)
-      gradInternalEnergy[d] -= normalInternalEnergyGradient*fn[d];
+      gradInternalEnergy[d] -= 2*normalInternalEnergyGradient*fn[d];
 
     auto gradPlus = gradMinus;
     for (std::size_t i=0; i<3; ++i) {

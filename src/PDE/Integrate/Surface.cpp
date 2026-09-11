@@ -333,8 +333,8 @@ viscousInternalFaceIntDG(
       surfaceArea_r += 0.5 * std::sqrt( tk::dot(cross_r, cross_r) );
     }
 
-    Assert( surfaceArea_l > 0.0, "Degenerate left tetrahedron" );
-    Assert( surfaceArea_r > 0.0, "Degenerate right tetrahedron" );
+    Assert( surfaceArea_l > 1e-12, "Degenerate left tetrahedron" );
+    Assert( surfaceArea_r > 1e-12, "Degenerate right tetrahedron" );
 
     const auto diameter_l = std::abs(detT_l) / surfaceArea_l;
     const auto diameter_r = std::abs(detT_r) / surfaceArea_r;
@@ -413,7 +413,7 @@ viscousInternalFaceIntDG(
       // Compute interface correction
       viscousRhs.interfaceCorrection( mat_blk, ncomp, state, dir, ic );
 
-      
+    
       // Contribute fluxes to RHS
       for (ncomp_t c=0; c<ncomp; ++c)
       {

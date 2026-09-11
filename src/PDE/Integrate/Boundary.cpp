@@ -255,7 +255,7 @@ viscousBoundaryFaceIntDG(
   Assert(ncomp == 5, "DGP1 viscous diffusion matrices currently assume five equations");
 
 
-  std::array < std::vector< tk::real >, 2 > B;
+  std::vector< tk::real > B_l;
   std::array < std::vector< tk::real >, 3 > dBdx_l;
   std::array< std::array< std::vector< tk::real >, 6 >, 2 > d2Bdx2;
   std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess{};
@@ -354,10 +354,9 @@ viscousBoundaryFaceIntDG(
             Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
 
           // Compute the basis functions for the left element
-          B[0].resize(ndof_l);
-          eval_basis( ndof_l, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B[0] );
-          auto B_l = B[0];
-        
+          B_l.resize(ndof_l);
+          eval_basis( ndof_l, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
+
           auto wt = wgp[igp] * geoFace(f,0);
 
           // Boundary condition, i.e. ghost state

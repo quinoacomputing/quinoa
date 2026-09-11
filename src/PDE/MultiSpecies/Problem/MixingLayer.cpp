@@ -80,6 +80,7 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
   Assert( ncomp == 5, "Number of scalar components must be 5" );
 
   auto nspec = g_inputdeck.get< eq, tag::nspec >();
+  Assert( nspec == 1, "Mixing layer currently supports one species" );
 
   std::vector< tk::real > s( ncomp+1, 0.0 );
   tk::real u, v, w;
@@ -91,25 +92,28 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
   const auto T = 400.0;
   const auto U1 = 10.0;
   const auto mu = 1.47e-5;
-  const auto rho0 =
-    mat_blk[0].compute< EOS::density >( p, T );
-  const auto nu = mu/rho0;
+
+  const std::vector< tk::real > Ys{ 1.0 };
+  inciter::Mixture mix( nspec, Ys, p, T, mat_blk );
+  tk::real rhob = mix.get_mix_density();
+
+  const auto nu = mu/rhob;
   const auto x0 = 200.0; // choose far downstream for thick mixing layer
   const auto eta = y * std::sqrt(U1 / (2*x0*nu));
   const auto f = mixingLayerVelocityProfile( eta );
   u = f*U1;
   v = 0;
   w = 0;
-  auto rhob = 0.0;
-  // density
+
+  // Partial species densities
   for (std::size_t k = 0; k<nspec; ++k) {
-    auto rho = mat_blk[k].compute< EOS::density >(p, T);
-    rhob += rho;
-    s[multispecies::densityIdx(nspec,k)] = rho;
-    s[multispecies::energyIdx(nspec,k)] =
-      mat_blk[k].compute< EOS::totalenergy >( rho, u, v, w, p, 1.0);
-    s[ncomp + multispecies::temperatureIdx(nspec,k)] = T;
- }
+    s[multispecies::densityIdx(nspec,k)] = Ys[k] * rhob;
+  }
+
+  // Mixture total energy and temperature
+  s[multispecies::energyIdx(nspec,0)] =
+    mix.totalenergy( rhob, u, v, w, T, mat_blk );
+  s[ncomp + multispecies::temperatureIdx(nspec,0)] = T;
 
   // momentum
   s[multispecies::momentumIdx(nspec, 0)] = rhob*u;

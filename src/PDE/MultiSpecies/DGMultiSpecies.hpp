@@ -1158,15 +1158,6 @@ class MultiSpecies {
                //const std::array< tk::real, 3 >& fn )
     {
 
-      auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >(); 
-      auto rhob = 0.0;
-      auto p = 101325;
-      auto T = 273.15;
-      // density
-      for (std::size_t k = 0; k<nspec; ++k) {
-        auto rho = mat_blk[k].compute< EOS::density >(p, T);
-        rhob += rho;
-      }
       auto ur = Problem::analyticSolution( ncomp, mat_blk, x, y, z, t );
       return {{ ul, ur }};
     }

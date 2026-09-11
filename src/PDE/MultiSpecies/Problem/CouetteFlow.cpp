@@ -13,6 +13,7 @@
 #include "CouetteFlow.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
+#include "MultiSpecies/Mixture/Mixture.hpp"
 
 namespace inciter {
 
@@ -42,19 +43,26 @@ couetteState( tk::ncomp_t ncomp, const std::vector< inciter::EOS >& mat_blk,
   constexpr tk::real w = 0.0;
 
   std::vector< tk::real > s( ncomp+1, 0.0 );
-  tk::real rhob = 0.0;
+  
+  // Assume single-species for this problem class
+  const std::vector< tk::real > Ys{ 1.0 };
+  inciter::Mixture mix( nspec, Ys, p, T, mat_blk );
+  tk::real rhob = mix.get_mix_density();
 
   for (std::size_t k=0; k<nspec; ++k) {
-    const auto rho =
-      mat_blk[k].compute< inciter::EOS::density >( p, T );
-    rhob += rho;
-    s[inciter::multispecies::densityIdx(nspec,k)] = rho;
-    s[inciter::multispecies::energyIdx(nspec,k)] =
-      mat_blk[k].compute< inciter::EOS::totalenergy >(
-        rho, u, v, w, p, 1.0 );
-    s[ncomp + inciter::multispecies::temperatureIdx(nspec,k)] = T;
+    //const auto rho =
+    //  mat_blk[k].compute< inciter::EOS::density >( p, T );
+    //rhob += rho;
+    //s[inciter::multispecies::densityIdx(nspec,k)] = rho;
+    //s[inciter::multispecies::energyIdx(nspec,k)] =
+    //  mat_blk[k].compute< inciter::EOS::totalenergy >(
+    //    rho, u, v, w, p, 1.0 );
+    //s[ncomp + inciter::multispecies::temperatureIdx(nspec,k)] = T;
+    s[inciter::multispecies::densityIdx(nspec,k)] = Ys[k] * rhob;
   }
-
+  s[inciter::multispecies::energyIdx(nspec,0)] =
+    mix.totalenergy( rhob, u, v, w, T, mat_blk );
+  s[ncomp + inciter::multispecies::temperatureIdx(nspec,0)] = T;
   s[inciter::multispecies::momentumIdx(nspec,0)] = rhob*u;
   s[inciter::multispecies::momentumIdx(nspec,1)] = rhob*v;
   s[inciter::multispecies::momentumIdx(nspec,2)] = rhob*w;

@@ -494,7 +494,6 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   // Initialize container for these matrices
   // Initialize direction vectors for each diffusion matrix, which will be used to compute the numerical flux
 
-  auto neq = ncomp;
   // Initialize vector of length 5. Each element contains 5 arrays of size 3 by 3
   auto A = std::vector( ncomp, std::vector( ncomp, std::array< std::array< tk::real, 3>, 3> {} ));
   // Initialize vector of length 5*5=25, each element of which contains a 3 by 1 vector
@@ -515,7 +514,10 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   inciter::Mixture mix_m(m_nspec, qmean, mat_blk);
   
   const auto rho_m = mix_m.get_mix_density();
-  Assert(rho_m > 0.0, "Non-positive mean interface density");
+  if (rho_m <= 0.0) {
+    Throw("Non-positive mean interface density");
+  }
+
 
   // Compute mean fluid properties 
   const auto u_m = qmean[momentumIdx(m_nspec,0)] / rho_m;
@@ -531,7 +533,9 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   const auto T_m = mix_m.temperature(
     rho_m, u_m, v_m, w_m, qmean[energyIdx(m_nspec,0)], mat_blk, converged, T_guess);
   
-  Assert(converged == 1, "Mean interface temperature solve failed");
+  if (converged != 1) {
+    Throw("Mean interface temperature solve failed");
+  }
   
   const auto R = mat_blk[0].compute<inciter::EOS::gas_constant>();
   const auto cp_m = mix_m.Cp(T_m, mat_blk);
@@ -543,6 +547,10 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   // Build diffusion matrices A^(lm) for l = 1,...,ncomp, m = 0, 1, ..., ncomp
   // All matrices A^(1m) are zero matrices because continuity contains no viscous terms
   // Since all A are initialized to zero, we don't compute anything for A^(0m).
+  // Explicitly set continuity terms equal to zero for clarity
+  for (auto& matrix : A[0]) {
+    matrix = {};
+  }
 
   // x-momentum (mathematically, l=2 but l = 1 in zero-based indexing)
   A[1][0] = { { 
