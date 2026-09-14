@@ -17,6 +17,7 @@
 
 #include "Basis.hpp"
 #include "Boundary.hpp"
+#include "DerivedData.hpp"
 #include "ViscousTerms.hpp"
 #include "Vector.hpp"
 #include "Quadrature.hpp"
@@ -264,6 +265,9 @@ viscousBoundaryFaceIntDG(
   std::vector< tk::real > fl( ncomp, 0.0);
   std::vector<std::array< tk::real, 3>> ic(ncomp);
 
+  // Diffusion matrices (allocated outside loops to avoid repeated allocation)
+  std::array< std::array < std::array < std::array<tk::real,3>,3>,5>,5> A{};
+
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find(static_cast<int>(s));// faces for side set
     if (bc != end(bface))
@@ -311,14 +315,9 @@ viscousBoundaryFaceIntDG(
 
         // Compute the tetrahedron insphere diameter for the numerical flux:
         // h_K = 2 r_K = 6 V_K / S_K = |det(J_K)| / S_K.
-        constexpr std::array< std::array< std::size_t, 3 >, 4 > tetFaces{{
-          {{ 0, 1, 2 }},
-          {{ 0, 1, 3 }},
-          {{ 0, 2, 3 }},
-          {{ 1, 2, 3 }} }};
 
         tk::real surfaceArea_l = 0.0;
-        for (const auto& face : tetFaces) {
+        for (const auto& face : tk::lpofa) {
           const auto a = face[0];
           const auto b = face[1];
           const auto c = face[2];
@@ -422,7 +421,7 @@ viscousBoundaryFaceIntDG(
               grad[1][c][d] = gradPlus[c][d];
           
           // Compute viscous fluxes
-          auto dir = viscousRhs.interiorFlux( mat_blk, ncomp, ghostState, fn, he, grad, hess, fl );
+          auto dir = viscousRhs.interiorFlux( mat_blk, ncomp, ghostState, fn, he, grad, hess, A,fl );
 
           viscousRhs.interfaceCorrection( mat_blk, ncomp, ghostState, dir, ic );
 

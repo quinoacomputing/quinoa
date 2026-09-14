@@ -129,6 +129,7 @@ class MultiSpeciesViscousTermsDGP1 {
       const tk::real he,
       const std::array<std::array< std::array< tk::real, 3 >, 5 >, 2>& grad,
       const std::array<std::array< std::array< tk::real, 6 >, 5 >, 2>& hess,
+      std::array< std::array<std::array<std::array<tk::real, 3>, 3>, 5>, 5>& A,
       std::vector< tk::real >& fl ) const;
 
     //! Compute the interface correction term for the multispecies viscous flux at an interior face

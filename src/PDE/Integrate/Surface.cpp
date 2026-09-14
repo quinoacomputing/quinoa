@@ -15,6 +15,7 @@
 
 #include <array>
 
+#include "DerivedData.hpp"
 #include "Surface.hpp"
 #include "ViscousTerms.hpp"
 #include "Vector.hpp"
@@ -232,6 +233,9 @@ viscousInternalFaceIntDG(
   std::vector< tk::real > fl( ncomp, 0.0 );
   std::vector<std::array< tk::real, 3>> ic(ncomp); 
 
+  // Diffusion matrices (allocated outside loops to avoid repeated allocation)
+  std::array< std::array< std::array< std::array< tk::real,3 >,3>,5>,5> A{};
+
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)
   {
@@ -291,15 +295,10 @@ viscousInternalFaceIntDG(
 
     // Compute tetrahedron insphere diameters for the numerical flux:
     // h_K = 2 r_K = 6 V_K / S_K = |det(J_K)| / S_K.
-    constexpr std::array< std::array< std::size_t, 3 >, 4 > tetFaces{{
-      {{ 0, 1, 2 }},
-      {{ 0, 1, 3 }},
-      {{ 0, 2, 3 }},
-      {{ 1, 2, 3 }} }};
 
     tk::real surfaceArea_l = 0.0;
     tk::real surfaceArea_r = 0.0;
-    for (const auto& face : tetFaces) {
+    for (const auto& face : tk::lpofa) {
       const auto a = face[0];
       const auto b = face[1];
       const auto c = face[2];
@@ -408,7 +407,7 @@ viscousInternalFaceIntDG(
       auto dBdx_r = dBdx[1];
       
       // Compute viscous fluxes
-      auto dir = viscousRhs.interiorFlux( mat_blk, ncomp, state, fn, he, grad, hess, fl );
+      auto dir = viscousRhs.interiorFlux( mat_blk, ncomp, state, fn, he, grad, hess, A, fl );
 
       // Compute interface correction
       viscousRhs.interfaceCorrection( mat_blk, ncomp, state, dir, ic );

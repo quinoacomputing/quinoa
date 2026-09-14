@@ -457,6 +457,7 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   const tk::real he,
   const std::array< std::array< std::array< tk::real, 3 >, 5 >, 2 >& grad,
   const std::array< std::array< std::array< tk::real, 6 >, 5 >, 2 >& hess,
+  std::array< std::array< std::array< std::array< tk::real,3>,3>,5>,5>& A,
   std::vector< tk::real >& fl ) const
 // *****************************************************************************
 //! \brief Compute the multispecies viscous flux at an interior face
@@ -486,6 +487,8 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   using inciter::multispecies::energyIdx;
 
   Assert ( fl.size() == ncomp, "incorrect viscous flux vector size" );
+  // Reset all diffusion matrices to zero (removes any previous values from prior loop index)
+  A = {};
 
   // 1. Compute diffusion matrices for average of left and right states
   // There are ncomp by ncomp diffusion matrices A^(lm) for l,m = 1,...,ncomp
@@ -495,7 +498,7 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   // Initialize direction vectors for each diffusion matrix, which will be used to compute the numerical flux
 
   // Initialize vector of length 5. Each element contains 5 arrays of size 3 by 3
-  auto A = std::vector( ncomp, std::vector( ncomp, std::array< std::array< tk::real, 3>, 3> {} ));
+  //auto A = std::vector( ncomp, std::vector( ncomp, std::array< std::array< tk::real, 3>, 3> {} ));
   // Initialize vector of length 5*5=25, each element of which contains a 3 by 1 vector
   auto dir = std::vector( ncomp * ncomp, std::array< tk::real, 3>{});
   
@@ -800,10 +803,17 @@ MultiSpeciesViscousTermsDGP1::volumeFlux(
 
   Mixture mix( nspec, state, mat_blk );
 
-  mu = mix.viscCoeff( state[ncomp+temperatureIdx(nspec,0)],
+  auto T_guess = state[ncomp+temperatureIdx(nspec,0)];
+  auto converged = 0; // check Newton convergence
+  auto conserved_temp = mix.temperature( rhob, u[0], u[1], u[2], state[energyIdx(nspec,0)], mat_blk, converged, T_guess );
+
+  if (converged != 1) {
+    Throw("Mean interface temperature solve failed");
+  }
+  mu = mix.viscCoeff( conserved_temp,
                       mat_blk );
 
-  conduct = mu * mix.Cp(state[ncomp+temperatureIdx(nspec,0)], mat_blk) / 0.71; 
+  conduct = mu * mix.Cp(conserved_temp, mat_blk) / 0.71; 
   //TO-DO: make Pr user-configurable
 
   for (std::size_t i=0; i<3; ++i) {
