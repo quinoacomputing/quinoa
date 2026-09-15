@@ -33,6 +33,16 @@ static CkReduction::reducerType PDFMerger;
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 
+//! \brief Generate solution transfer (coupling) list for overset meshes
+//! \param[in] nmesh Total number of meshes
+//! \return Transfer list, pairing mesh 0 (background) with every other mesh
+static std::vector< Transfer >
+genTransfer( std::size_t nmesh ) {
+  std::vector< Transfer > transfer;
+  for (std::size_t i=1; i<nmesh; ++i) transfer.emplace_back( 0, i );
+  return transfer;
+}
+
 } // inciter::
 
 using inciter::Discretization;
@@ -53,7 +63,7 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid,
   int nc ) :
   m_meshid( meshid ),
-  m_transfer( g_inputdeck.get< tag::transfer >() ),
+  m_transfer( genTransfer( g_inputdeck.get< tag::mesh >().size() ) ),
   m_disc( disc ),
   m_nchare( nc ),
   m_it( 0 ),

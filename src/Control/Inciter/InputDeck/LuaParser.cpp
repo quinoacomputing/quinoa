@@ -583,11 +583,8 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::body_force >().size() != 3)
         Throw("Mesh body force requires 3 coordinates.");
 
-      // Transfer object
+      // Assign depvar for overset mesh
       if (i > 0) {
-        gideck.get< tag::transfer >().emplace_back( 0, i );
-
-        // assign depvar
         ++depvar_cnt;
         gideck.get< tag::depvar >().push_back(depvar_cnt);
 

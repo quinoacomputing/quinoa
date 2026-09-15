@@ -18,7 +18,6 @@
 #include "Types.hpp"
 #include "TaggedTuple.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Transfer.hpp"
 #include "Inciter/OutVar.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "Inciter/Options/Problem.hpp"
@@ -376,7 +375,6 @@ using ConfigMembers = brigand::list<
   tag::bc, std::vector< bcList >,
   tag::ic, icList,
   tag::mesh, std::vector< meshList >,
-  tag::transfer, std::vector< Transfer >,
 
   // Rigid-body motion solver
   tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
