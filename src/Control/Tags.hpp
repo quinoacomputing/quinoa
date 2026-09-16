@@ -166,6 +166,7 @@ DEFTAG(imex_scheme);
 DEFTAG(imex_maxiter);
 DEFTAG(imex_reltol);
 DEFTAG(imex_abstol);
+DEFTAG(operator_split_plasticity);
 
 DEFTAG(nasa9_filepath);
 
@@ -234,6 +235,10 @@ DEFTAG(cp_coeff);
 DEFTAG(t_range);
 DEFTAG(dH_ref);
 DEFTAG(plasticity_reltime);
+DEFTAG(temp_ref);
+DEFTAG(mu_ref);
+DEFTAG(C);
+DEFTAG(Sutherland);
 
 DEFTAG(field_output);
 DEFTAG(interval);
@@ -256,7 +261,7 @@ DEFTAG(coord);
 DEFTAG(ale);
 DEFTAG(smoother);
 DEFTAG(mesh_velocity);
-DEFTAG(mesh_motion);
+DEFTAG(mesh_motion_directions);
 DEFTAG(meshforce);
 DEFTAG(dvcfl);
 DEFTAG(vortmult);

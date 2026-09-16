@@ -134,7 +134,7 @@ class WilkinsAluminum {
     tk::real cp( tk::real ) const { return m_gamma*m_cv; }
 
     //! Return dynamic viscosity coefficient
-    tk::real viscCoeff() const { return 0.0; }
+    tk::real viscCoeff( tk::real ) const { return 0.0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

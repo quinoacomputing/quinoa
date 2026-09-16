@@ -41,7 +41,8 @@ struct AUSMMultiSpecies {
   flux( const std::vector< EOS >& mat_blk,
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& = {} )
+        const std::vector< std::array< tk::real, 3 > >& = {},
+        const tk::real = 0 )
   {
     auto nspec = g_inputdeck.get< tag::multispecies, tag::nspec >();
 
@@ -113,8 +114,8 @@ struct AUSMMultiSpecies {
     //  * (0.25 - (0.5*(vmag_l*vmag_l + vmag_r*vmag_r)/(a12*a12)));
     // Additional diffusion
     auto delta = 4.0;
-    md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * a12);
-    //md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
+    //md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * a12);  // 2025u mod
+    md = std::max(m0, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);  // 2025p mod
 
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);

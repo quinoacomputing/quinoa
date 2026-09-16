@@ -18,7 +18,6 @@
 #include "Types.hpp"
 #include "TaggedTuple.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Transfer.hpp"
 #include "Inciter/OutVar.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "Inciter/Options/Problem.hpp"
@@ -101,7 +100,8 @@ using multispeciesList = tk::TaggedTuple< brigand::list<
   tag::physics,          PhysicsType,
   tag::nspec,            std::size_t,
   tag::problem,          ProblemType,
-  tag::viscous,          bool
+  tag::viscous,          bool,
+  tag::Sutherland,       bool
 > >;
 
 // Material/EOS object
@@ -129,7 +129,10 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::s1,                 std::vector< tk::real >,
   tag::cv,                 std::vector< tk::real >,
   tag::k,                  std::vector< tk::real >,
-  tag::plasticity_reltime, std::vector< tk::real >
+  tag::plasticity_reltime, std::vector< tk::real >,
+  tag::temp_ref,  std::vector< tk::real >,
+  tag::mu_ref,    std::vector< tk::real >,
+  tag::C,         std::vector< tk::real >
 > >;
 
 // Species/EOS object
@@ -143,7 +146,10 @@ using speciesList = tk::TaggedTuple< brigand::list<
   tag::t_range,   std::vector< std::vector< tk::real > >,
   tag::dH_ref,    std::vector< tk::real >,
   tag::mu,        std::vector< tk::real >,
-  tag::spec_name, std::vector< std::string >
+  tag::spec_name, std::vector< std::string >,
+  tag::temp_ref,  std::vector< tk::real >,
+  tag::mu_ref,    std::vector< tk::real >,
+  tag::C,         std::vector< tk::real >
 > >;
 
 // Boundary conditions block
@@ -299,19 +305,20 @@ using ConfigMembers = brigand::list<
   tag::cmd, CmdLine,
 
   // time stepping options
-  tag::nstep,               uint64_t,
-  tag::term,                tk::real,
-  tag::t0,                  tk::real,
-  tag::dt,                  tk::real,
-  tag::cfl,                 tk::real,
-  tag::cfl_ramping,         bool,
-  tag::cfl_ramping_steps,   uint32_t,
-  tag::ttyi,                uint32_t,
-  tag::imex_runge_kutta,    uint32_t,
-  tag::imex_scheme,         std::string,
-  tag::imex_maxiter,        uint32_t,
-  tag::imex_reltol,         tk::real,
-  tag::imex_abstol,         tk::real,
+  tag::nstep,            uint64_t,
+  tag::term,             tk::real,
+  tag::t0,               tk::real,
+  tag::dt,               tk::real,
+  tag::cfl,              tk::real,
+  tag::cfl_ramping,      bool,
+  tag::cfl_ramping_steps,uint32_t,
+  tag::ttyi,             uint32_t,
+  tag::imex_runge_kutta, uint32_t,
+  tag::imex_scheme,      std::string,
+  tag::imex_maxiter,     uint32_t,
+  tag::imex_reltol,      tk::real,
+  tag::imex_abstol,      tk::real,
+  tag::operator_split_plasticity, uint32_t,
 
   // NASA9 database location for MultiSpecies
   tag::nasa9_filepath, std::string,
@@ -369,7 +376,6 @@ using ConfigMembers = brigand::list<
   tag::bc, std::vector< bcList >,
   tag::ic, icList,
   tag::mesh, std::vector< meshList >,
-  tag::transfer, std::vector< Transfer >,
 
   // Rigid-body motion solver
   tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
@@ -381,18 +387,18 @@ using ConfigMembers = brigand::list<
   // ALE block
   // ---------------------------------------------------------------------------
   tag::ale, tk::TaggedTuple< brigand::list<
-    tag::ale,           bool,
-    tag::smoother,      MeshVelocitySmootherType,
-    tag::mesh_velocity, MeshVelocityType,
-    tag::mesh_motion,   std::vector< std::size_t >,
-    tag::meshforce,     std::vector< tk::real >,
-    tag::dvcfl,         tk::real,
-    tag::vortmult,      tk::real,
-    tag::maxit,         std::size_t,
-    tag::tolerance,     tk::real,
-    tag::dirichlet,     std::vector< std::size_t >,
-    tag::symmetry,      std::vector< std::size_t >,
-    tag::move,          std::vector<
+    tag::ale,                      bool,
+    tag::smoother,                 MeshVelocitySmootherType,
+    tag::mesh_velocity,            MeshVelocityType,
+    tag::mesh_motion_directions,   std::vector< std::size_t >,
+    tag::meshforce,                std::vector< tk::real >,
+    tag::dvcfl,                    tk::real,
+    tag::vortmult,                 tk::real,
+    tag::maxit,                    std::size_t,
+    tag::tolerance,                tk::real,
+    tag::dirichlet,                std::vector< std::size_t >,
+    tag::symmetry,                 std::vector< std::size_t >,
+    tag::move,                     std::vector<
       tk::TaggedTuple< brigand::list<
         tag::sideset, std::vector< uint64_t >,
         tag::fntype,  tk::ctr::UserTableType,
@@ -587,6 +593,17 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the absolute tolerance that
         the non-linear solver uses to obtain the implicit unknowns within the
         Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      keywords.insert({"operator_split_plasticity",
+        "Toggle use of operator-split plasticity around explicit SSP-RK3",
+        R"(This keyword toggles a Lie operator-split treatment of the
+        stiff plasticity source for solid materials in multimat, as an SSP
+        alternative to imex_runge_kutta. The explicit SSP-RK3 scheme
+        advances all equations over the full time step, then the plastic terms
+        are relaxed once per step by a per-element backward-Euler solve. The
+        non-linear solver reuses imex_maxiter/imex_reltol/imex_abstol. Mutually
+        exclusive with imex_runge_kutta and implicit_timestepping.)",
+        "uint 0/1"});
 
       // -----------------------------------------------------------------------
       // MultiSpecies option to provide NASA9 DB filepath
@@ -866,7 +883,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         "Select the Low Diffusion Flux Splitting Scheme (LDFSS)",
         R"(This keyword is used to select the LDFSS flux
         function used for discontinuous Galerkin (DG) spatial discretization
-        used in inciter. It is only set up for for multi-material hydro, and
+        used in inciter. It is only set up for for multi-species PDEs, and
         not selectable for anything else.)"});
 
       keywords.insert({"lowspeed_kp",
@@ -1067,7 +1084,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to specify the material property, stiffness
         parameter in the stiffened gas equation of state.)", "vector of reals"});
 
-      keywords.insert({"w_gru", "Grueneisen coefficient",
+        keywords.insert({"w_gru", "Grueneisen coefficient",
         R"(This keyword is used to specify the material property, Gruneisen
         coefficient for the Jones-Wilkins-Lee equation of state, and the
         reference Gruneisen coefficient for the linear Mie-Gruneisen equation
@@ -1197,6 +1214,25 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to specify the species property, specific gas
         constant, in units J/kg.K.)", "vector of reals"});
 
+      keywords.insert({"mu_ref", "Reference dynamic viscosity",
+        R"(This keyword is used to specify the species reference viscosity at
+        the reference temperature (temp_ref) for Sutherland's Law in units of 
+        N.s/m^2)", "vector of reals"});
+
+      keywords.insert({"temp_ref", "Reference temperature", 
+        R"(This keyword is used to specify the species reference temperature 
+        for Sutherland's Law in units of K)", "vector of reals"});
+
+      keywords.insert({"C", "Sutherland constant",
+        R"(This keyword is used to specify the species Sutherland constant, 
+        which is an effective temperature in units of K)", "vector of reals"});
+
+      keywords.insert({"Sutherland", "Sutherland's Law boolean",
+        R"(This keyword is used to toggle between using Sutherland's Law and
+        holding viscosity constant. A value of 'true' enables Sutherland's 
+        Law and a value of 'false' enables constant viscosity. Default is 'false'.)",
+        "bool"});
+
       keywords.insert({"stiffenedgas",
         "Select the stiffened gas equation of state",
         R"(This keyword is used to select the stiffened gas equation of state.)"});
@@ -1205,9 +1241,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to select the Jones, Wilkins, Lee equation of
         state.)"});
 
-      keywords.insert({"smallshearsolid",
-        "Select the SMALLSHEARSOLID equation of state",
-        R"(This keyword is used to select the small shear strain equation of state
+      keywords.insert({"neohookeansolid",
+        "Select the NEOHOOKEANSOLID equation of state",
+        R"(This keyword is used to select the Neo-Hookean equation of state
         for solids. This EOS uses a small-shear approximation for the elastic
         contribution, and a stiffened gas EOS for the hydrodynamic contribution of
         the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized
@@ -1473,7 +1509,7 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         Arbitrary-Lagrangian-Eulerian (ALE) mesh motion. Valid options are
         'sine', 'fluid', and 'user_defined".)", "string"});
 
-      keywords.insert({"mesh_motion",
+      keywords.insert({"mesh_motion_directions",
         "List of dimension indices that are allowed to move in ALE calculations",
         R"(This keyword is used to specify a list of integers (0, 1, or 2) whose
         coordinate directions corresponding to x, y, or z are allowed to move with

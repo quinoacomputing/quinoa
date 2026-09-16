@@ -49,3 +49,19 @@ add_subdirectory(MultiMat/Problem)
 add_subdirectory(MultiSpecies/Problem)
 add_subdirectory(MultiSpecies/Mixture)
 add_subdirectory(EoS)
+
+if (ENABLE_GPU)
+  foreach(_quinoa_pde_target
+          PDE
+          Integrate
+          CGTransportPhysics
+          TransportProblem
+          CompFlowProblem
+          FVMultiMatPhysics
+          MultiMatProblem
+          MultiSpeciesProblem
+          MultiSpeciesMixture
+          EOS)
+    quinoa_cuda_target(${_quinoa_pde_target})
+  endforeach()
+endif()

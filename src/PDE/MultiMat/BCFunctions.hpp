@@ -269,6 +269,9 @@ namespace inciter {
     // Mach number
     auto Ma = vn / a;
 
+    // Inverse deformation gradient
+    std::array< std::array< tk::real, 3 >, 3 > gk;
+
     if (Ma <= -1) {  // Supersonic inflow
       // For supersonic inflow, all the characteristics are from outside.
       // Therefore, we calculate the ghost cell state using the primitive
@@ -282,9 +285,28 @@ namespace inciter {
           ur[volfracIdx(nmat,k)] = alphamin;
         auto rhok = mat_blk[k].compute< EOS::density >(fp, ft);
         ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
+
+        // solids' state
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j) {
+              // inverse deformation gradient
+              if (i == j) gk[i][j] = 1.0;
+              else gk[i][j] = 0.0;
+              ur[deformIdx(nmat,solidx[k],i,j)] = gk[i][j];
+
+              // elastic component of Cauchy stress
+              ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = 0.0;
+            }
+        }
+        else {
+          gk = {{}};
+        }
+
         ur[energyIdx(nmat,k)] =
           mat_blk[k].compute< EOS::totalenergy >(ur[volfracIdx(nmat,k)]*rhok,
-          fu[0], fu[1], fu[2], ur[volfracIdx(nmat,k)]*fp, ur[volfracIdx(nmat,k)]);
+          fu[0], fu[1], fu[2], ur[volfracIdx(nmat,k)]*fp, ur[volfracIdx(nmat,k)],
+          gk);
 
         // material pressures
         ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * fp;
@@ -311,9 +333,28 @@ namespace inciter {
         auto p = ul[ncomp+pressureIdx(nmat,k)] / ul[volfracIdx(nmat,k)];
         auto rhok = mat_blk[k].compute< EOS::density >(p, ft);
         ur[densityIdx(nmat,k)] = ur[volfracIdx(nmat,k)] * rhok;
+
+        // solids' state
+        if (solidx[k] > 0) {
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j) {
+              // inverse deformation gradient
+              if (i == j) gk[i][j] = 1.0;
+              else gk[i][j] = 0.0;
+              ur[deformIdx(nmat,solidx[k],i,j)] = gk[i][j];
+
+              // elastic component of Cauchy stress
+              ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = 0.0;
+            }
+        }
+        else {
+          gk = {{}};
+        }
+
         ur[energyIdx(nmat,k)] =
           mat_blk[k].compute< EOS::totalenergy >(ur[volfracIdx(nmat,k)]*rhok,
-          fu[0], fu[1], fu[2], ur[volfracIdx(nmat,k)]*p, ur[volfracIdx(nmat,k)]);
+          fu[0], fu[1], fu[2], ur[volfracIdx(nmat,k)]*p, ur[volfracIdx(nmat,k)],
+          gk);
 
         // material pressures
         ur[ncomp+pressureIdx(nmat, k)] = ur[volfracIdx(nmat, k)] * p;
@@ -331,10 +372,11 @@ namespace inciter {
       // by taking pressure from the outside and other quantities from the
       // internal cell.
       for (std::size_t k=0; k<nmat; ++k) {
+        gk = getDeformGrad(nmat, k, ul);
         ur[energyIdx(nmat, k)] =
         mat_blk[k].compute< EOS::totalenergy >(
           ur[densityIdx(nmat, k)], v1l, v2l, v3l, ul[volfracIdx(nmat, k)]*fp,
-          ul[volfracIdx(nmat, k)] );
+          ul[volfracIdx(nmat, k)], gk );
 
         // material pressures
         ur[ncomp+pressureIdx(nmat, k)] = ul[volfracIdx(nmat, k)] * fp;

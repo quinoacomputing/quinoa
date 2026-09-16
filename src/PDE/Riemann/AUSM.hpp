@@ -39,7 +39,8 @@ struct AUSM {
   flux( const std::vector< EOS >& mat_blk,
         const std::array< tk::real, 3 >& fn,
         const std::array< std::vector< tk::real >, 2 >& u,
-        const std::vector< std::array< tk::real, 3 > >& = {} )
+        const std::vector< std::array< tk::real, 3 > >& = {},
+        const tk::real wn = 0 )
   {
     auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
 
@@ -66,7 +67,7 @@ struct AUSM {
       rhor += u[1][densityIdx(nmat, k)];
     }
 
-    tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0);
+    tk::real pl(0.0), pr(0.0), amatl(0.0), amatr(0.0), dalmax(0.0);
     std::vector< tk::real > al_l(nmat, 0.0), al_r(nmat, 0.0),
                             hml(nmat, 0.0), hmr(nmat, 0.0),
                             pml(nmat, 0.0), pmr(nmat, 0.0),
@@ -87,6 +88,8 @@ struct AUSM {
       hmr[k] = u[1][energyIdx(nmat, k)] + pmr[k];
       amatr = mat_blk[k].compute< EOS::soundspeed >(
         u[1][densityIdx(nmat, k)], pmr[k], al_r[k], k );
+
+      dalmax = std::max(std::fabs(al_l[k]-al_r[k]), dalmax);
 
       // Average states for mixture speed of sound
       arhom12[k] = 0.5*(u[0][densityIdx(nmat, k)] + u[1][densityIdx(nmat, k)]);
@@ -115,6 +118,10 @@ struct AUSM {
     auto vnl = ul*fn[0] + vl*fn[1] + wl*fn[2];
     auto vnr = ur*fn[0] + vr*fn[1] + wr*fn[2];
 
+    // relative velocity (v_fluid-v_mesh) based mach etc
+    vnl -= wn;
+    vnr -= wn;
+
     // Mach numbers
     auto ml = vnl/ac12;
     auto mr = vnr/ac12;
@@ -140,13 +147,15 @@ struct AUSM {
     // Velocity magnitudes
     auto vmag_l = tk::dot( {{ul, vl, wl}}, {{ul, vl, wl}} );
     auto vmag_r = tk::dot( {{ur, vr, wr}}, {{ur, vr, wr}} );
-    auto m0_mod = 4.0
-      * (0.25 - (0.5*(vmag_l*vmag_l + vmag_r*vmag_r)/(ac12*ac12)));
+    auto m0_mod = 2.0
+      * (0.5 - (0.5*(vmag_l*vmag_l + vmag_r*vmag_r)/(ac12*ac12)));
     //// uncomment code below AND set k_u and k_p to zero for AUSM-2025u/p mods.
     //// Additional diffusion
+    //if (dalmax < 1e-6) {
     //delta = 4.0;
     //md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(vnl - vnr) * ac12);
     ////md = std::max(m0_mod, 0.0) * delta * std::sqrt(std::abs(pl - pr) / rho12);
+    //}
 
     // Flux vector splitting
     auto l_plus = 0.5 * (vriem + std::fabs(vriem) + 2.0*md);
@@ -158,7 +167,12 @@ struct AUSM {
       flx[volfracIdx(nmat, k)] = l_plus*al_l[k] + l_minus*al_r[k];
       flx[densityIdx(nmat, k)] = l_plus*u[0][densityIdx(nmat, k)]
                               + l_minus*u[1][densityIdx(nmat, k)];
-      flx[energyIdx(nmat, k)] = l_plus*hml[k] + l_minus*hmr[k];
+      // Energy flux for direct ALE using AUSM-ALE flux. For details, see
+      // Luo, H., Baum, J. D., & Löhner, R. (2004). On the computation of
+      // multi-material flows using ALE formulation. Journal of Computational
+      // Physics, 194(1), 304-328.
+      flx[energyIdx(nmat, k)] = l_plus*hml[k] + l_minus*hmr[k]
+                             + (msl[2]*pml[k] + msr[3]*pmr[k] + pu) * wn;
     }
 
     for (std::size_t idir=0; idir<3; ++idir)
@@ -169,11 +183,11 @@ struct AUSM {
     }
 
     // Evaluate pressure work biasing in energy equation
-    l_plus = 0.5 * (vriem + std::fabs(vriem))
-      / ( vriem + std::copysign(1.0e-12,vriem) )
+    auto l_mag = vriem + (msl[2]+msr[3])*wn;
+    l_mag += std::copysign(1e-12,l_mag);
+    l_plus = (0.5 * (vriem + std::fabs(vriem)) + wn*msl[2])/l_mag
       + delta*std::max(m0_mod, 0.0);
-    l_minus = 0.5 * (vriem - std::fabs(vriem))
-      / ( vriem + std::copysign(1.0e-12,vriem) )
+    l_minus = (0.5 * (vriem - std::fabs(vriem)) + wn*msr[3])/l_mag
       - delta*std::max(m0_mod, 0.0);
 
     // Store Riemann-advected partial pressures
@@ -181,7 +195,10 @@ struct AUSM {
       flx.push_back( l_plus*pml[k] + l_minus*pmr[k] );
 
     // Store Riemann velocity
-    flx.push_back( vriem );
+    // Note that mesh velocity must be added back into the Riemann velocity,
+    // since the non-conservative term is not based on relative velocity, but
+    // on fluid velocity.
+    flx.push_back( vriem+wn );
 
     Assert( flx.size() == (3*nmat+3+nmat+1), "Size of multi-material flux "
             "vector incorrect" );

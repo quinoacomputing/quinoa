@@ -157,6 +157,17 @@ LuaParser::storeInputDeck(
     lua_ideck, "imex_reltol", gideck.get< tag::imex_reltol >(), 1.0e-02);
   storeIfSpecd< tk::real >(
     lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-08);
+  storeIfSpecd< uint32_t >(
+    lua_ideck, "operator_split_plasticity",
+    gideck.get< tag::operator_split_plasticity >(), 0);
+
+  // Operator-split plasticity cannot coexist with unsplit IMEX or BDF1
+  if (gideck.get< tag::operator_split_plasticity >() &&
+      (gideck.get< tag::imex_runge_kutta >() ||
+       gideck.get< tag::implicit_timestepping >()))
+    Throw("operator_split_plasticity is mutually exclusive with "
+      "imex_runge_kutta and implicit_timestepping. Enable only one time "
+      "integration scheme for the stiff plasticity terms.");
 
   if (gideck.get< tag::dt >() < 1e-12 && gideck.get< tag::cfl >() < 1e-12)
     Throw("No time step calculation policy has been selected in the "
@@ -574,11 +585,8 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::body_force >().size() != 3)
         Throw("Mesh body force requires 3 coordinates.");
 
-      // Transfer object
+      // Assign depvar for overset mesh
       if (i > 0) {
-        gideck.get< tag::transfer >().emplace_back( 0, i );
-
-        // assign depvar
         ++depvar_cnt;
         gideck.get< tag::depvar >().push_back(depvar_cnt);
 
@@ -876,9 +884,9 @@ LuaParser::storeInputDeck(
       inciter::ctr::MeshVelocity >(lua_ideck["ale"], "mesh_velocity",
       ale_deck.get< tag::mesh_velocity >(), inciter::ctr::MeshVelocityType::SINE);
 
-    // Mesh motion direction
-    storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "mesh_motion",
-      ale_deck.get< tag::mesh_motion >(), { 0, 1, 2 });
+    // Mesh motion directions
+    storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "mesh_motion_directions",
+      ale_deck.get< tag::mesh_motion_directions >(), { 0, 1, 2 });
 
     // Mesh force
     storeVecIfSpecd< tk::real >(lua_ideck["ale"], "meshforce",
@@ -1454,7 +1462,7 @@ LuaParser::registerMaterials(
   }
   // Small-shear solid materials
   else if (mati_deck.get< tag::eos >() ==
-    inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+    inciter::ctr::MaterialType::NEOHOOKEANSOLID) {
     // gamma
     checkStoreMatProp(sol_mat[imat+1], "gamma", ntype,
       mati_deck.get< tag::gamma >());
@@ -1691,6 +1699,24 @@ LuaParser::registerSpecies(
   std::size_t ntype = nspec;
   const auto& mati_deck = gideck.get< tag::material >()[imat];
 
+  // mu (dynamic viscosity) and 'viscous' keyword
+  if (!sol_spc[imat+1]["mu"].valid())
+    sol_spc[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
+  else gideck.get< tag::multispecies, tag::viscous >() = true;
+  checkStoreMatProp(sol_spc[imat+1], "mu", ntype, spci_deck.get< tag::mu >());
+
+  // Sutherland's Law check
+  if (gideck.get< tag::multispecies, tag::Sutherland >()){
+    // C (Sutherland)
+    checkStoreMatProp(sol_spc[imat+1], "C", nspec,
+      spci_deck.get< tag::C >());
+    // mu_ref (Sutherland)
+    checkStoreMatProp(sol_spc[imat+1], "mu_ref", nspec,
+      spci_deck.get< tag::mu_ref >());
+    //temp_ref (Sutherland)
+    checkStoreMatProp(sol_spc[imat+1], "temp_ref", nspec,
+      spci_deck.get< tag::temp_ref >());
+  }
   // Stiffened-gas species
   if (mati_deck.get< tag::eos >() ==
     inciter::ctr::MaterialType::STIFFENEDGAS) {
@@ -1709,12 +1735,6 @@ LuaParser::registerSpecies(
       sol_spc[imat+1]["pstiff"] = std::vector< tk::real >(ntype, 0.0);
     checkStoreMatProp(sol_spc[imat+1], "pstiff", ntype,
       spci_deck.get< tag::pstiff >());
-
-    // mu (dynamic viscosity) and 'viscous' keyword
-    if (!sol_spc[imat+1]["mu"].valid())
-      sol_spc[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
-    else gideck.get< tag::multispecies, tag::viscous >() = true;
-    checkStoreMatProp(sol_spc[imat+1], "mu", ntype, spci_deck.get< tag::mu >());
   }
   // Thermally-perfect gas species
   else if (mati_deck.get< tag::eos >() ==
@@ -1776,12 +1796,6 @@ LuaParser::registerSpecies(
       checkStoreMatProp(sol_spc[imat+1], "dH_ref", nspec,
         spci_deck.get< tag::dH_ref >());
     }
-
-    // mu (dynamic viscosity) and 'viscous' keyword
-    if (!sol_spc[imat+1]["mu"].valid())
-      sol_spc[imat+1]["mu"] = std::vector< tk::real >(ntype, 0.0);
-    else gideck.get< tag::multispecies, tag::viscous >() = true;
-    checkStoreMatProp(sol_spc[imat+1], "mu", ntype, spci_deck.get< tag::mu >());
   }
 }
 
@@ -2023,4 +2037,32 @@ LuaParser::addOutVar(
   else {
     foutvar.emplace_back( inciter::ctr::OutVar(c, varname, 0, varname) );
   }
+}
+
+void
+LuaParser::checkStoreMatPropBool(
+  const sol::table table,
+  const std::string key,
+  std::size_t vecsize,
+  std::vector< bool >& storage )
+// *****************************************************************************
+//  Check and store material property boolean into inpudeck storage
+//! \param[in] table Sol-table which contains said property
+//! \param[in] key Key for said property in Sol-table
+//! \param[in] vecsize Number of said property in Sol-table (based on number of
+//!   materials that are of the same eos type
+//! \param[in,out] storage Storage space in inputdeck where said property is
+//!   to be stored
+// *****************************************************************************
+{
+  // check validity of table
+  if (!table[key].valid())
+    Throw("Material property '" + key + "' not specified");
+  if (sol::table(table[key]).size() != vecsize)
+    Throw("Incorrect number of '" + key + "'s specified. Expected " +
+      std::to_string(vecsize));
+
+  // store values from table to inputdeck
+  storeVecIfSpecd< bool >(table, key, storage,
+    std::vector< bool >(vecsize, true));
 }
