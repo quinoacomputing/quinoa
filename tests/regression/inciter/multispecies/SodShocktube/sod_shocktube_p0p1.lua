@@ -3,8 +3,8 @@ inciter = {
   title = "Multi-species Sod shock tube problem",
 
   nstep = 25,
-  dt = 1.0e-4,
-  ttyi = 25,  -- TTY output interval
+  cfl = 0.7,
+  ttyi = 5,  -- TTY output interval
   scheme = "p0p1",
   limiter = "vertexbasedp1",
 
@@ -68,9 +68,9 @@ inciter = {
   field_output = {
     interval = 25,
     elemvar = {
-      "D1", "D2",
+      "mass_fractions",
       "density",
-      "specific_total_energy",
+      "pressure",
       "x-velocity",
       "y-velocity",
       "z-velocity"

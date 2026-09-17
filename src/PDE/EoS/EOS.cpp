@@ -51,13 +51,13 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     m_material = JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, Tr_jwl, Pr_jwl, A_jwl,
       B_jwl, R1_jwl, R2_jwl);
   }
-  else if (mattype == ctr::MaterialType::SMALLSHEARSOLID) {
-    // query input deck for SmallShearSolid parameters
+  else if (mattype == ctr::MaterialType::NEOHOOKEANSOLID) {
+    // query input deck for NeoHookeanSolid parameters
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
-    m_material = SmallShearSolid(g, ps, c_v, mu);
+    m_material = NeoHookeanSolid(g, ps, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::LINEARMIEGRUNEISEN) {
     // query input deck for LinearMieGruneisen parameters
@@ -110,7 +110,11 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
         g_inputdeck.get< tag::species >()[0].get< tag::t_range >()[k];
       auto dH_ref = getspecprop< tag::dH_ref >(k);
       auto mu = getspecprop< tag::mu >(k);
-      m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, mu);
+      auto temp_ref = getspecprop< tag::temp_ref >(k);
+      auto mu_ref = getspecprop< tag::mu_ref >(k);
+      auto C = getspecprop< tag::C >(k);
+      auto Sutherland = g_inputdeck.get< tag::multispecies >().get< tag::Sutherland >();
+      m_material = ThermallyPerfectGas(R, cp_coeff, t_range, dH_ref, mu, temp_ref, mu_ref, C, Sutherland);
     }
     else Throw( "Unknown EOS for species " + std::to_string(k+1) );
   }

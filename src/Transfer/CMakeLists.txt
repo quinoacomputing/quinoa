@@ -47,3 +47,4 @@ addCharmModule( "transferdetails" "TransferDetails" )
 addCharmModule( "m2mtransfer" "TransferDetails" )
 
 add_dependencies( "transferdetailsCharmModule" "meshwriterCharmModule" )
+add_dependencies( "m2mtransferCharmModule" "transferdetailsCharmModule" )

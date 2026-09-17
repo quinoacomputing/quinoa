@@ -1171,7 +1171,7 @@ ALECG::solve()
     if (g_inputdeck.get< tag::ale, tag::ale >()) {
       auto& coord = d->Coord();
       const auto& w = d->meshvel();
-      for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion >())
+      for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
         for (std::size_t i=0; i<coord[j].size(); ++i)
           coord[j][i] = d->Coordn()[j][i] + adt * w(i,j);
     }

@@ -228,9 +228,12 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
   inciter::Mixture mix_l(m_nspec, ul, mat_blk);
   inciter::Mixture mix_r(m_nspec, ur, mat_blk);
 
+  auto mix_temp_l = ul[ncomp + temperatureIdx(m_nspec,0)];
+  auto mix_temp_r = ur[ncomp + temperatureIdx(m_nspec,0)];
+
   // compute fluid properties (viscosity and conductivity)
   auto mu =
-    0.5 * (mix_l.viscCoeff(mat_blk) + mix_r.viscCoeff(mat_blk));
+    0.5 * (mix_l.viscCoeff(mix_temp_l, mat_blk) + mix_r.viscCoeff(mix_temp_r, mat_blk));
   auto Cp = 0.5 * (mix_l.Cp(ul[ncomp+temperatureIdx(m_nspec,0)], mat_blk)
     + mix_r.Cp(ur[ncomp+temperatureIdx(m_nspec,0)], mat_blk));
   auto kTh = mu * Cp / 0.71; // TODO: make Prandtl number user-configurable
@@ -252,6 +255,7 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
 
   auto rho_l = mix_l.get_mix_density();
   auto rho_r = mix_r.get_mix_density();
+
   std::array< real, 3 > energyFlux{{0.0, 0.0, 0.0}};
   std::array< real, 3 > uAvg{{
     0.5 * (ul[momentumIdx(m_nspec,0)]/rho_l + ur[momentumIdx(m_nspec,0)]/rho_r),
@@ -268,4 +272,109 @@ MultiSpeciesViscousTermsP0P1::interiorFlux(
   fl[energyIdx(m_nspec, 0)] = tk::dot(energyFlux, fn);
 }
 
+
+MultiSpeciesViscousTermsDGP1::MultiSpeciesViscousTermsDGP1(
+  std::size_t nspec,
+  std::size_t rdof ) :
+  m_nspec( nspec ),
+  m_rdof( rdof )
+// *****************************************************************************
+//! Constructor
+//! \param[in] nspec Number of species in this PDE system
+//! \param[in] rdof Maximum number of reconstructed degrees of freedom
+// *****************************************************************************
+{}
+
+// DDG Functions will go here
+std::vector< tk::real >
+MultiSpeciesViscousTermsDGP1::stateAt(
+  const std::vector< inciter::EOS >& mat_blk,
+  const Fields& U,
+  const Fields& P,
+  std::size_t e,
+  std::size_t ndof,
+  const std::vector< tk::real >& B ) const
+// *****************************************************************************
+//! \brief Reconstruct conserved variables and primitives at a face point
+//! \param[in] mat_blk Material EOS block
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] e Element id
+//! \param[in] ndof Number of local degrees of freedom
+//! \param[in] B Basis functions evaluated at the face point
+//! \return State vector containing conserved variables followed by
+//!   multispecies primitives
+// *****************************************************************************
+{
+  const auto ncomp = U.nprop()/m_rdof;
+  const auto nprim = P.nprop()/m_rdof;
+  std::vector< tk::real > state( ncomp+nprim, 0.0 );
+
+  eval_state( ncomp, m_rdof, ndof, e, U, B, state.data() );
+  eval_state( nprim, m_rdof, ndof, e, P, B, state.data()+ncomp );
+  enforcePhysicalConstraints( mat_blk, ncomp, 1, state );
+
+  return state;
+}
+
+void
+MultiSpeciesViscousTermsDGP1::gradientIntElem(
+  const Fields& U,
+  const Fields& P,
+  std::size_t elem,
+  const std::array< std::vector< tk::real >, 3 >& dBdx,
+  std::array< std::array< tk::real, 3 >, 4>& grad ) const
+// *****************************************************************************
+//! Compute gradients of quantities for an interior element
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Vector of primitives at recent time step
+//! \param[in] elem element id
+//! \param[in] dBdx Basis gradients in element
+//! \param[in,out] grad Velocity and temperature gradients in element
+// *****************************************************************************
+{ 
+  // no-op
+}
+
+
+void
+MultiSpeciesViscousTermsDGP1::interiorFlux(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t ncomp,
+  const std::array< std::vector< tk::real >, 2 >& state,
+  const std::array< tk::real, 3 >& fn,
+  const std::array< std::array< std::array< tk::real, 3 >, 4>, 2 >& grad,
+  std::vector< tk::real >& fl ) const
+// *****************************************************************************
+//! \brief Compute the multispecies viscous flux at an interior face
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ncomp Number of components in this system
+//! \param[in] state Left and right high-order face states
+//! \param[in] cellAvgState Left and right cell-average states
+//! \param[in] fn Face normal
+//! \param[in] centroid Left and right element centroids
+//! \param[in] grad Velocity and temperature gradients in left and right elements
+//! \param[in,out] fl Numerical viscous flux
+//! \details Will be implemented using DDG
+// *****************************************************************************
+{
+  // no-op
+}
+
+void
+MultiSpeciesViscousTermsDGP1::volumeFlux(
+  const std::vector< inciter::EOS >& mat_blk,
+  std::size_t ncomp,
+  const std::vector<tk::real>& state,
+  std::vector<std::array<tk::real, 3>>& visc_fl ) const
+// *****************************************************************************
+//! \brief Compute the multispecies viscous flux on a tet volume
+//! \param[in] mat_blk Material EOS block
+//! \param[in] ncomp Number of components in this system
+//! \param[in] state vector of conserved quantities
+//! \param[in,out] visc_fl viscous volume flux
+// *****************************************************************************
+{
+ // no-op
+}
 } // tk::

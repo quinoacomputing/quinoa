@@ -19,6 +19,7 @@
 
 #include "DG.hpp"
 #include "Discretization.hpp"
+#include "CGPDE.hpp"
 #include "DGPDE.hpp"
 #include "DiagReducer.hpp"
 #include "DerivedData.hpp"
@@ -96,7 +97,7 @@ using inciter::DG;
 DG::DG( const CProxy_Discretization& disc,
         const CProxy_Ghosts& ghostsproxy,
         const std::map< int, std::vector< std::size_t > >& bface,
-        const std::map< int, std::vector< std::size_t > >& /* bnode */,
+        const std::map< int, std::vector< std::size_t > >& bnode,
         const std::vector< std::size_t >& triinpoel ) :
   m_disc( disc ),
   m_ghosts( ghostsproxy ),
@@ -107,6 +108,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_nrefine( 0 ),
   m_nsmooth( 0 ),
   m_nreco( 0 ),
+  m_nale( 0 ),
+  m_nbnorm( 0 ),
   m_nstiffeq( g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_nnonstiffeq( g_dgpde[Disc()->MeshId()].nnonstiffeq() ),
   m_u( Disc()->Inpoel().size()/4,
@@ -115,6 +118,8 @@ DG::DG( const CProxy_Discretization& disc,
   m_un( m_u.nunk(), m_u.nprop() ),
   m_p( m_u.nunk(), g_inputdeck.get< tag::rdof >()*
     g_dgpde[Disc()->MeshId()].nprim() ),
+  m_geoElemk( m_u.nunk(), 5 ),
+  m_geoElemn( m_u.nunk(), 5 ),
   m_rhs( m_u.nunk(),
          g_inputdeck.get< tag::ndof >()*
          g_inputdeck.get< tag::ncomp >() ),
@@ -151,7 +156,16 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
+  m_srcFlag(m_u.nunk(), 0),
   m_shockmarker(m_u.nunk(), 1),
+  m_nodevel( {{ std::vector<tk::real>(Disc()->Lid().size(), 0.0),
+                std::vector<tk::real>(Disc()->Lid().size(), 0.0),
+                std::vector<tk::real>(Disc()->Lid().size(), 0.0) }} ),
+  m_bnode( bnode ),
+  m_bface( bface ),
+  m_triinpoel( tk::remap( triinpoel, Disc()->Lid() ) ),
+  m_bnorm(),
+  m_bnormc(),
   m_dte(m_u.nunk(), 0.0),
   m_finished(0)
 // *****************************************************************************
@@ -179,6 +193,7 @@ DG::DG( const CProxy_Discretization& disc,
     if (pref) thisProxy[ thisIndex ].wait4refine();
     thisProxy[ thisIndex ].wait4smooth();
     thisProxy[ thisIndex ].wait4lim();
+    thisProxy[ thisIndex ].wait4ale();
     thisProxy[ thisIndex ].wait4nod();
     thisProxy[ thisIndex ].wait4reco();
   }
@@ -188,6 +203,9 @@ DG::DG( const CProxy_Discretization& disc,
 
   // Only one stage for point implicit
   if (g_inputdeck.get< tag::point_implicit >()) m_nstage = 1;
+
+  // Query ALE mesh velocity boundary condition node lists
+  Disc()->meshvelBnd( m_bface, m_bnode, m_triinpoel );
 
   // insert array-element into the implicit solver chare array
   if (g_inputdeck.get< tag::implicit_timestepping >()) {
@@ -256,6 +274,9 @@ DG::resizeSolVectors()
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
+  m_srcFlag.resize( myGhosts()->m_nunk );
+  for (std::size_t i=0; i<3; ++i)
+    m_nodevel[i].resize( Disc()->Coord()[0].size() );
   m_dte.resize( myGhosts()->m_nunk );
 
   // Size communication buffer for solution and number of degrees of freedom
@@ -284,7 +305,7 @@ DG::resizeSolVectors()
     "GeoElem unknowns size mismatch" );
 
   // Signal the runtime system that all workers have received their adjacency
-  std::vector< std::size_t > meshdata{ myGhosts()->m_initial, Disc()->MeshId() };
+  std::vector< std::size_t > meshdata{ m_initial, Disc()->MeshId() };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
@@ -302,9 +323,6 @@ DG::setup()
 
   auto d = Disc();
 
-  // Compute left-hand side of discrete PDEs
-  lhs();
-
   // Determine elements inside user-defined IC box
   g_dgpde[d->MeshId()].IcBoxElems( myGhosts()->m_geoElem,
     myGhosts()->m_fd.Esuel().size()/4, m_boxelems );
@@ -321,8 +339,17 @@ DG::setup()
     d->histheader( std::move(histnames) );
   }
 
-  // If working with IMEX-RK, Store stiff equations into m_stiffEqIdx
-  if (g_inputdeck.get< tag::imex_runge_kutta >())
+  // Select the stiff-equation residual mode for the run. The schemes are
+  // mutually exclusive (enforced by the parser), so this is set once here.
+  if (g_inputdeck.get< tag::operator_split_plasticity >())
+    m_stiffSolverMode = StiffSolverMode::OperatorSplit;
+  else
+    m_stiffSolverMode = StiffSolverMode::IMEX;
+
+  // If working with IMEX-RK or operator-split plasticity, store stiff equations
+  // into m_stiffEqIdx (both schemes integrate the same stiff plasticity eqs)
+  if (g_inputdeck.get< tag::imex_runge_kutta >() ||
+      g_inputdeck.get< tag::operator_split_plasticity >())
   {
     g_dgpde[Disc()->MeshId()].setStiffEqIdx(m_stiffEqIdx);
     g_dgpde[Disc()->MeshId()].setNonStiffEqIdx(m_nonStiffEqIdx);
@@ -340,6 +367,10 @@ DG::box( tk::real v, const std::vector< tk::real >& )
 
   // Store user-defined box IC volume
   d->Boxvol() = v;
+
+  // Store previous time step and stage element volumes for GCL
+  m_geoElemk = myGhosts()->m_geoElem;
+  m_geoElemn = myGhosts()->m_geoElem;
 
   // Set initial conditions for all PDEs
   g_dgpde[d->MeshId()].initialize( myGhosts()->m_geoElem, myGhosts()->m_inpoel,
@@ -877,7 +908,7 @@ DG::lim()
     g_dgpde[d->MeshId()].limit( d->T(), pref, myGhosts()->m_geoFace,
               myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_esup,
               myGhosts()->m_inpoel, myGhosts()->m_coord, m_ndof, d->Gid(),
-              d->Bid(), m_mtInv, m_u, m_p, m_shockmarker );
+              d->Bid(), m_mtInv, m_srcFlag, m_u, m_p, m_shockmarker );
 
     if (g_inputdeck.get< tag::limsol_projection >())
       g_dgpde[d->MeshId()].CPL(m_p, myGhosts()->m_geoElem,
@@ -1045,6 +1076,276 @@ DG::comlim( int fromch,
 }
 
 void
+DG::updateChareBoundaryGeoFace()
+// *****************************************************************************
+// Recompute chare-boundary face geometry after ALE ghost updates arrive
+// *****************************************************************************
+{
+  auto d = Disc();
+  auto g = myGhosts();
+  const auto& esuf = g->m_fd.Esuf();
+
+  for (std::size_t f = g->m_fd.Nipfac(); f < esuf.size()/2; ++f) {
+    std::size_t el = static_cast< std::size_t >( esuf[2*f] );
+    tk::UnsMesh::Face t{{
+      d->Gid()[ g->m_fd.Inpofa()[3*f+2] ],
+      d->Gid()[ g->m_fd.Inpofa()[3*f+1] ],
+      d->Gid()[ g->m_fd.Inpofa()[3*f+0] ]
+    }};
+    std::array< std::size_t, 2 > id{{ f, el }};
+    g->addGeoFace( t, id );
+  }
+}
+
+void
+DG::bnorm()
+// *****************************************************************************
+//  Compute boundary point normals for mesh velocity symmetry BCs
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  std::unordered_map< int, std::unordered_set< std::size_t > > bcnodes;
+  for (const auto& s : g_inputdeck.get< tag::ale, tag::symmetry >()) {
+    auto k = m_bface.find(static_cast<int>(s));
+    if (k != end(m_bface)) {
+      auto& n = bcnodes[ k->first ];
+      for (auto f : k->second) {
+        n.insert( m_triinpoel[f*3+0] );
+        n.insert( m_triinpoel[f*3+1] );
+        n.insert( m_triinpoel[f*3+2] );
+      }
+    }
+  }
+
+  m_bnorm = cg::bnorm( m_bface, m_triinpoel, d->Coord(), d->Gid(), bcnodes );
+
+  // Send our nodal normal contributions to neighbor chares
+  if (d->NodeCommMap().empty())
+    comnorm_complete();
+  else
+    for (const auto& [neighborchare, sharednodes] : d->NodeCommMap()) {
+      decltype(m_bnorm) exp;
+      for (auto i : sharednodes) {
+        for (const auto& [s,norms] : m_bnorm) {
+          auto j = norms.find(i);
+          if (j != end(norms)) exp[s][i] = j->second;
+        }
+      }
+      thisProxy[ neighborchare ].comnorm( exp );
+    }
+
+  ownnorm_complete();
+}
+
+void
+DG::comnorm( const std::unordered_map< int,
+  std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm )
+// *****************************************************************************
+// Receive boundary point normals on chare-boundaries
+//! \param[in] innorm Incoming partial sums of boundary point normal
+//!   contributions to normals (first 3 components), inverse distance squared
+//!   (4th component), associated to side set ids
+// *****************************************************************************
+{
+  // Buffer up incoming boundary-point normal vector contributions
+  for (const auto& [s,norms] : innorm) {
+    auto& bnorms = m_bnormc[s];
+    for (const auto& [p,n] : norms) {
+      auto& bnorm = bnorms[p];
+      bnorm[0] += n[0];
+      bnorm[1] += n[1];
+      bnorm[2] += n[2];
+      bnorm[3] += n[3];
+    }
+  }
+
+  if (++m_nbnorm == Disc()->NodeCommMap().size()) {
+    m_nbnorm = 0;
+    comnorm_complete();
+  }
+}
+
+void
+DG::normfinal()
+// *****************************************************************************
+//  Finish computing boundary point normals
+// *****************************************************************************
+{
+  const auto& lid = Disc()->Lid();
+
+  // Combine own and communicated contributions to boundary point normals
+  for (const auto& [s,norms] : m_bnormc) {
+    auto& bnorms = m_bnorm[s];
+    for (const auto& [p,n] : norms) {
+      auto& norm = bnorms[p];
+      norm[0] += n[0];
+      norm[1] += n[1];
+      norm[2] += n[2];
+      norm[3] += n[3];
+    }
+  }
+  tk::destroy( m_bnormc );
+
+  // Divide summed point normals by the sum of inverse distance squared
+  for (auto& [s,norms] : m_bnorm)
+    for (auto& [p,n] : norms) {
+      n[0] /= n[3];
+      n[1] /= n[3];
+      n[2] /= n[3];
+      Assert( (n[0]*n[0] + n[1]*n[1] + n[2]*n[2] - 1.0) <
+              1.0e+3*std::numeric_limits< tk::real >::epsilon(),
+              "Non-unit normal" );
+    }
+
+  // Replace global->local ids associated to boundary point normals
+  decltype(m_bnorm) bnorm;
+  for (auto& [s,norms] : m_bnorm) {
+    auto& bnorms = bnorm[s];
+    for (auto&& [g,n] : norms)
+      bnorms[ tk::cref_find(lid,g) ] = std::move(n);
+  }
+  m_bnorm = std::move(bnorm);
+
+  meshvelstart();
+}
+
+void
+DG::ALEComm()
+// *****************************************************************************
+// Perform ALE mesh update and communicate updated ghost mesh data
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto is_ale = g_inputdeck.get< tag::ale, tag::ale >();
+
+  if (!is_ale) {
+    ownale_complete();
+    comale_complete();
+    return;
+  }
+
+  if (m_stage == 0) {
+    d->UpdateCoordn();
+    m_geoElemn = myGhosts()->m_geoElem;
+  }
+
+  // Advance owned mesh coordinates and mirror them into the extended array.
+  const auto& meshvel = d->meshvel();
+  auto& coord = myGhosts()->m_coord;
+  auto& disc_coord = d->Coord();
+  const auto dc_size = disc_coord[0].size();
+  for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >()) {
+    for (std::size_t i=0; i<dc_size; ++i) {
+      auto x = rkcoef[0][m_stage] * d->Coordn()[j][i]
+        + rkcoef[1][m_stage] * ( disc_coord[j][i] + d->Dt() * meshvel(i,j) );
+      disc_coord[j][i] = x;
+      coord[j][i] = x;
+    }
+  }
+
+  // Store element volumes at previous stage for GCL consistent RK
+  m_geoElemk = myGhosts()->m_geoElem;
+
+  // Recompute internal + physical boundary face geometry from the updated mesh.
+  auto gf_temp = tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
+    myGhosts()->m_fd.Inpofa(), myGhosts()->m_coord );
+  for (std::size_t f=0; f<myGhosts()->m_fd.Nipfac(); ++f)
+    for (std::size_t i=0; i<gf_temp.nprop(); ++i)
+      myGhosts()->m_geoFace(f,i) = gf_temp(f,i);
+
+  // Recompute element geometries for owned elements only.
+  auto ge_temp = tk::genGeoElemTet( d->Inpoel(), disc_coord );
+  for (std::size_t e=0; e<ge_temp.nunk(); ++e)
+    for (std::size_t i=0; i<ge_temp.nprop(); ++i)
+      myGhosts()->m_geoElem(e,i) = ge_temp(e,i);
+
+  if (myGhosts()->m_sendGhost.empty()) {
+    updateChareBoundaryGeoFace();
+    comale_complete();
+  } else {
+    for (const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
+      std::vector< std::size_t > tetid( ghostdata.size() );
+      std::vector< std::vector< tk::real > > geoElem( ghostdata.size() );
+      std::vector< std::array< tk::real, 3 > > coordg(
+        ghostdata.size(), std::array< tk::real, 3 >{{ 0.0, 0.0, 0.0 }} );
+      const auto sendnode = myGhosts()->m_sendChBndNode.find( cid );
+
+      std::size_t j = 0;
+      for (const auto& e : ghostdata) {
+        Assert( e < myGhosts()->m_fd.Esuel().size()/4,
+          "Sending ALE ghost data" );
+        tetid[j] = e;
+        geoElem[j] = myGhosts()->m_geoElem[e];
+
+        if (sendnode != end(myGhosts()->m_sendChBndNode)) {
+          const auto n = sendnode->second.find( e );
+          if (n != end(sendnode->second)) {
+            coordg[j] = {{ coord[0][n->second],
+                           coord[1][n->second],
+                           coord[2][n->second] }};
+          }
+        }
+        ++j;
+      }
+
+      thisProxy[ cid ].comale( thisIndex, tetid, geoElem, coordg );
+    }
+  }
+
+  ownale_complete();
+}
+
+void
+DG::comale( int fromch,
+            const std::vector< std::size_t >& tetid,
+            const std::vector< std::vector< tk::real > >& geoElem,
+            const std::vector< std::array< tk::real, 3 > >& coord )
+// *****************************************************************************
+//  Receive updated ALE ghost mesh data from neighboring chares
+//! \param[in] fromch Sender chare id
+//! \param[in] tetid Ghost tet ids we receive ALE mesh data for
+//! \param[in] geoElem Updated ghost-element geometry
+//! \param[in] coord Updated off-face coordinates for face ghosts
+// *****************************************************************************
+{
+  Assert( geoElem.size() == tetid.size(), "Size mismatch in DG::comale()" );
+  Assert( coord.size() == tetid.size(), "Size mismatch in DG::comale()" );
+
+  const auto& ghost = tk::cref_find( myGhosts()->m_ghost, fromch );
+  const auto recvnode = myGhosts()->m_recvChBndNode.find( fromch );
+
+  for (std::size_t i=0; i<tetid.size(); ++i) {
+    auto j = tk::cref_find( ghost, tetid[i] );
+    Assert( j >= myGhosts()->m_fd.Esuel().size()/4,
+      "Receiving ALE non-ghost data" );
+    Assert( geoElem[i].size() == myGhosts()->m_geoElem.nprop(),
+      "Geometry size mismatch in DG::comale()" );
+
+    for (std::size_t c=0; c<geoElem[i].size(); ++c)
+      myGhosts()->m_geoElem(j,c) = geoElem[i][c];
+
+    if (recvnode != end(myGhosts()->m_recvChBndNode)) {
+      const auto n = recvnode->second.find( tetid[i] );
+      if (n != end(recvnode->second)) {
+        auto p = n->second;
+        Assert( p < myGhosts()->m_coord[0].size(),
+          "Indexing out of extended ALE ghost coordinates" );
+        myGhosts()->m_coord[0][p] = coord[i][0];
+        myGhosts()->m_coord[1][p] = coord[i][1];
+        myGhosts()->m_coord[2][p] = coord[i][2];
+      }
+    }
+  }
+
+  if (++m_nale == myGhosts()->m_sendGhost.size()) {
+    m_nale = 0;
+    updateChareBoundaryGeoFace();
+    comale_complete();
+  }
+}
+
+void
 DG::dt()
 // *****************************************************************************
 // Compute time step size
@@ -1084,7 +1385,7 @@ DG::dt()
         g_dgpde[d->MeshId()].dt( myGhosts()->m_coord, myGhosts()->m_inpoel,
           myGhosts()->m_fd,
           myGhosts()->m_geoFace, myGhosts()->m_geoElem, m_ndof, m_u, m_p,
-          myGhosts()->m_fd.Esuel().size()/4, m_dte );
+          myGhosts()->m_fd.Esuel().size()/4, m_srcFlag, m_dte );
       if (eqdt < mindt) mindt = eqdt;
 
       // time-step suppression for unsteady problems
@@ -1099,6 +1400,20 @@ DG::dt()
       }
 
       mindt *= coeff * g_inputdeck.get< tag::cfl >();
+
+      // time-step restriction based on max volume change
+      auto mindtv = std::numeric_limits< tk::real >::max();
+      auto dvcfl = g_inputdeck.get< tag::ale, tag::dvcfl >();
+      if (d->Dtn() > 1e-12 && dvcfl > 0.0) {
+        for (std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+          auto dt_v = dvcfl *
+            d->Dtn() * std::min(m_geoElemn(e,0), myGhosts()->m_geoElem(e,0))
+            / (std::abs(m_geoElemn(e,0)-myGhosts()->m_geoElem(e,0)) + 1.0e-12);
+          mindtv = std::min(mindtv, dt_v);
+        }
+      }
+
+      mindt = std::min(mindt, mindtv);
     }
   }
   else
@@ -1176,6 +1491,7 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4smooth();
   thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4lim();
+  thisProxy[ thisIndex ].wait4ale();
   thisProxy[ thisIndex ].wait4nod();
 
   auto d = Disc();
@@ -1188,21 +1504,34 @@ DG::solve( tk::real newdt )
   if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
     d->setdt( newdt );
 
-  // Update Un
-  if (m_stage == 0) m_un = m_u;
-
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
   const auto point_implicit = g_inputdeck.get< tag::point_implicit >();
+  // Operator-split plasticity wraps a relaxation substep around explicit SSP-RK3
+  const auto op_split_plasticity =
+    g_inputdeck.get< tag::operator_split_plasticity >();
 
-  // physical time at time-stage for computing exact source terms
+  // Physical time at time-stage for computing exact source terms.
+  // The stage time must match the abscissae of the tableau actually in use:
+  // the explicit RK3 (Shu-Osher) uses c = {0, 1, 1/2}, while the IMEX
+  // (Cavaglieri-Bewley) explicit part uses c = {0, c2, c3}.
   tk::real physT(d->T());
-  if (m_stage == 1) {
-    physT += d->Dt();
+  if (imex_runge_kutta) {
+    if (m_stage == 1) {
+      physT += c2*d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += c3*d->Dt();
+    }
   }
-  else if (m_stage == 2) {
-    physT += 0.5*d->Dt();
+  else {
+    if (m_stage == 1) {
+      physT += d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += 0.5*d->Dt();
+    }
   }
 
   if (imex_runge_kutta) {
@@ -1214,16 +1543,36 @@ DG::solve( tk::real newdt )
     }
   }
 
-  if ( !imex_runge_kutta || m_stage < m_nstage-1 || point_implicit) {
-    if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
-    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
-  }
+  // Evaluate the explicit (hyperbolic) RHS on the current solution. For IMEX,
+  // the two-register combination at the final stage requires
+  // m_rhsprev = R_ex(u^0) and m_rhs = R_ex(u^1) simultaneously (see the b2/b3
+  // row of expl_rkcoef and imex_integrate()). We therefore advance the register
+  // pair every stage: copy m_rhsprev = m_rhs (the previous stage's RHS) and then
+  // recompute m_rhs on the current m_u.
+  if (imex_runge_kutta) m_rhsprev = m_rhs;
+  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+    myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
+    d->Dt(), m_rhs, m_srcFlag );
+
+  // Update Un
+  if (m_stage == 0) m_un = m_u;
 
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
     DG::imex_integrate();
+
+    // Re-apply the external source term after the IMEX update. Sources can
+    // modify the solution vector m_u in place rather than contributing through
+    // the RHS. The IMEX explicit update rebuilds m_u from m_un + RHS only (see
+    // imex_integrate()), which discards those in-place edits. Re-applying the
+    // source here reinstates them on the updated m_u.
+    // A scratch RHS is used so that the source's zeroing of RHS entries does
+    // not corrupt m_rhs/m_rhsprev used by subsequent stages.
+    tk::Fields srcrhs( m_rhs.nunk(), m_rhs.nprop() );
+    srcrhs.fill( 0.0 );
+    g_dgpde[d->MeshId()].physSrc( physT, myGhosts()->m_geoElem,
+      d->ElemBlockId(), m_u, m_p, srcrhs, m_srcFlag );
   }
   else if (implicit_ts) {
     // Implicit time-stepping using BDF1 to discretize time-derivative
@@ -1237,7 +1586,12 @@ DG::solve( tk::real newdt )
     // Explicit time-stepping using RK3 to discretize time-derivative
     const auto steady = g_inputdeck.get< tag::steady_state >();
     for(std::size_t e=0; e<myGhosts()->m_nunk; ++e) {
+
+      // Stage-wise volumes for GCL consistent RK
       auto vole = myGhosts()->m_geoElem(e,0);
+      auto vole_n = m_geoElemn(e,0);
+      auto vole_k = m_geoElemk(e,0);
+
       auto dte = d -> Dt();
       if (steady) dte = m_dte[e];
       for(std::size_t c=0; c<neq; ++c)
@@ -1247,9 +1601,15 @@ DG::solve( tk::real newdt )
           if(k < m_ndof[e]) {
             auto rmark = c*rdof+k;
             auto mark = c*ndof+k;
-            m_u(e, rmark) =  rkcoef[0][m_stage] * m_un(e, rmark)
-              + rkcoef[1][m_stage] * ( m_u(e, rmark)
-                + dte * m_rhs(e, mark)/ (vole*mass_dubiner[k]));
+
+            auto mm_i = vole * mass_dubiner[k];
+            auto mm_n = vole_n * mass_dubiner[k];
+            auto mm_k = vole_k * mass_dubiner[k];
+            m_u(e, rmark) = (
+              rkcoef[0][m_stage] * mm_n * m_un(e, rmark)
+              + rkcoef[1][m_stage] * ( mm_k * m_u(e, rmark)
+              + dte * m_rhs(e, mark) )
+              ) / mm_i;
             if(fabs(m_u(e, rmark)) < 1e-16)
               m_u(e, rmark) = 0;
           }
@@ -1271,6 +1631,12 @@ DG::solve( tk::real newdt )
         }
       }
     }
+
+  // Operator-split plasticity: after the explicit SSP-RK3 step has updated
+  // m_u using the hyperbolic operator, relax the stiff plasticity source at
+  // the final RK stage.
+  if (op_split_plasticity && m_stage == m_nstage-1)
+    DG::plasticity_split_integrate();
 
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
@@ -1355,7 +1721,7 @@ DG::resizePostAMR(
   const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
-  const std::map< int, std::vector< std::size_t > >& /* bnode */,
+  const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
@@ -1375,7 +1741,6 @@ DG::resizePostAMR(
 
   // Set flag that indicates that we are during time stepping
   m_initial = 0;
-  myGhosts()->m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
@@ -1401,9 +1766,16 @@ DG::resizePostAMR(
   m_rhsprev.resize( nelem );
   m_stiffrhs.resize( nelem );
   m_stiffrhsprev.resize( nelem );
+  m_srcFlag.resize( nelem );
+  for (std::size_t i=0; i<3; ++i) m_nodevel[i].resize( coord[0].size() );
 
   myGhosts()->m_fd = FaceData( myGhosts()->m_inpoel, bface,
     tk::remap(triinpoel,d->Lid()) );
+
+  m_bnode = bnode;
+  m_bface = bface;
+  m_triinpoel = tk::remap( triinpoel, d->Lid() );
+  d->meshvelBnd( m_bface, m_bnode, m_triinpoel );
 
   myGhosts()->m_geoFace =
     tk::Fields( tk::genGeoFaceTri( myGhosts()->m_fd.Nipfac(),
@@ -1566,12 +1938,33 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
+  // Add source flag array to element-centered field output
+  std::vector< tk::real > srcFlag( begin(m_srcFlag), end(m_srcFlag) );
+  // Here m_srcFlag has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells.
+  // For the purpose of output, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the srcFlag vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
+  srcFlag.resize( nelem );
+  for (const auto& [child,parent] : addedTets)
+    srcFlag[child] = static_cast< tk::real >( m_srcFlag[parent] );
+  elemfields.push_back( srcFlag );
+
   // Compute plastic deformation averaged for all materials
   std::vector< tk::real > plasticDeformation(nelem);
   g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, m_p, plasticDeformation);
   for (const auto& [child,parent] : addedTets)
     plasticDeformation[child] = 0.0;
   if (plasticDeformation.size() > 0) elemfields.push_back( plasticDeformation );
+
+  // Add sound speed vector
+  std::vector< tk::real > soundspd(nelem, 0.0);
+  g_dgpde[d->MeshId()].soundspeed(nelem, m_u, m_p, soundspd);
+  for (const auto& [child,parent] : addedTets)
+    soundspd[child] = soundspd[parent];
+  if (soundspd.size() > 0) elemfields.push_back( soundspd );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
@@ -1587,8 +1980,28 @@ DG::writeFields(
 
   elemfieldnames.push_back( "shock_marker" );
 
+  elemfieldnames.push_back( "src_flag" );
+
   if (plasticDeformation.size() > 0)
     elemfieldnames.push_back( "plastic_deformation" );
+
+  if (soundspd.size() > 0)
+    elemfieldnames.push_back( "sound speed" );
+
+  //! Lambda to put in a field for output if not empty
+  auto add_node_field = [&]( const auto& name, const auto& field ){
+    if (not field.empty()) {
+      nodefieldnames.push_back( name );
+      nodefields.push_back( field );
+    }
+  };
+
+  // Output mesh velocity if ALE is enabled
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    add_node_field( "x-mesh-velocity", d->meshvel().extract_comp(0) );
+    add_node_field( "y-mesh-velocity", d->meshvel().extract_comp(1) );
+    add_node_field( "z-mesh-velocity", d->meshvel().extract_comp(2) );
+  }
 
   Assert( elemfieldnames.size() == elemfields.size(), "Size mismatch" );
   Assert( nodefieldnames.size() == nodefields.size(), "Size mismatch" );
@@ -1664,8 +2077,14 @@ DG::stage()
   // otherwise prepare for nodal field output
   if (m_stage < m_nstage)
     next();
-  else
+  else {
+    // Ensure new field output file if ALE is enabled
+    if (g_inputdeck.get< tag::ale, tag::ale >()) {
+      Disc()->Itf() = 0;  // Zero field output iteration count if mesh moved
+      ++Disc()->Itr();    // Increase number of iterations with a change in the mesh
+    }
     startFieldOutput( CkCallback(CkIndex_DG::step(), thisProxy[thisIndex]) );
+  }
 }
 
 void
@@ -1757,6 +2176,78 @@ DG::step()
                    CkCallback(CkReductionTarget(Transporter,finish), d->Tr()) );
 
   }
+}
+
+void
+DG::computeBNorm()
+// *****************************************************************************
+// Start computing the boundary normals for ALE
+// *****************************************************************************
+{
+  if (g_inputdeck.get< tag::ale, tag::ale >() &&
+      !g_inputdeck.get< tag::ale, tag::symmetry >().empty())
+  {
+    thisProxy[ thisIndex ].wait4norm();
+    bnorm();
+  } else {
+    meshvelstart();
+  }
+}
+
+void
+DG::meshvelstart()
+// *****************************************************************************
+// Start computing the mesh mesh velocity after boundary normals are ready
+// *****************************************************************************
+{
+  auto d = Disc();
+
+  // Compute fluid velocity at nodes
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
+    const auto meshveltype =
+      g_inputdeck.get< tag::ale, tag::mesh_velocity >();
+
+    if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
+      Throw( "DG-ALE does not yet support the Helmholtz mesh velocity "
+             "smoother" );
+
+    if (smoother == ctr::MeshVelocitySmootherType::LAPLACE) {
+      if (meshveltype != ctr::MeshVelocityType::FLUID)
+        Throw( "DG-ALE Laplace mesh velocity smoothing is currently "
+               "supported only with mesh_velocity = \"fluid\"" );
+
+      const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
+      const auto eps = std::numeric_limits< tk::real >::epsilon();
+      if (!std::all_of( begin(meshforce), end(meshforce),
+            [eps](tk::real c){ return std::abs(c) <= eps; } ))
+        Throw( "DG-ALE Laplace mesh velocity smoothing does not yet support "
+               "nonzero meshforce coefficients" );
+    }
+
+    g_dgpde[d->MeshId()].nodeVelocity( myGhosts()->m_geoElem,
+      myGhosts()->m_esup, myGhosts()->m_inpoel, myGhosts()->m_coord, m_u, m_p,
+      m_nodevel );
+  }
+
+  // Start computing the mesh velocity for ALE
+  const auto adt = rkcoef[1][m_stage] * d->Dt();
+  d->meshvelStart( m_nodevel, {}, m_bnorm, adt,
+    CkCallback(CkIndex_DG::meshveldone(), thisProxy[thisIndex]) );
+}
+
+void
+DG::meshveldone()
+// *****************************************************************************
+// Done with computing the mesh velocity for ALE
+// *****************************************************************************
+{
+  // Assess and record mesh velocity linear solver convergence
+  Disc()->meshvelConv();
+
+  m_initial = 0;
+
+  p_refine();
 }
 
 void
@@ -1881,6 +2372,7 @@ DG::imex_integrate()
 
     for (std::size_t e=0; e<nelem; ++e) {
       auto vole = myGhosts()->m_geoElem(e,0);
+      auto vole_n = m_geoElemn(e,0);
       // Integrate explicitly on all equations
       for (std::size_t c=0; c<neq; ++c)
       {
@@ -1888,9 +2380,13 @@ DG::imex_integrate()
         {
           auto rmark = c*rdof+k;
           auto mark = c*ndof+k;
-          m_u(e, rmark) = m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
+
+          auto mm_i = vole * mass_dubiner[k];
+          auto mm_n = vole_n * mass_dubiner[k];
+
+          m_u(e, rmark) = ( mm_n * m_un(e, rmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark) ) ) / mm_i;
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -1901,9 +2397,12 @@ DG::imex_integrate()
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
         {
           auto rmark = m_stiffEqIdx[c]*rdof+k;
+
+          auto mm_i = vole * mass_dubiner[k];
+
           m_u(e, rmark) += d->Dt() *
             ( impl_rkcoef[0][m_stage]
-            * m_stiffrhsprev(e,c*ndof+k)/(vole*mass_dubiner[k]) );
+            * m_stiffrhsprev(e,c*ndof+k) / mm_i );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -1965,6 +2464,7 @@ DG::imex_integrate()
     for (std::size_t e=0; e<nelem; ++e)
     {
       auto vole = myGhosts()->m_geoElem(e,0);
+      auto vole_n = m_geoElemn(e,0);
       // First integrate explicitly on all equations
       for (std::size_t c=0; c<neq; ++c)
       {
@@ -1972,9 +2472,13 @@ DG::imex_integrate()
         {
           auto rmark = c*rdof+k;
           auto mark = c*ndof+k;
-          m_u(e, rmark) =  m_un(e, rmark) + d->Dt() * (
-            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)/(vole*mass_dubiner[k])
-            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)/(vole*mass_dubiner[k]));
+
+          auto mm_i = vole * mass_dubiner[k];
+          auto mm_n = vole_n * mass_dubiner[k];
+
+          m_u(e, rmark) =  ( mm_n * m_un(e, rmark) + d->Dt() * (
+            expl_rkcoef[0][m_stage] * m_rhsprev(e, mark)
+            + expl_rkcoef[1][m_stage] * m_rhs(e, mark)) ) / mm_i;
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
@@ -1984,15 +2488,85 @@ DG::imex_integrate()
         for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
         {
           auto rmark = m_stiffEqIdx[ieq]*rdof+idof;
+
+          auto mm_i = vole * mass_dubiner[idof];
+
           m_u(e, rmark) +=
             d->Dt() * ( impl_rkcoef[0][m_stage]
-                      * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
+                      * m_stiffrhsprev(e,ieq*ndof+idof) / mm_i
                       + impl_rkcoef[1][m_stage]
-                      * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
+                      * m_stiffrhs(e,ieq*ndof+idof) / mm_i );
           if(fabs(m_u(e, rmark)) < 1e-16)
             m_u(e, rmark) = 0;
         }
     }
+  }
+}
+
+void
+DG::plasticity_split_integrate()
+// *****************************************************************************
+// Perform the operator-split plasticity relaxation substep
+//! \details Lie operator split: the explicit SSP-RK3 step has already
+//!   advanced every equation over the full time step using the hyperbolic
+//!   operators. This routine relaxes the stiff plasticity source, locally per
+//!   element, by a backward-Euler solve about the post-RK state (after RK's
+//!   final stage in this time-step). Then, it balances the elastic energy
+//!   change.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+
+  // The split residual carries no tableau history; clear the stiff RHS register.
+  m_stiffrhs.fill(0.0);
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // Gather the stiff DOFs of this element as the relaxation state.
+    // m_numEqDof is indexed by global equation index, so the DOF count of a
+    // stiff equation is m_numEqDof[m_stiffEqIdx[ieq]] (not m_numEqDof[ieq]).
+    std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        x[ieq*ndof+idof] = m_u(e, stiffrmark);
+      }
+
+    // g_afterRK (constant term of the backward-Euler residual) and the
+    // pre-relaxation state used to balance the plastic (elastic) energy.
+    m_gStar = x;
+    auto x_star = x;
+
+    // Solve the local nonlinear system, first try Broyden then fall back to
+    // Newton, reusing the IMEX nonlinear solvers (m_stiffSolverMode selects the
+    // residual assembled in nonlinear_func()).
+    bool solver_failed = false;
+    x = DG::nonlinear_broyden(e, x, solver_failed);
+    if (solver_failed) {
+      solver_failed = false;
+      x = DG::nonlinear_newton(e, x, solver_failed);
+    }
+    if (solver_failed)
+      Throw("At element " + std::to_string(e) +
+            " operator-split plasticity nonlinear solver did not converge");
+
+    // Balance the elastic-energy change from the relaxation into total energy.
+    // Unlike IMEX (which defers the stiff combination to the final stage and
+    // deposits into m_un), the split writes the converged solution directly, so
+    // the correction goes into the live m_u.
+    g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_u);
+
+    // Update the state with the converged relaxed stiff DOFs.
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        m_u(e, stiffrmark) = x[ieq*ndof+idof];
+      }
   }
 }
 
@@ -2026,14 +2600,36 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
   std::size_t n = x.size();
 
   // m_u <- x
+  // m_numEqDof is indexed by global equation index, so the DOF count of a
+  // stiff equation is m_numEqDof[m_stiffEqIdx[ieq]] (not m_numEqDof[ieq]).
   for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-    for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    for (size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
     {
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
       m_u(e, stiffrmark) = x[ieq*ndof+idof];
     }
 
   auto vole = myGhosts()->m_geoElem(e,0);
+  auto vole_n = m_geoElemn(e,0);
+
+  // Operator-split plasticity: pure backward-Euler relaxation of the stiff
+  // source about the post-RK state g_afterRK (m_gStar), with no IMEX tableau
+  // history. Residual: F_i = x_i - g_afterRK_i - dt*stiff_rhs_i(x)/mm_i.
+  if (m_stiffSolverMode == StiffSolverMode::OperatorSplit) {
+    g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
+      m_u, m_ndof, m_stiffrhs );
+    std::vector< tk::real > f(n, 0.0);
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        auto mm_i = vole * mass_dubiner[idof];
+        f[ieq*ndof+idof] = m_u(e, stiffrmark)
+          - m_gStar[ieq*ndof+idof]
+          - d->Dt() * m_stiffrhs(e,ieq*ndof+idof) / mm_i;
+      }
+    return f;
+  }
 
   // Compute explicit terms (Should be computed once)
   std::vector< tk::real > expl_terms(n, 0.0);
@@ -2042,13 +2638,15 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
     {
       auto stiffmark = m_stiffEqIdx[ieq]*ndof+idof;
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
-      expl_terms[ieq*ndof+idof] = m_un(e, stiffrmark)
+      auto mm_i = vole * mass_dubiner[idof];
+      auto mm_n = vole_n * mass_dubiner[idof];
+      expl_terms[ieq*ndof+idof] = ( mm_n * m_un(e, stiffrmark)
         + d->Dt() * ( expl_rkcoef[0][m_stage]
-        * m_rhsprev(e,stiffmark)/(vole*mass_dubiner[idof])
+        * m_rhsprev(e,stiffmark)
         + expl_rkcoef[1][m_stage]
-        * m_rhs(e,stiffmark)/(vole*mass_dubiner[idof])
+        * m_rhs(e,stiffmark)
         + impl_rkcoef[0][m_stage]
-        * m_stiffrhsprev(e,ieq*ndof+idof)/(vole*mass_dubiner[idof]) );
+        * m_stiffrhsprev(e,ieq*ndof+idof)) ) / mm_i;
     }
 
   // Compute stiff_rhs
@@ -2061,9 +2659,10 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
     for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
     {
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+      auto mm_i = vole * mass_dubiner[idof];
       f[ieq*ndof+idof] = expl_terms[ieq*ndof+idof]
         + d->Dt() * impl_rkcoef[1][m_stage]
-        * m_stiffrhs(e,ieq*ndof+idof)/(vole*mass_dubiner[idof])
+        * m_stiffrhs(e,ieq*ndof+idof) / mm_i
         - m_u(e, stiffrmark);
     }
 
@@ -2711,9 +3310,11 @@ DG::point_implicit_jacobian(
         g_dgpde[d->MeshId()].updatePrimitives( Up, myGhosts()->m_geoElem, Pp,
           nelem, m_ndof );
 
+        auto srcFlag = m_srcFlag;
         g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
           myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel,
-          m_boxelems, myGhosts()->m_coord, Up, Pp, m_ndof, d->Dt(), Rp );
+          m_boxelems, myGhosts()->m_coord, d->ElemBlockId(), Up, Pp, d->meshvel(), m_ndof,
+          d->Dt(), Rp, srcFlag );
 
         for (std::size_t e=0; e<nelem; ++e) {
           if (elemColor[e] != color) continue;

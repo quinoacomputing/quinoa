@@ -659,7 +659,14 @@ THINCFunction( std::size_t rdof,
       + dBdx[i][2] * alSol[kmax*rdof+2]
       + dBdx[i][3] * alSol[kmax*rdof+3];
 
-  auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
+  auto nMag = std::sqrt(tk::dot(nInt, nInt));
+
+  // If the majority material has no resolved gradient in this cell, the
+  // interface normal is undefined. Proceeding would form exp(0)/... = 0/0 in
+  // the tanh profile inversion below. In this degenerate case there is no
+  // interface to sharpen, so retain the TVD reconstruction already stored in
+  // alReco and return.
+  if (!std::isfinite(nMag) || nMag < 1.0e-8) return;
 
   for (std::size_t i=0; i<3; ++i)
     nInt[i] /= nMag;
@@ -863,7 +870,8 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    const std::vector< real >& B,
                    const Fields& U,
                    const Fields& P,
-                   std::vector< tk::real >& state )
+                   std::vector< tk::real >& state,
+                   int srcFlag )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] mat_blk EOS material block
@@ -881,6 +889,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 //! \param[in] B Basis function at given quadrature point
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
+//! \param[in] srcFlag Whether the energy source was added to element e
 //! \param[in,out] state Vector of solution states at quadrature point
 // *****************************************************************************
 {
@@ -897,7 +906,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
   }
 
-  if (intsharp > 0)
+  if (intsharp > 0 && srcFlag == 0)
   {
     std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 
@@ -1059,6 +1068,86 @@ enforcePhysicalConstraints(
     state[ncomp+temperatureIdx(nspec,0)] = inciter::constrain_temperature(
       state[ncomp+temperatureIdx(nspec,0)] );
   }
+}
+
+std::array< real, 3 >
+evaluateMeshVelTri(
+  const std::size_t f,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpofa,
+  const std::array< std::vector< real >, 2 >& coordgp,
+  const Fields& W )
+// *****************************************************************************
+//  Evaluate mesh velocity at a quadrature point on a triangular face
+//! \param[in] f Id of face on which evaluation is being done
+//! \param[in] igp Local quadrature point id where mesh velocity is required
+//! \param[in] inpofa Face-node connectivity
+//! \param[in] coordgp 2 spatial coordinates of quadrature points on reference
+//!   triangular element
+//! \param[in] W Mesh velocity vector at recent time step
+//! \return Mesh velocity at quadrature point
+//! \details This function evaluates the mesh velocity at the specified
+//!   quadrature point on a reference triangular element (face) assuming linear
+//!   finite element basis functions (i.e. Lagrange basis).
+// *****************************************************************************
+{
+  std::array< real, 3 > w_igp {{ 0.0, 0.0, 0.0 }};
+
+  // Barycentric coordinates/Lagrange basis at igp
+  std::array< real, 3 > lambda_igp {{
+    1.0-coordgp[0][igp]-coordgp[1][igp],
+    coordgp[0][igp], coordgp[1][igp] }};
+
+  // Mesh velocity evaluation using Lagrange basis
+  for (std::size_t j=0; j<3; ++j) {
+    auto wt_igp = lambda_igp[j];
+    auto nid = inpofa[3*f+j];
+    w_igp[0] += wt_igp*W(nid,0);
+    w_igp[1] += wt_igp*W(nid,1);
+    w_igp[2] += wt_igp*W(nid,2);
+  }
+
+  return w_igp;
+}
+
+std::array< real, 3 >
+evaluateMeshVelTet(
+  const std::size_t e,
+  const std::size_t igp,
+  const std::vector< std::size_t >& inpoel,
+  const std::array< std::vector< real >, 3 >& coordgp,
+  const Fields& W )
+// *****************************************************************************
+//  Evaluate mesh velocity at a quadrature point on a tetrahedral element
+//! \param[in] e Id of element in which evaluation is being done
+//! \param[in] igp Local quadrature point id where mesh velocity is required
+//! \param[in] inpoel Mesh element connectivity
+//! \param[in] coordgp 3 spatial coordinates of quadrature points in reference
+//!   tetrahedron
+//! \param[in] W Mesh velocity vector at recent time step
+//! \return Mesh velocity at quadrature point
+//! \details This function evaluates the mesh velocity at the specified
+//!   quadrature point on a reference tetrahedral element assuming linear finite
+//!   element basis functions (i.e. Lagrange basis).
+// *****************************************************************************
+{
+  std::array< real, 3 > w_igp {{ 0.0, 0.0, 0.0 }};
+
+  // Barycentric coordinates/Lagrange basis at igp
+  std::array< real, 4 > lambda_igp {{
+    1.0-coordgp[0][igp]-coordgp[1][igp]-coordgp[2][igp],
+    coordgp[0][igp], coordgp[1][igp], coordgp[2][igp] }};
+
+  // Mesh velocity evaluation using Lagrange basis
+  for (std::size_t j=0; j<4; ++j) {
+    auto wt_igp = lambda_igp[j];
+    auto nid = inpoel[4*e+j];
+    w_igp[0] += wt_igp*W(nid,0);
+    w_igp[1] += wt_igp*W(nid,1);
+    w_igp[2] += wt_igp*W(nid,2);
+  }
+
+  return w_igp;
 }
 
 void

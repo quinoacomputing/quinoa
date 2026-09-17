@@ -146,7 +146,7 @@ class GodunovRomenski {
     tk::real cp( tk::real ) const { return 0.0; }
 
     //! Return dynamic viscosity coefficient
-    tk::real viscCoeff() const { return 0.0; }
+    tk::real viscCoeff( tk::real ) const { return 0.0; }
 
     //! Return specific heat derivative (no-op)
     tk::real dcvdT( [[maybe_unused]] tk::real temp) const { return 0.0; }

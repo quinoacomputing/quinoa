@@ -45,8 +45,10 @@ surfInt( const bool pref,
          const VelFn& vel,
          const Fields& U,
          const Fields& P,
+         const Fields& W,
          const std::vector< std::size_t >& ndofel,
          const tk::real dt,
+         const std::vector< int >& srcFlag,
          Fields& R,
          std::vector< std::vector< tk::real > >& riemannDeriv,
          int intcompr=0 );
@@ -86,7 +88,9 @@ surfInt_constP(
   const VelFn& vel,
   const Fields& U,
   const Fields& P,
+  const Fields& W,
   const tk::real /*dt*/,
+  const std::vector< int >& srcFlag,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp=0 );
@@ -128,6 +132,21 @@ surfIntViscousFV(
   const std::vector< int >& srcFlag,
   Fields& R,
   int intsharp );
+
+// Compute internal surface viscous flux integrals for DG
+/*void
+viscousInternalFaceIntDG( 
+  const ViscousTerms& viscousRhs,
+  const std::vector< inciter::EOS >& mat_blk,
+  const std::size_t ndof,
+  const std::vector< std::size_t >& inpoel,
+  const UnsMesh::Coords& coord,
+  const inciter::FaceData& fd,
+  const Fields& geoFace,
+  const Fields& geoElem,
+  const Fields& U,
+  const Fields& P,
+  Fields& R  );*/
 
 // Compute internal surface viscous flux integrals for multispecies flow
 void

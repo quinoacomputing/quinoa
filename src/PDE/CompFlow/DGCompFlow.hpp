@@ -242,6 +242,17 @@ class CompFlow {
       plasticDeformation.resize(0);
     }
 
+    //! Compute relevant sound speed for output. No-op.
+    //! \param[in,out] ss Sound speed vector
+    void soundspeed(
+      std::size_t /*nielem*/,
+      const tk::Fields& /*U*/,
+      const tk::Fields& /*P*/,
+      std::vector< tk::real >& ss ) const
+    {
+      ss.resize(0);
+    }
+
     //! Update the interface cells to first order dofs
     //! \details This function resets the high-order terms in interface cells,
     //!   and is currently not used in compflow.
@@ -269,6 +280,15 @@ class CompFlow {
                              tk::Fields&,
                              tk::Fields&,
                              std::size_t ) const {}
+
+    void physSrc( tk::real,
+                  const tk::Fields&,
+                  const std::unordered_map< std::size_t,
+                    std::set< std::size_t > >&,
+                  tk::Fields&,
+                  const tk::Fields&,
+                  tk::Fields&,
+                  std::vector< int >& ) const {}
 
     //! Reconstruct second-order solution from first-order using least-squares
 //    //! \param[in] t Physical time
@@ -324,6 +344,7 @@ class CompFlow {
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& mtInv,
+                const std::vector< int >&,
                 tk::Fields& U,
                 tk::Fields&,
                 std::vector< std::size_t >& shockmarker) const
@@ -416,11 +437,15 @@ class CompFlow {
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] boxelems Mesh node ids within user-defined IC boxes
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in] elemblkid Element ids associated with mesh block ids where
+//    //!   user-defined block-dependent settings apply
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
+    //! \param[in] W Mesh velocity vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in,out] srcFlag Whether a source was added to each element
     void rhs( tk::real t,
               const bool pref,
               const tk::Fields& geoFace,
@@ -429,11 +454,14 @@ class CompFlow {
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::unordered_set< std::size_t > >& boxelems,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&,
               const tk::Fields& U,
               const tk::Fields& P,
+              const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              std::vector< int >& srcFlag ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -469,35 +497,38 @@ class CompFlow {
       if (!pref) {
         // compute internal surface flux integrals
         tk::surfInt_constP( 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P,
-                     dt, R, riemannDeriv );
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+                     dt, srcFlag, R, riemannDeriv );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt_constP( 1, m_mat_blk, ndof, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                          velfn, std::get<1>(b), U, P, R, riemannDeriv );
+                          velfn, std::get<1>(b), U, P, W, srcFlag, R,
+                          riemannDeriv );
 
         // compute volume integrals
         tk::volInt_constP( 1, t, m_mat_blk, ndof, rdof, fd.Esuel().size()/4,
-          inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, R );
+          inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, W,
+          srcFlag, R );
       }
       else {
         // compute internal surface flux integrals
         tk::surfInt( pref, 1, m_mat_blk, t, ndof, rdof, inpoel, solidx,
-                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, ndofel,
-                     dt, R, riemannDeriv );
+                     coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
+                     ndofel, dt, srcFlag, R, riemannDeriv );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt( pref, 1, m_mat_blk, ndof, rdof, std::get<0>(b),
                           fd, geoFace, geoElem, inpoel, coord, t, m_riemann,
-                        velfn, std::get<1>(b), U, P, ndofel, R, riemannDeriv );
+                          velfn, std::get<1>(b), U, P, W, ndofel, srcFlag, R,
+                          riemannDeriv );
 
         // compute volume integrals
         tk::volInt( 1, t, m_mat_blk, ndof, rdof,
                     fd.Esuel().size()/4, inpoel, coord, geoElem, flux, velfn,
-                    Problem::src, U, P, ndofel, R );
+                    Problem::src, U, P, W, ndofel, srcFlag, R );
       }
 
      // compute external (energy) sources
@@ -592,6 +623,7 @@ class CompFlow {
                  const tk::Fields& U,
                  const tk::Fields&,
                  const std::size_t /*nielem*/,
+                 const std::vector< int >& /*srcFlag*/,
                  std::vector< tk::real >& local_dte ) const
     {
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -830,28 +862,16 @@ class CompFlow {
                     tk::Fields& /*R*/ ) const
     {}
 
-    //! Extract the velocity field at cell nodes. Currently unused.
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] N Element node indices
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& N ) const
-    {
-      std::array< std::array< tk::real, 4 >, 3 > v;
-      v[0] = U.extract( 1, N );
-      v[1] = U.extract( 2, N );
-      v[2] = U.extract( 3, N );
-      auto r = U.extract( 0, N );
-      std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
-                      []( tk::real s, tk::real& d ){ return d /= s; } );
-      return v;
-    }
+    //! Extract the velocity field at cell nodes. Not implemented for CompFlow
+    void nodeVelocity(
+      const tk::Fields&,
+      const std::map< std::size_t, std::vector< std::size_t > >&,
+      const std::vector< std::size_t >&,
+      const tk::UnsMesh::Coords&,
+      const tk::Fields&,
+      const tk::Fields&,
+      tk::UnsMesh::Coords& ) const
+    {}
 
     //! Return a map that associates user-specified strings to functions
     //! \return Map that associates user-specified strings to functions that

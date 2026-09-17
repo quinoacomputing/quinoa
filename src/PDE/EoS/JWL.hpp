@@ -137,7 +137,7 @@ class JWL {
     tk::real cp( tk::real ) const { return m_cv; }
 
     //! Return dynamic viscosity coefficient
-    tk::real viscCoeff() const { return 0.0; }
+    tk::real viscCoeff( tk::real ) const { return 0.0; }
 
     //! Return specific heat derivative (no-op)
     //! \note: cv and T may be related in JWL, but this relationship has not

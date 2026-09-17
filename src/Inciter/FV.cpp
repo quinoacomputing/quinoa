@@ -178,7 +178,7 @@ FV::resizeSolVectors()
     "GeoElem unknowns size mismatch" );
 
   // Signal the runtime system that all workers have received their adjacency
-  std::vector< std::size_t > meshdata{ myGhosts()->m_initial, Disc()->MeshId() };
+  std::vector< std::size_t > meshdata{ m_initial, Disc()->MeshId() };
   contribute( meshdata, CkReduction::sum_ulong,
     CkCallback(CkReductionTarget(Transporter,comfinal), Disc()->Tr()) );
 }
@@ -613,9 +613,6 @@ FV::solve( tk::real newdt )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  // Update Un
-  if (m_stage == 0) m_un = m_u;
-
   // physical time at time-stage for computing exact source terms for
   // unsteady problems
   tk::real physT(d->T());
@@ -639,6 +636,9 @@ FV::solve( tk::real newdt )
   g_fvpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
     d->ElemBlockId(), m_u, m_p, m_rhs, m_srcFlag );
+
+  // Update Un
+  if (m_stage == 0) m_un = m_u;
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   const auto steady = g_inputdeck.get< tag::steady_state >();
@@ -764,7 +764,6 @@ FV::resizePostAMR(
 
   // Set flag that indicates that we are during time stepping
   m_initial = 0;
-  myGhosts()->m_initial = 0;
 
   // Zero field output iteration count between two mesh refinement steps
   d->Itf() = 0;
