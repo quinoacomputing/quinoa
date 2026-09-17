@@ -201,6 +201,9 @@ DG::DG( const CProxy_Discretization& disc,
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
 
+  // Only one stage for point implicit
+  if (g_inputdeck.get< tag::point_implicit >()) m_nstage = 1;
+
   // Query ALE mesh velocity boundary condition node lists
   Disc()->meshvelBnd( m_bface, m_bnode, m_triinpoel );
 
@@ -1504,6 +1507,7 @@ DG::solve( tk::real newdt )
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
+  const auto point_implicit = g_inputdeck.get< tag::point_implicit >();
   // Operator-split plasticity wraps a relaxation substep around explicit SSP-RK3
   const auto op_split_plasticity =
     g_inputdeck.get< tag::operator_split_plasticity >();
@@ -1573,6 +1577,10 @@ DG::solve( tk::real newdt )
   else if (implicit_ts) {
     // Implicit time-stepping using BDF1 to discretize time-derivative
     DG::BDF1_integrate();
+  }
+  else if (point_implicit) {
+    // Point-implicit time-stepping using BDF1 to discretize time-derivative
+    DG::point_implicit_integrate();
   }
   else {
     // Explicit time-stepping using RK3 to discretize time-derivative
@@ -3084,6 +3092,350 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
   return x;
 
+}
+
+void
+DG::point_implicit_integrate()
+// *****************************************************************************
+//  Perform the point-implicit update
+//! \details This function updates the solution using the point-implicit
+//!   time discretization.
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+
+  if (ndof != 1) {
+    Throw(
+      "Point-implicit integrator currently only implemented for P0 (ndof=1)");
+  }
+
+  if (!g_inputdeck.get< tag::steady_state >()) {
+    Throw("Point-implicit integrator currently only for steady-state");
+  }
+
+  // Currently no p-refinement
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    Throw("Point-implicit integrator currently requires pref=false");
+  }
+
+  // Frozen neighbors
+  const tk::Fields Ubase( m_un );
+  const tk::Fields Pbase( m_p );
+
+  // Jacobian of RHS of all elements
+  const auto dRdu = point_implicit_jacobian_analytic( Ubase, Pbase );
+
+  tk::Fields Unew( m_u );
+
+  // Element-local implicit solve
+  for (std::size_t e=0; e<nelem; ++e) {
+    auto vole = myGhosts()->m_geoElem(e,0);
+    auto dte = Disc()->Dt();
+
+    // Extract element DOFs
+    std::vector< tk::real > u_old(neq*ndof), u_new(neq*ndof);
+    for (std::size_t c=0; c<neq; ++c)
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+        const auto rmark = c*rdof + k;
+        const auto mark = c*ndof + k;
+        u_old[mark] = Ubase(e, rmark);
+        // guess previous value
+        u_new[mark] = Ubase(e, rmark);
+      }
+
+    // Get value at next time step
+    auto converged = element_implicit_step(
+      e, u_old, u_new, dte, vole, dRdu[e] );
+
+    if (!converged)
+      Throw( "Point-implicit solver failed at element " + std::to_string(e) );
+
+    // Update global solution
+    for (std::size_t c=0; c<neq; ++c)
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+        const auto rmark = c*rdof + k;
+        const auto mark = c*ndof + k;
+        Unew(e, rmark) = u_new[mark];
+      }
+  }
+
+  m_u = std::move(Unew);
+}
+
+bool
+DG::element_implicit_step(
+  std::size_t e,
+  const std::vector< tk::real >& u_old,
+  std::vector< tk::real >& u_new,
+  tk::real dte,
+  tk::real vole,
+  const std::vector< std::vector< tk::real > >& dRdu
+ )
+// *****************************************************************************
+//  Solve one iteration of an element-local, linearized implicit system
+//! \param[in] e Element index
+//! \param[in] u_old Solution at previous time step (element DOFs)
+//! \param[in,out] u_new Updated solution
+//! \param[in] dte Element-local time step size
+//! \param[in] vole Element volume
+//! \param[in] dRdU Jacobian of RHS for element
+//! \return True if invert is successful, false otherwise
+//! \details Solves the linearized system
+//!   M(u - u_old) = dt( R(u)^n + dR(u)/du^n)
+//!   The Jacobian and RHS are obtained from the physics-specific
+//!   implementations
+// *****************************************************************************
+{
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+
+  // Intermediate variable that ends up equal to ndof * neq
+  const auto n = u_new.size();
+
+  if ( n != m_u.nprop()/g_inputdeck.get< tag::rdof >()*ndof ) {
+    Throw("Size mismatch in element_implicit_step()");
+  }
+  if( dRdu.size() != n ) {
+    Throw("Jacobian row size mismatch" );
+  };
+
+  std::vector< double > A(n*n, 0.0);
+  std::vector< double > b(n, 0.0);
+
+  // For this element, take solve for one step of u
+  for (std::size_t i=0; i<n; ++i) {
+    if( dRdu[i].size() != n ) {
+      Throw("Jacobian column size mismatch" );
+    }
+    const auto k = i % ndof;
+    const auto scale = dte / (vole * mass_dubiner[k]);
+
+    // RHS: dt M^-1 R^n
+    b[i] = static_cast< double >(scale * m_rhs(e, i));
+
+    // LHS: I - dt M^-1 dR/du
+    for (std::size_t j=0; j<n; ++j) {
+      A[i*n + j] =
+        static_cast< double >(
+          (i == j ? tk::real(1.0) : tk::real(0.0))
+          - scale * dRdu[i][j] );
+    }
+  }
+
+  const auto ln = static_cast< lapack_int >(n);
+
+  std::vector< lapack_int > ipiv(n);
+
+  const auto info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, ln, 1, A.data(), ln,
+    ipiv.data(), b.data(), 1 );
+
+  // LAPACK didn't converge
+  if (info != 0) return false;
+
+  // b has been overwritten with du, add to previous solution
+  u_new = u_old;
+  for (std::size_t i=0; i<n; ++i) {
+    const auto du = static_cast< tk::real >(b[i]);
+
+    if (!std::isfinite(du)) return false;
+
+    u_new[i] += du;
+  }
+
+  return true;
+}
+
+std::vector< std::vector< std::vector< tk::real > > >
+DG::point_implicit_jacobian(
+  const tk::Fields& Ubase,
+  const tk::Fields& Pbase,
+  const tk::Fields& Rbase ) const
+// *****************************************************************************
+// Calculates element-local residual Jacobian
+//! \param[in] Ubase Base conservative field with lagged neighbor states
+//! \param[in] Pbase Base primitive field with lagged neighbor states
+//! \param[in] Rbase Base RHS field
+//! \return Dense matrix dR_e/du_e for all elements
+//! \details WIP that performs finite differencing to calculate Jacobian, with
+//! the exact Jacobian to be wired in later.
+// *****************************************************************************
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto nunk = neq*ndof;
+  auto d = Disc();
+  tk::real physT(d->T());
+
+  const auto elemColor = point_implicit_elem_coloring();
+
+  const auto ncolor = static_cast< std::size_t >(
+    *std::max_element( begin(elemColor), end(elemColor) ) + 1);
+
+  // Allocate each element's Jacobian
+  std::vector< std::vector< std::vector< tk::real > > >
+    dRdu( nelem,
+      std::vector< std::vector< tk::real > >(
+        nunk, std::vector< tk::real >( nunk, 0.0 ) ) );
+
+  for (std::size_t c=0; c<neq; ++c) {
+    for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+      const auto col = c*ndof + k;
+      const auto rcol = c*rdof + k;
+
+      // Loop over different colors
+      for (std::size_t color=0; color<ncolor; ++color) {
+        // Re-allocate to base state
+        tk::Fields Up( Ubase );
+        tk::Fields Pp( Pbase );
+        tk::Fields Rp( Rbase.nunk(), Rbase.nprop() );
+
+        std::vector< tk::real > eps( nelem, 0.0 );
+
+        // Skip element if it's not the right color
+        for (std::size_t e=0; e<nelem; ++e) {
+          if (elemColor[e] != static_cast< int >( color )) continue;
+
+          eps[e] = 1e-4 * (1.0 + std::sqrt(Ubase(e, rcol) * Ubase(e, rcol)));
+
+          // Perturb solutions of this color
+          Up(e,rcol) += eps[e];
+        }
+
+        // Calculate perturbed RHS
+        g_dgpde[d->MeshId()].updatePrimitives( Up, myGhosts()->m_geoElem, Pp,
+          nelem, m_ndof );
+
+        auto srcFlag = m_srcFlag;
+        g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+          myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel,
+          m_boxelems, myGhosts()->m_coord, d->ElemBlockId(), Up, Pp, d->meshvel(), m_ndof,
+          d->Dt(), Rp, srcFlag );
+
+        for (std::size_t e=0; e<nelem; ++e) {
+          if (elemColor[e] != color) continue;
+
+          for (std::size_t ceq=0; ceq<neq; ++ceq) {
+            for (std::size_t keq=0; keq<m_numEqDof[ceq]; ++keq) {
+              const auto row = ceq*ndof + keq;
+              dRdu[e][row][col] = ( Rp(e,row) - Rbase(e,row) ) / eps[e];
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return dRdu;
+}
+std::vector< std::vector< std::vector< tk::real > > >
+DG::point_implicit_jacobian_analytic(
+  const tk::Fields& Ubase,
+  const tk::Fields& Pbase) const
+// *****************************************************************************
+// Calculates element-local residual Jacobian using analytic PDE flux Jacobians
+//! \param[in] Ubase Base conservative field with lagged neighbor states
+//! \param[in] Pbase Base primitive field with lagged neighbor states
+//! \return Dense matrix dR_e/du_e for all owned elements
+//! \details WIP using information specific to Riemann solver and PDE to
+//! calculate jacobian
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto nunk = neq*ndof;
+
+  if (ndof != 1) {
+    Throw(
+      "Analytic point-implicit Jacobian currently only implemented for P0 "
+      "(ndof=1)");
+  }
+
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    Throw("Analytic point-implicit Jacobian currently requires pref=false");
+  }
+
+  auto d = Disc();
+
+  auto dRdu =
+    g_dgpde[d->MeshId()].point_implicit_jacobian_analytic(
+      d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem, myGhosts()->m_fd,
+      myGhosts()->m_inpoel, myGhosts()->m_coord, Ubase, Pbase, m_ndof );
+
+  if (dRdu.size() != nelem) {
+    Throw("Analytic point-implicit Jacobian element count mismatch");
+  }
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    if (dRdu[e].size() != nunk) {
+      Throw("Analytic point-implicit Jacobian row count mismatch");
+    }
+
+    for (std::size_t i=0; i<nunk; ++i) {
+      if (dRdu[e][i].size() != nunk) {
+        Throw("Analytic point-implicit Jacobian column count mismatch");
+      }
+    }
+  }
+
+  return dRdu;
+}
+
+std::vector< int >
+DG::point_implicit_elem_coloring() const
+// *****************************************************************************
+//  Color owned elements for simultaneous finite-difference perturbations
+//! \return Element color for each owned element
+//! \details Elements with the same color do not share a face, so their
+//! point-implicit residual stencils do not overlap for the P0 face-flux
+//! residual.
+// *****************************************************************************
+{
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto& esuel = myGhosts()->m_fd.Esuel();
+
+  const auto invalid = -1;
+
+  std::vector< int > elemColor( nelem, invalid );
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    std::vector< int > used;
+
+    for (std::size_t f=0; f<4; ++f) {
+      const auto n = esuel[4*e+f];
+
+      if (n < 0) continue;
+
+      const auto en = static_cast< std::size_t >( n );
+
+      if (en >= nelem) continue;
+
+      if (elemColor[en] != invalid) {
+        used.push_back( elemColor[en] );
+      }
+    }
+
+    int color = 0;
+
+    while (std::find( begin(used), end(used), color ) != end(used)) {
+      ++color;
+    }
+
+    elemColor[e] = color;
+  }
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    if(elemColor[e] == invalid)
+      Throw("Invalid element color in point_implicit_elem_coloring()" );
+  }
+
+  return elemColor;
 }
 
 //------------------------------------------------------------------------------
