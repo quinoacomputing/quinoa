@@ -328,7 +328,6 @@ DG::resizeSolVectors()
   m_imex_y.resize( myGhosts()->m_nunk );
   m_imex_zex.resize( myGhosts()->m_nunk );
   m_imex_zim.resize( myGhosts()->m_nunk );
-  m_stiffrhsprev.resize( myGhosts()->m_nunk );
   m_srcFlag.resize( myGhosts()->m_nunk );
   for (std::size_t i=0; i<3; ++i)
     m_nodevel[i].resize( Disc()->Coord()[0].size() );
@@ -1595,12 +1594,14 @@ DG::solve( tk::real newdt )
     // m_imex_zex and produces the next stage state in m_u.
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
       myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_imex_zex );
+      myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
+      d->Dt(), m_imex_zex, m_srcFlag );
   }
   else {
     g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
       myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, m_ndof, d->Dt(), m_rhs );
+      myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
+      d->Dt(), m_rhs, m_srcFlag );
   }
 
   if (imex_runge_kutta) {
@@ -1813,7 +1814,6 @@ DG::resizePostAMR(
   m_imex_y.resize( nelem );
   m_imex_zex.resize( nelem );
   m_imex_zim.resize( nelem );
-  m_stiffrhsprev.resize( nelem );
   m_srcFlag.resize( nelem );
   for (std::size_t i=0; i<3; ++i) m_nodevel[i].resize( coord[0].size() );
 
@@ -2333,7 +2333,6 @@ DG::imex_integrate_cb3a()
 
     for (std::size_t e=0; e<nelem; ++e) {
       auto vole = myGhosts()->m_geoElem(e,0);
-      auto vole_n = m_geoElemn(e,0);
       // Integrate explicitly on all equations
       for (std::size_t c=0; c<neq; ++c)
         for (std::size_t k=0; k<m_numEqDof[c]; ++k)
@@ -2341,8 +2340,7 @@ DG::imex_integrate_cb3a()
           auto rmark = c*rdof + k;
           auto mark = c*ndof + k;
           auto mm_i = vole * mass_dubiner[k];
-          auto mm_n = vole_n * mass_dubiner[k]
-          U(e, rmark) += dt * coeff * G(e, mark) / mm_i
+          U(e, rmark) += dt * coeff * G(e, mark) / mm_i;
         }
     }
   };
@@ -2355,10 +2353,10 @@ DG::imex_integrate_cb3a()
     for (std::size_t e=0; e<nelem; ++e) {
       auto vole = myGhosts()->m_geoElem(e,0);
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
         {
           auto rmark = m_stiffEqIdx[ieq]*rdof + idof;
-          auto mm_i = vole * mass_dubiner[k];
+          auto mm_i = vole * mass_dubiner[idof];
           U(e, rmark) += dt * coeff * F(e, ieq*ndof+idof) / mm_i;
         }
     }
@@ -2380,7 +2378,7 @@ DG::imex_integrate_cb3a()
       std::vector< tk::real > stage_base(m_nstiffeq*ndof, 0.0);
 
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
         {
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
           auto idx = ieq*ndof + idof;
@@ -2393,7 +2391,7 @@ DG::imex_integrate_cb3a()
       g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
 
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
         {
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
           U(e, stiffrmark) = x[ieq*ndof + idof];
@@ -2479,7 +2477,7 @@ DG::imex_integrate_cb3d()
     for (std::size_t e=0; e<nelem; ++e) {
       auto vole = myGhosts()->m_geoElem(e,0);
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
         {
           auto rmark = m_stiffEqIdx[ieq]*rdof + idof;
           U(e, rmark) += dt * coeff * F(e, ieq*ndof+idof) /
@@ -2504,7 +2502,7 @@ DG::imex_integrate_cb3d()
       std::vector< tk::real > stage_base(m_nstiffeq*ndof, 0.0);
 
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
         {
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
           auto idx = ieq*ndof + idof;
@@ -2517,7 +2515,7 @@ DG::imex_integrate_cb3d()
       g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
 
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-        for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+        for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
         {
           auto stiffrmark = m_stiffEqIdx[ieq]*rdof + idof;
           U(e, stiffrmark) = x[ieq*ndof + idof];
@@ -2613,18 +2611,14 @@ DG::plasticity_split_integrate()
     m_gStar = x;
     auto x_star = x;
 
-    // Solve the local nonlinear system, first try Broyden then fall back to
-    // Newton, reusing the IMEX nonlinear solvers (m_stiffSolverMode selects the
-    // residual assembled in nonlinear_func()).
-    bool solver_failed = false;
-    x = DG::nonlinear_broyden(e, x, solver_failed);
-    if (solver_failed) {
-      solver_failed = false;
-      x = DG::nonlinear_newton(e, x, solver_failed);
-    }
-    if (solver_failed)
-      Throw("At element " + std::to_string(e) +
-            " operator-split plasticity nonlinear solver did not converge");
+    // Solve the local nonlinear system with Newton's method, reusing the
+    // per-stage IMEX solver. m_stiffSolverMode == OperatorSplit makes
+    // nonlinear_func_stage() assemble the backward-Euler residual about
+    // m_gStar instead of the IMEX stage residual; stage_base is unused in
+    // that branch (the residual reads m_gStar directly), so its value here
+    // is irrelevant. aii must be 1.0 so that compute_jacobian_stage()'s
+    // coeff = dt*aii matches the residual's implicit coefficient of dt.
+    x = DG::nonlinear_newton_stage(e, x, m_gStar, 1.0);
 
     // Balance the elastic-energy change from the relaxation into total energy.
     // Unlike IMEX (which defers the stiff combination to the final stage and
@@ -2684,7 +2678,7 @@ DG::compute_stiff_rhs_local( std::size_t e,
 
   std::vector< tk::real > rim(n, 0.0);
   for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-    for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
       rim[ieq*ndof + idof] = m_stiffrhs(e, ieq*ndof + idof);
 
   return rim;
@@ -2700,10 +2694,10 @@ DG::nonlinear_func_stage( std::size_t e,
 // *****************************************************************************
 {
   auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const std::size_t n = x.size();
   auto vole = myGhosts()->m_geoElem(e,0);
-  auto vole_n = m_geoElemn(e,0);
 
   // Operator-split plasticity: pure backward-Euler relaxation of the stiff
   // source about the post-RK state g_afterRK (m_gStar), with no IMEX tableau
@@ -2728,7 +2722,7 @@ DG::nonlinear_func_stage( std::size_t e,
 
   std::vector< tk::real > f(n, 0.0);
   for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-    for (std::size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
     {
       auto idx = ieq*ndof + idof;
       auto mm_i = vole * mass_dubiner[idof];

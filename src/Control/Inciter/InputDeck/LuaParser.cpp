@@ -1480,7 +1480,7 @@ LuaParser::registerMaterials(
     // plasticity_reltime
     if (!sol_mat[imat+1]["plasticity_reltime"].valid())
       sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-05);
+        std::vector< tk::real >(ntype, 1.0e-08);
     checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
       mati_deck.get< tag::plasticity_reltime >());
 
@@ -1524,7 +1524,7 @@ LuaParser::registerMaterials(
     // plasticity_reltime
     if (!sol_mat[imat+1]["plasticity_reltime"].valid())
       sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-05);
+        std::vector< tk::real >(ntype, 1.0e-08);
     checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
       mati_deck.get< tag::plasticity_reltime >());
 
@@ -1552,7 +1552,7 @@ LuaParser::registerMaterials(
     // plasticity_reltime
     if (!sol_mat[imat+1]["plasticity_reltime"].valid())
       sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-07);
+        std::vector< tk::real >(ntype, 1.0e-08);
     checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
       mati_deck.get< tag::plasticity_reltime >());
 
@@ -1592,7 +1592,7 @@ LuaParser::registerMaterials(
     // plasticity_reltime
     if (!sol_mat[imat+1]["plasticity_reltime"].valid())
       sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-07);
+        std::vector< tk::real >(ntype, 1.0e-08);
     checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
       mati_deck.get< tag::plasticity_reltime >());
 

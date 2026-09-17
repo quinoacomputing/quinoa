@@ -1417,15 +1417,6 @@ class MultiMat {
                            std::vector< double > /*jacob*/,
                            std::size_t /*jacobian_provided*/ ) const {}
 
-    //! Extract the velocity field at cell nodes. Currently unused.
-    //! \param[in] U Solution vector at recent time step
-    //! \param[in] N Element node indices
-    //! \return Array of the four values of the velocity field
-    std::array< std::array< tk::real, 4 >, 3 >
-    velocity( const tk::Fields& U,
-              const std::array< std::vector< tk::real >, 3 >&,
-              const std::array< std::size_t, 4 >& N ) const
-
     //! Extract the velocity field at cell nodes.
     //! \param[in] geoElem Element geometry array
     //! \param[in] esup Elements-surrounding-nodes connectivity
