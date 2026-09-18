@@ -1558,6 +1558,10 @@ DG::solve( tk::real newdt )
   if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
     d->setdt( newdt );
 
+  // Snapshot the solution at the start of the time step. Both the IMEX
+  // stage-0 bootstrap and the explicit RK3 GCL update advance from m_un.
+  if (m_stage == 0) m_un = m_u;
+
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
