@@ -241,6 +241,35 @@ defGradOutVar( const tk::Fields& U,
   return g;
 }
 
+//! Compute equivalent plastic strain for output to file
+//! \note Must follow the signature in tk::GetVarFn
+//! \param[in] U Numerical solution
+//! \param[in] P Primitive solution
+//! \param[in] rdof Number of reconstructed solution DOFs
+//! \return Equivalent plastic strain ready to be output to file
+static tk::GetVarFn::result_type
+epsPOutVar( const tk::Fields& U,
+            [[maybe_unused]] const tk::Fields& P,
+            std::size_t rdof )
+{
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+
+  std::vector< tk::real > ep(U.nunk(), 0.0);
+  for (std::size_t e=0; e<ep.size(); ++e) {
+    for (std::size_t k=0; k<nmat; ++k) {
+      tk::real aepk(0.0);
+
+      if (solidx[k] > 0) aepk = U(e, volfracDofIdx(nmat,k,rdof,0)) *
+        U(e, epsPDofIdx(nmat,solidx[k],rdof,0));
+
+      ep[e] += aepk;
+    }
+  }
+
+  return ep;
+}
+
 } // multimat::
 
 #if defined(__clang__)

@@ -92,6 +92,9 @@ namespace inciter {
             ur[deformIdx(nmat,solidx[k],i,j)] = g[i][j];
             ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = s[i][j];
           }
+        // Equivalent plastic strain is a scalar, so it is simply copied
+        // through (no reflection needed)
+        ur[epsPIdx(nmat,solidx[k])] = ul[epsPIdx(nmat,solidx[k])];
       }
     }
     ur[momentumIdx(nmat, 0)] = rho * v1r;
@@ -298,6 +301,8 @@ namespace inciter {
               // elastic component of Cauchy stress
               ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = 0.0;
             }
+          // Farfield inflow carries no accumulated plastic strain
+          ur[epsPIdx(nmat,solidx[k])] = 0.0;
         }
         else {
           gk = {{}};
@@ -346,6 +351,8 @@ namespace inciter {
               // elastic component of Cauchy stress
               ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = 0.0;
             }
+          // Farfield inflow carries no accumulated plastic strain
+          ur[epsPIdx(nmat,solidx[k])] = 0.0;
         }
         else {
           gk = {{}};
@@ -483,6 +490,9 @@ namespace inciter {
             ur[deformIdx(nmat,solidx[k],i,j)] = g[i][j];
             ur[ncomp+stressIdx(nmat,solidx[k],stressCmp[i][j])] = s[i][j];
           }
+        // Equivalent plastic strain is a scalar, so it is simply copied
+        // through (no reflection needed)
+        ur[epsPIdx(nmat,solidx[k])] = ul[epsPIdx(nmat,solidx[k])];
       }
     }
     ur[momentumIdx(nmat, 0)] = rho * v1r;

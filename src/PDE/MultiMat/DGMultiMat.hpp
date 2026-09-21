@@ -171,7 +171,7 @@ class MultiMat {
     {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      return 9*numSolids(nmat, solidx);
+      return 10*numSolids(nmat, solidx);
     }
 
     //! Find how many 'non-stiff equations', which are the inverse
@@ -192,6 +192,7 @@ class MultiMat {
       std::size_t icnt = 0;
       for (std::size_t k=0; k<nmat; ++k)
         if (solidx[k] > 0)
+        {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
             {
@@ -199,6 +200,9 @@ class MultiMat {
                 inciter::deformIdx(nmat, solidx[k], i, j);
               icnt++;
             }
+          stiffEqIdx[icnt] = inciter::epsPIdx(nmat, solidx[k]);
+          icnt++;
+        }
     }
 
     //! Locate the nonstiff equations.
@@ -216,9 +220,23 @@ class MultiMat {
     //! \param[in,out] x Stiff unknown array
     void enforceStiffBounds( std::size_t /*e*/,
                              const tk::Fields& /*U*/,
-                             std::vector< tk::real >& /*x*/ ) const
+                             std::vector< tk::real >& x ) const
     {
-      // Do not enforce any bounds.
+      // Clamp the cell-mean (P0) DOF of the accumulated equivalent plastic
+      // strain (eps_p) to be non-negative for each solid. Higher-order
+      // moments are left to the limiter's interface treatment instead of a
+      // hard clamp here.
+      const auto ndof = g_inputdeck.get< tag::ndof >();
+      std::size_t ksld = 0;
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      for (std::size_t k=0; k<nmat; ++k)
+        if (solidx[k] > 0)
+        {
+          auto idx0 = inciter::solidEpsPIdx(ksld)*ndof;
+          x[idx0] = std::max(0.0, x[idx0]);
+          ++ksld;
+        }
     }
 
     //! Initialize the compressible flow equations, prepare for time integration
@@ -1300,6 +1318,18 @@ class MultiMat {
 
         tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B, state.data() );
 
+        // bulk density and velocity at this quadrature point. Density and
+        // momentum are non-stiff equations, so these reflect the frozen
+        // pre-relaxation (post-RK, pre-plastic-substep) state, not the
+        // current Newton iterate.
+        tk::real rhob(0.0);
+        for (std::size_t k=0; k<nmat; ++k)
+          rhob += state[inciter::densityIdx(nmat, k)];
+        std::array< tk::real, 3 >
+          vel{ state[inciter::momentumIdx(nmat, 0)]/rhob,
+               state[inciter::momentumIdx(nmat, 1)]/rhob,
+               state[inciter::momentumIdx(nmat, 2)]/rhob };
+
         // compute source
         // Loop through materials
         std::size_t ksld = 0;
@@ -1313,6 +1343,16 @@ class MultiMat {
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)];
+
+            // current eps_p (this solid's Newton-iterate value)
+            tk::real eps_p_cur =
+              std::max(0.0, state[inciter::epsPIdx(nmat,solidx[k])]);
+
+            // temperature at frozen pre-relaxation state, for thermal
+            // softening in the hardening law
+            tk::real T_k = m_mat_blk[k].template compute< EOS::temperature >(
+              state[inciter::densityIdx(nmat,k)], vel[0], vel[1], vel[2],
+              state[inciter::energyIdx(nmat,k)], alpha, g );
 
             // Compute Lp
             // Reference: Ortega, A. L., Lombardini, M., Pullin, D. I., &
@@ -1347,9 +1387,23 @@ class MultiMat {
               }
 
             // 3. Divide by 2*mu*tau
-            // 'Perfect' plasticity
-            std::vector< tk::real > s(9*ndof, 0.0);
-            tk::real yield_stress = getmatprop< tag::yield_stress >(k);
+            // Strain-hardening yield stress (Barton-style):
+            // sigma_Y = (c1 + c2*eps_p^n) * (1 - ((T-T0)/(Tmelt-T0))^m)
+            std::vector< tk::real > s(10*ndof, 0.0);
+            tk::real c1 = getmatprop< tag::yield_stress >(k);
+            tk::real c2 = getmatprop< tag::hardening_c2 >(k);
+            tk::real hn = getmatprop< tag::hardening_n >(k);
+            tk::real hm = getmatprop< tag::hardening_m >(k);
+            tk::real t_room = getmatprop< tag::t_room >(k);
+            tk::real t_melt = getmatprop< tag::t_melt >(k);
+            tk::real thermal_term = 1.0;
+            if (t_melt > t_room) {
+              tk::real frac =
+                std::clamp((T_k-t_room)/(t_melt-t_room), 0.0, 1.0);
+              thermal_term = 1.0 - std::pow(frac, hm);
+            }
+            tk::real yield_stress =
+              (c1 + c2*std::pow(eps_p_cur, hn)) * thermal_term;
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
@@ -1383,6 +1437,16 @@ class MultiMat {
                   s[(i*3+j)*ndof+idof] = B[idof] * Lp[i][j];
                 }
 
+            // eps_p rate = sqrt(2/3 * Lp:Lp), using the fully-scaled Lp
+            // (the same plastic velocity gradient that sources g_ij above)
+            tk::real Lp_contraction = 0.0;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                Lp_contraction += Lp[i][j]*Lp[i][j];
+            tk::real eps_p_rate = std::sqrt(2.0/3.0*Lp_contraction);
+            for (std::size_t idof=0; idof<ndof; ++idof)
+              s[9*ndof+idof] = B[idof] * eps_p_rate;
+
             auto wt = wgp[igp] * geoElem(e, 0);
 
             // Contribute to the right-hand-side
@@ -1394,6 +1458,12 @@ class MultiMat {
                   std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
                   R(e, dofId) += wt * s[srcId];
                 }
+            for (std::size_t idof=0; idof<ndof; ++idof)
+            {
+              std::size_t srcId = 9*ndof+idof;
+              std::size_t dofId = solidEpsPIdx(ksld)*ndof+idof;
+              R(e, dofId) += wt * s[srcId];
+            }
 
             ksld++;
           }

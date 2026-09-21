@@ -87,6 +87,7 @@ MultiMatProblemUserDefined::initialize( ncomp_t ncomp,
           s[deformIdx(nmat,solidx[k],i,j)] = g[i][j];
         }
       }
+      s[epsPIdx(nmat,solidx[k])] = 0.0;
     }
     else {
       g = {{}};

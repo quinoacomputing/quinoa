@@ -64,6 +64,16 @@ inline std::size_t deformIdx( std::size_t nmat, std::size_t ksld,
   std::size_t i, std::size_t j )
 { return (2*nmat+3+nmat + 9*(ksld-1)+3*i+j); }
 
+//! Get the index of the required material equivalent plastic strain equation
+//! \param[in] nmat Number of materials
+//! \param[in] ksld Index of required solid
+//! \return Index of the required accumulated equivalent plastic strain
+//!   (eps_p) equation. This is tail-appended right after the 9 deformation
+//!   gradient components of this solid, so it is contiguous with them and
+//!   does not disturb deformIdx's stride/arithmetic for other solids.
+inline std::size_t epsPIdx( std::size_t nmat, std::size_t ksld )
+{ return deformIdx(nmat, ksld, 2, 2) + 1; }
+
 //! Get the index of the required velocity component from vector of primitives
 //! \param[in] nmat Number of materials
 //! \param[in] idir Required component direction;
@@ -160,6 +170,17 @@ inline std::size_t deformDofIdx( std::size_t nmat, std::size_t ksld,
   std::size_t i, std::size_t j, std::size_t ndof, std::size_t idof )
 { return deformIdx(nmat, ksld, i, j)*ndof+idof; }
 
+//! \brief Get the index of the required DOF of material equivalent plastic
+//!   strain equation from the DG solution vector
+//! \param[in] nmat Number of materials
+//! \param[in] ksld Index of required solid
+//! \param[in] ndof Number of solution DOFs stored in DG solution vector
+//! \param[in] idof Index of required solution DOF from DG solution vector
+//! \return Index of the required DOF of the eps_p equation
+inline std::size_t epsPDofIdx( std::size_t nmat, std::size_t ksld,
+  std::size_t ndof, std::size_t idof )
+{ return epsPIdx(nmat, ksld)*ndof+idof; }
+
 //! \brief Get the index of the required DOF of velocity component from the DG
 //!   vector of primitives
 //! \param[in] nmat Number of materials
@@ -238,16 +259,31 @@ const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
   {{4, 5, 2}} }};
 
 //! Get the index of the required material deformation gradient equation
-//! in the context of a list where only the g's of solid materials are present.
-//! If one needs to access the deformation tensor within the state array one
-//! should use deformIdx instead!
+//! in the context of a list where only the g's (and eps_p) of solid
+//! materials are present, i.e. the compact packed-local layout used by the
+//! stiff (plasticity) Newton-solve machinery (x/x_star/jacobian arrays in
+//! DG.cpp and DGMultiMat.hpp's stiff_rhs()/balance_plastic_energy()).
+//! If one needs to access the deformation tensor within the state array
+//! (the full ncomp-sized global solution vector) one should use deformIdx
+//! instead! Each solid now occupies a 10-wide packed-local block: 9
+//! deformation-gradient tensor components followed by eps_p (see
+//! solidEpsPIdx below) - do not conflate the two index families.
 //! \param[in] ksld Index of required solid
 //! \param[in] i Row-index of required tensor component
 //! \param[in] j Column-index of required tensor component
 //! \return Index of the required material deformation gradient equation
 //! in the context of a list where only the g's of solid materials are present.
 inline std::size_t solidTensorIdx( std::size_t ksld, std::size_t i, std::size_t j )
-{ return 9*ksld+(3*i+j); }
+{ return 10*ksld+(3*i+j); }
+
+//! Get the index of the required material equivalent plastic strain equation
+//! in the context of a list where only the g's (and eps_p) of solid
+//! materials are present. See solidTensorIdx above for the packed-local
+//! layout this belongs to.
+//! \param[in] ksld Index of required solid
+//! \return Index of the required eps_p equation in the packed-local layout
+inline std::size_t solidEpsPIdx( std::size_t ksld )
+{ return 10*ksld+9; }
 
 
 //@}

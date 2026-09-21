@@ -130,6 +130,11 @@ using materialList = tk::TaggedTuple< brigand::list<
   tag::cv,                 std::vector< tk::real >,
   tag::k,                  std::vector< tk::real >,
   tag::plasticity_reltime, std::vector< tk::real >,
+  tag::hardening_c2,       std::vector< tk::real >,
+  tag::hardening_n,        std::vector< tk::real >,
+  tag::hardening_m,        std::vector< tk::real >,
+  tag::t_melt,             std::vector< tk::real >,
+  tag::t_room,             std::vector< tk::real >,
   tag::temp_ref,  std::vector< tk::real >,
   tag::mu_ref,    std::vector< tk::real >,
   tag::C,         std::vector< tk::real >
@@ -1181,6 +1186,35 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         simulation of elastic–plastic solid mechanics using an Eulerian stretch
         tensor approach and HLLD Riemann solver." Journal of Computational
         Physics 257 (2014): 414-441.)", "vector of reals"});
+
+      keywords.insert({"hardening_c2", "Strain-hardening coefficient c2",
+        R"(This keyword is used to specify the strain-hardening coefficient c2
+        in the Barton-style hardening law
+        sigma_Y = (c1 + c2*eps_p^n)*(1-((T-T0)/(Tmelt-T0))^m), where c1 is the
+        yield_stress. Units: Pa. Default: 0.0 (no hardening).)",
+        "vector of reals"});
+
+      keywords.insert({"hardening_n", "Strain-hardening exponent n",
+        R"(This keyword is used to specify the strain-hardening exponent n in
+        the Barton-style hardening law
+        sigma_Y = (c1 + c2*eps_p^n)*(1-((T-T0)/(Tmelt-T0))^m). Default: 1.0.)",
+        "vector of reals"});
+
+      keywords.insert({"hardening_m", "Thermal softening exponent m",
+        R"(This keyword is used to specify the thermal softening exponent m in
+        the Barton-style hardening law
+        sigma_Y = (c1 + c2*eps_p^n)*(1-((T-T0)/(Tmelt-T0))^m). Default: 1.0.)",
+        "vector of reals"});
+
+      keywords.insert({"t_melt", "Melting temperature",
+        R"(This keyword is used to specify the melting temperature Tmelt used
+        in the thermal-softening term of the strain-hardening law. Units: K.
+        Default: 1.0e30 (disables thermal softening).)", "vector of reals"});
+
+      keywords.insert({"t_room", "Reference/room temperature",
+        R"(This keyword is used to specify the reference temperature T0 used in
+        the thermal-softening term of the strain-hardening law. Units: K.
+        Default: 300.0.)", "vector of reals"});
 
       keywords.insert({"cp_coeff", "specific heat coefficients for TPG",
         R"(This keyword is used to specify species' coefficients in the

@@ -154,6 +154,9 @@ struct LaxFriedrichsSolids {
               g_l[k][i][0] * ul +
               g_l[k][i][1] * vl +
               g_l[k][i][2] * wl ) * fn[j];
+
+        // equivalent plastic strain, advected as a passive scalar
+        fluxl[epsPIdx(nmat,solidx[k])] = vnl * u[0][epsPIdx(nmat,solidx[k])];
       }
 
       // Right fluxes
@@ -173,6 +176,9 @@ struct LaxFriedrichsSolids {
               g_r[k][i][0] * ur +
               g_r[k][i][1] * vr +
               g_r[k][i][2] * wr ) * fn[j];
+
+        // equivalent plastic strain, advected as a passive scalar
+        fluxr[epsPIdx(nmat,solidx[k])] = vnr * u[1][epsPIdx(nmat,solidx[k])];
       }
     }
 

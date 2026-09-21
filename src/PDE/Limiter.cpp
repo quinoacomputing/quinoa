@@ -616,6 +616,7 @@ VertexBasedMultiMat_P1(
               for (std::size_t i=0; i<3; ++i)
                 for (std::size_t j=0; j<3; ++j)
                   vars.push_back(deformIdx(nmat, solidx[k], i, j));
+              vars.push_back(epsPIdx(nmat, solidx[k]));
             }
             VertexBasedLimiting(U, esup, inpoel, e, rdof, phic, vars);
 
@@ -1858,12 +1859,16 @@ void consistentMultiMatLimiting_P1(
             U(e,volfracDofIdx(nmat, k, rdof, idof));
       }
       if (solidx[k] > 0)
+      {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
           {
             for (std::size_t idof=1; idof<rdof; ++idof)
               U(e,deformDofIdx(nmat,solidx[k],i,j,rdof,idof)) = 0.0;
           }
+        for (std::size_t idof=1; idof<rdof; ++idof)
+          U(e,epsPDofIdx(nmat,solidx[k],rdof,idof)) = 0.0;
+      }
     }
 
     // 2. same limiter for all volume-fractions and densities
@@ -1873,9 +1878,12 @@ void consistentMultiMatLimiting_P1(
       phic_p1[densityIdx(nmat, k)] = phi_al_p1;
       phic_p1[energyIdx(nmat, k)] = phi_al_p1;
       if (solidx[k] > 0)
+      {
         for (std::size_t i=0; i<3; ++i)
           for (std::size_t j=0; j<3; ++j)
             phic_p1[deformIdx(nmat,solidx[k],i,j)] = phi_al_p1;
+        phic_p1[epsPIdx(nmat,solidx[k])] = phi_al_p1;
+      }
     }
     if(rdof > 4)
     {
@@ -1885,9 +1893,12 @@ void consistentMultiMatLimiting_P1(
         phic_p2[densityIdx(nmat, k)] = phi_al_p2;
         phic_p2[energyIdx(nmat, k)] = phi_al_p2;
         if (solidx[k] > 0)
+        {
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               phic_p2[deformIdx(nmat,solidx[k],i,j)] = phi_al_p2;
+          phic_p2[epsPIdx(nmat,solidx[k])] = phi_al_p2;
+        }
       }
     }
   }

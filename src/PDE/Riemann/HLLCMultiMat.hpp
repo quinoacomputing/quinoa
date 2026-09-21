@@ -288,6 +288,8 @@ struct HLLCMultiMat {
       glStar[k] = tk::unrotateTensor(gnlStar[k], fn);
       uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
+      if (solidx[k] > 0)
+        uStar[0][epsPIdx(nmat,solidx[k])] = w_l * u[0][epsPIdx(nmat,solidx[k])];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
         + ( - asignnl[k][0][0]*unl
             - asignnl[k][1][0]*vnl[1]
@@ -316,6 +318,8 @@ struct HLLCMultiMat {
       grStar[k] = tk::unrotateTensor(gnrStar[k], fn);
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
+      if (solidx[k] > 0)
+        uStar[1][epsPIdx(nmat,solidx[k])] = w_r * u[1][epsPIdx(nmat,solidx[k])];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
         + ( - asignnr[k][0][0]*unr
             - asignnr[k][1][0]*vnr[1]
@@ -348,6 +352,7 @@ struct HLLCMultiMat {
                 gl[k][i][1] * vl +
                 gl[k][i][2] * wl ) * fn[j]
                 - wn * gl[k][i][j];
+          flx[epsPIdx(nmat,solidx[k])] = u[0][epsPIdx(nmat,solidx[k])] * vnl[0];
         }
       }
 
@@ -402,6 +407,7 @@ struct HLLCMultiMat {
                 + glStar[k][i][1] * ulStarPhysical[1]
                 + glStar[k][i][2] * ulStarPhysical[2] ) * fn[j]
                 - wn * glStar[k][i][j];
+          flx[epsPIdx(nmat,solidx[k])] = uStar[0][epsPIdx(nmat,solidx[k])] * Sm;
         }
       }
 
@@ -456,6 +462,7 @@ struct HLLCMultiMat {
                   + grStar[k][i][1] * urStarPhysical[1]
                   + grStar[k][i][2] * urStarPhysical[2] ) * fn[j]
                   - wn * grStar[k][i][j];
+              flx[epsPIdx(nmat,solidx[k])] = uStar[1][epsPIdx(nmat,solidx[k])] * Sm;
           }
       }
 
@@ -502,6 +509,7 @@ struct HLLCMultiMat {
                   gr[k][i][1] * vr +
                   gr[k][i][2] * wr ) * fn[j]
                   - wn * gr[k][i][j];
+              flx[epsPIdx(nmat,solidx[k])] = u[1][epsPIdx(nmat,solidx[k])] * vnr[0];
           }
       }
 

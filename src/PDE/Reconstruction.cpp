@@ -243,6 +243,7 @@ THINCReco( std::size_t rdof,
   using inciter::velocityDofIdx;
   using inciter::deformDofIdx;
   using inciter::stressDofIdx;
+  using inciter::epsPDofIdx;
   using inciter::volfracIdx;
   using inciter::densityIdx;
   using inciter::momentumIdx;
@@ -251,6 +252,7 @@ THINCReco( std::size_t rdof,
   using inciter::velocityIdx;
   using inciter::deformIdx;
   using inciter::stressIdx;
+  using inciter::epsPIdx;
 
   auto bparam = inciter::g_inputdeck.get< tag::multimat,
     tag::intsharp_param >();
@@ -316,6 +318,11 @@ THINCReco( std::size_t rdof,
             for (std::size_t j=0; j<3; ++j)
               state[deformIdx(nmat,solidx[k],i,j)] =
                 U(e, deformDofIdx(nmat,solidx[k],i,j,rdof,0));
+
+          // equivalent plastic strain is held at its cell-average value
+          // near material interfaces, same as the deformation gradient
+          state[epsPIdx(nmat,solidx[k])] =
+            U(e, epsPDofIdx(nmat,solidx[k],rdof,0));
 
           for (std::size_t i=0; i<6; ++i)
             state[ncomp+stressIdx(nmat,solidx[k],i)] = alReco[k]

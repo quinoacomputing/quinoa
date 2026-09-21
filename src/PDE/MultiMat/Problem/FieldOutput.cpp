@@ -57,6 +57,8 @@ std::map< std::string, tk::GetVarFn > MultiMatOutVarFn()
   OutFnMap["g31"] = multimat::defGradOutVar<2,0>;
   OutFnMap["g32"] = multimat::defGradOutVar<2,1>;
   OutFnMap["g33"] = multimat::defGradOutVar<2,2>;
+  // Equivalent plastic strain
+  OutFnMap["eps_p"] = multimat::epsPOutVar;
 
   return OutFnMap;
 }
@@ -191,6 +193,10 @@ std::vector< std::string > MultiMatDiagNames(std::size_t nmat)
           n.push_back( "g"+std::to_string(k+1)+
             "_"+std::to_string(i)+std::to_string(j) );
     }
+  }
+  for (std::size_t k=0; k<nmat; ++k) {
+    if (solidx[k])
+      n.push_back( "epsp"+std::to_string(k+1) );
   }
 
   return n;

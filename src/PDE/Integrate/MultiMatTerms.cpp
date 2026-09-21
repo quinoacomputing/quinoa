@@ -891,6 +891,7 @@ fluxTerms(
   using inciter::velocityIdx;
   using inciter::pressureIdx;
   using inciter::deformIdx;
+  using inciter::epsPIdx;
 
   const auto& solidx =
     inciter::g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -966,6 +967,12 @@ fluxTerms(
           }
           // other components are zero
         }
+
+        // conservative part of equivalent plastic strain flux (passive
+        // scalar advection)
+        fl[epsPIdx(nmat,solidx[k])][0] = u * ugp[epsPIdx(nmat,solidx[k])];
+        fl[epsPIdx(nmat,solidx[k])][1] = v * ugp[epsPIdx(nmat,solidx[k])];
+        fl[epsPIdx(nmat,solidx[k])][2] = w * ugp[epsPIdx(nmat,solidx[k])];
       }
     }
   }

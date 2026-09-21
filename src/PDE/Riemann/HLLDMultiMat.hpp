@@ -241,6 +241,8 @@ struct HLLDMultiMat {
       glStar[k] = tk::unrotateTensor(gnlStar[k], fn);
       uStar[0][volfracIdx(nmat, k)] = u[0][volfracIdx(nmat, k)];
       uStar[0][densityIdx(nmat, k)] = w_l * u[0][densityIdx(nmat, k)];
+      if (solidx[k] > 0)
+        uStar[0][epsPIdx(nmat,solidx[k])] = w_l * u[0][epsPIdx(nmat,solidx[k])];
       uStar[0][energyIdx(nmat, k)] = w_l * u[0][energyIdx(nmat, k)]
         + (asignnlStar[k][0][0]*vnlStar[0] - asignnl[k][0][0]*vnl[0]) / (Sm-Sl);
       rholStar += uStar[0][densityIdx(nmat, k)];
@@ -260,6 +262,8 @@ struct HLLDMultiMat {
       grStar[k] = tk::unrotateTensor(gnrStar[k], fn);
       uStar[1][volfracIdx(nmat, k)] = u[1][volfracIdx(nmat, k)];
       uStar[1][densityIdx(nmat, k)] = w_r * u[1][densityIdx(nmat, k)];
+      if (solidx[k] > 0)
+        uStar[1][epsPIdx(nmat,solidx[k])] = w_r * u[1][epsPIdx(nmat,solidx[k])];
       uStar[1][energyIdx(nmat, k)] = w_r * u[1][energyIdx(nmat, k)]
         + (asignnrStar[k][0][0]*vnrStar[0] - asignnr[k][0][0]*vnr[0]) / (Sm-Sr);
       rhorStar += uStar[1][densityIdx(nmat, k)];
@@ -395,6 +399,8 @@ struct HLLDMultiMat {
         glStarStar[k] = tk::unrotateTensor(gnlStarStar, fn);
         uStarStar[0][volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)];
         uStarStar[0][densityIdx(nmat, k)] = uStar[0][densityIdx(nmat, k)];
+        if (solidx[k] > 0)
+          uStarStar[0][epsPIdx(nmat,solidx[k])] = uStar[0][epsPIdx(nmat,solidx[k])];
         uStarStar[0][energyIdx(nmat, k)] = uStar[0][energyIdx(nmat, k)]
           + ( - asignnl[k][1][0]*vnl[1]
               - asignnl[k][2][0]*vnl[2]
@@ -418,6 +424,8 @@ struct HLLDMultiMat {
         grStarStar[k] = tk::unrotateTensor(gnrStarStar, fn);
         uStarStar[1][volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)];
         uStarStar[1][densityIdx(nmat, k)] = uStar[1][densityIdx(nmat, k)];
+        if (solidx[k] > 0)
+          uStarStar[1][epsPIdx(nmat,solidx[k])] = uStar[1][epsPIdx(nmat,solidx[k])];
         uStarStar[1][energyIdx(nmat, k)] = uStar[1][energyIdx(nmat, k)]
           + ( - asignnr[k][1][0]*vnr[1]
               - asignnr[k][2][0]*vnr[2]
@@ -448,6 +456,7 @@ struct HLLDMultiMat {
                 gl[k][i][0] * ul +
                 gl[k][i][1] * vl +
                 gl[k][i][2] * wl ) * fn[j];
+          flx[epsPIdx(nmat,solidx[k])] = u[0][epsPIdx(nmat,solidx[k])] * vnl[0];
         }
       }
 
@@ -495,6 +504,7 @@ struct HLLDMultiMat {
                   glStar[k][i][0] * vlStar[0] +
                   glStar[k][i][1] * vlStar[1] +
                   glStar[k][i][2] * vlStar[2] ) * fn[j];
+          flx[epsPIdx(nmat,solidx[k])] = uStar[0][epsPIdx(nmat,solidx[k])] * Sm;
           }
       }
 
@@ -542,6 +552,7 @@ struct HLLDMultiMat {
                   glStarStar[k][i][0] * vlStarStar[0] +
                   glStarStar[k][i][1] * vlStarStar[1] +
                   glStarStar[k][i][2] * vlStarStar[2] ) * fn[j];
+          flx[epsPIdx(nmat,solidx[k])] = uStarStar[0][epsPIdx(nmat,solidx[k])] * Sm;
           }
       }
 
@@ -589,6 +600,7 @@ struct HLLDMultiMat {
                   grStarStar[k][i][0] * vrStarStar[0] +
                   grStarStar[k][i][1] * vrStarStar[1] +
                   grStarStar[k][i][2] * vrStarStar[2] ) * fn[j];
+          flx[epsPIdx(nmat,solidx[k])] = uStarStar[1][epsPIdx(nmat,solidx[k])] * Sm;
           }
       }
 
@@ -636,6 +648,7 @@ struct HLLDMultiMat {
                   grStar[k][i][0] * vrStar[0] +
                   grStar[k][i][1] * vrStar[1] +
                   grStar[k][i][2] * vrStar[2] ) * fn[j];
+          flx[epsPIdx(nmat,solidx[k])] = uStar[1][epsPIdx(nmat,solidx[k])] * Sm;
           }
       }
 
@@ -681,6 +694,7 @@ struct HLLDMultiMat {
                   gr[k][i][0] * ur +
                   gr[k][i][1] * vr +
                   gr[k][i][2] * wr ) * fn[j];
+          flx[epsPIdx(nmat,solidx[k])] = u[1][epsPIdx(nmat,solidx[k])] * vnr[0];
           }
       }
 

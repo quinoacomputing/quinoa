@@ -177,6 +177,7 @@ void initializeBox( const std::vector< EOS >& mat_blk,
             s[deformIdx(nmat,solidx[k],i,j)] = gk[i][j];
           }
         }
+        s[epsPIdx(nmat,solidx[k])] = 0.0;
       }
       else {
         gk = {{}};
