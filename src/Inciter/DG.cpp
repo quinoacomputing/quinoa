@@ -2833,8 +2833,21 @@ DG::nonlinear_newton_stage( std::size_t e,
   tk::real abs_err = abs_tol + 1.0;
   bool solver_success = true;
 
+  // Bounds (e.g. eps_p >= 0) are enforced on every Newton trial iterate via
+  // enforceStiffBounds() below, but stage_base/x as received here come from
+  // the explicit substep (advection + limiting) and may carry a small
+  // numerical undershoot past the bound (e.g. a slightly negative eps_p at
+  // a material interface). Since the stiff source that drives eps_p is
+  // strictly non-negative, such an undershoot has no feasible solution with
+  // x>=0 and otherwise leaves an irreducible residual that stalls Newton
+  // forever. Clamp the incoming state consistently with the bound enforced
+  // on every subsequent iterate.
+  auto stage_base_bnd = stage_base;
+  g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x );
+  g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, stage_base_bnd );
+
   std::vector< tk::real > f =
-    DG::nonlinear_func_stage(e, x, stage_base, aii);
+    DG::nonlinear_func_stage(e, x, stage_base_bnd, aii);
 
   abs_err = 0.0;
   for (std::size_t i=0; i<n; ++i) abs_err += f[i]*f[i];
@@ -2891,7 +2904,7 @@ DG::nonlinear_newton_stage( std::size_t e,
 
       g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, xtest );
 
-      ftest = DG::nonlinear_func_stage(e, xtest, stage_base, aii);
+      ftest = DG::nonlinear_func_stage(e, xtest, stage_base_bnd, aii);
 
       tk::real err = 0.0;
       for (std::size_t i=0; i<n; ++i) err += ftest[i]*ftest[i];
