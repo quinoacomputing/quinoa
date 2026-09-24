@@ -1318,18 +1318,6 @@ class MultiMat {
 
         tk::eval_state( m_ncomp, rdof, ndofel[e], e, U, B, state.data() );
 
-        // bulk density and velocity at this quadrature point. Density and
-        // momentum are non-stiff equations, so these reflect the frozen
-        // pre-relaxation (post-RK, pre-plastic-substep) state, not the
-        // current Newton iterate.
-        tk::real rhob(0.0);
-        for (std::size_t k=0; k<nmat; ++k)
-          rhob += state[inciter::densityIdx(nmat, k)];
-        std::array< tk::real, 3 >
-          vel{ state[inciter::momentumIdx(nmat, 0)]/rhob,
-               state[inciter::momentumIdx(nmat, 1)]/rhob,
-               state[inciter::momentumIdx(nmat, 2)]/rhob };
-
         // compute source
         // Loop through materials
         std::size_t ksld = 0;
@@ -1347,12 +1335,6 @@ class MultiMat {
             // current eps_p (this solid's Newton-iterate value)
             tk::real eps_p_cur =
               std::max(0.0, state[inciter::epsPIdx(nmat,solidx[k])]);
-
-            // temperature at frozen pre-relaxation state, for thermal
-            // softening in the hardening law
-            tk::real T_k = m_mat_blk[k].template compute< EOS::temperature >(
-              state[inciter::densityIdx(nmat,k)], vel[0], vel[1], vel[2],
-              state[inciter::energyIdx(nmat,k)], alpha, g );
 
             // Compute Lp
             // Reference: Ortega, A. L., Lombardini, M., Pullin, D. I., &
@@ -1387,21 +1369,12 @@ class MultiMat {
               }
 
             // 3. Divide by 2*mu*tau
-            // Strain-hardening yield stress (Barton-style):
-            // sigma_Y = (c1 + c2*eps_p^n) * (1 - ((T-T0)/(Tmelt-T0))^m)
+            // Strain-hardening yield stress (Barton-style, no thermal
+            // softening): sigma_Y = c1 + c2*eps_p^n
             std::vector< tk::real > s(10*ndof, 0.0);
             tk::real c1 = getmatprop< tag::yield_stress >(k);
             tk::real c2 = getmatprop< tag::hardening_c2 >(k);
             tk::real hn = getmatprop< tag::hardening_n >(k);
-            tk::real hm = getmatprop< tag::hardening_m >(k);
-            tk::real t_room = getmatprop< tag::t_room >(k);
-            tk::real t_melt = getmatprop< tag::t_melt >(k);
-            tk::real thermal_term = 1.0;
-            if (t_melt > t_room) {
-              tk::real frac =
-                std::clamp((T_k-t_room)/(t_melt-t_room), 0.0, 1.0);
-              thermal_term = 1.0 - std::pow(frac, hm);
-            }
             // Regularize the power-law hardening term with a small strain
             // offset: for hn<1 the exact d/d(eps_p)[eps_p^hn] diverges at
             // eps_p=0, which poisons the Newton solve's finite-difference
@@ -1410,7 +1383,7 @@ class MultiMat {
             // negligible for any physically relevant eps_p.
             constexpr tk::real eps_p_reg = 1.0e-06;
             tk::real yield_stress =
-              (c1 + c2*std::pow(eps_p_cur+eps_p_reg, hn)) * thermal_term;
+              c1 + c2*std::pow(eps_p_cur+eps_p_reg, hn);
             tk::real equiv_stress = 0.0;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)

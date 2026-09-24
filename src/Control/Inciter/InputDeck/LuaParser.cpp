@@ -1503,24 +1503,6 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "hardening_n", ntype,
       mati_deck.get< tag::hardening_n >());
 
-    // hardening_m
-    if (!sol_mat[imat+1]["hardening_m"].valid())
-      sol_mat[imat+1]["hardening_m"] = std::vector< tk::real >(ntype, 1.0);
-    checkStoreMatProp(sol_mat[imat+1], "hardening_m", ntype,
-      mati_deck.get< tag::hardening_m >());
-
-    // t_melt
-    if (!sol_mat[imat+1]["t_melt"].valid())
-      sol_mat[imat+1]["t_melt"] = std::vector< tk::real >(ntype, 1.0e+30);
-    checkStoreMatProp(sol_mat[imat+1], "t_melt", ntype,
-      mati_deck.get< tag::t_melt >());
-
-    // t_room
-    if (!sol_mat[imat+1]["t_room"].valid())
-      sol_mat[imat+1]["t_room"] = std::vector< tk::real >(ntype, 300.0);
-    checkStoreMatProp(sol_mat[imat+1], "t_room", ntype,
-      mati_deck.get< tag::t_room >());
-
     // assign solid
     is_solid = true;
   }
@@ -1577,24 +1559,6 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "hardening_n", ntype,
       mati_deck.get< tag::hardening_n >());
 
-    // hardening_m
-    if (!sol_mat[imat+1]["hardening_m"].valid())
-      sol_mat[imat+1]["hardening_m"] = std::vector< tk::real >(ntype, 1.0);
-    checkStoreMatProp(sol_mat[imat+1], "hardening_m", ntype,
-      mati_deck.get< tag::hardening_m >());
-
-    // t_melt
-    if (!sol_mat[imat+1]["t_melt"].valid())
-      sol_mat[imat+1]["t_melt"] = std::vector< tk::real >(ntype, 1.0e+30);
-    checkStoreMatProp(sol_mat[imat+1], "t_melt", ntype,
-      mati_deck.get< tag::t_melt >());
-
-    // t_room
-    if (!sol_mat[imat+1]["t_room"].valid())
-      sol_mat[imat+1]["t_room"] = std::vector< tk::real >(ntype, 300.0);
-    checkStoreMatProp(sol_mat[imat+1], "t_room", ntype,
-      mati_deck.get< tag::t_room >());
-
     // assign solid
     is_solid = true;
   }
@@ -1634,24 +1598,6 @@ LuaParser::registerMaterials(
       sol_mat[imat+1]["hardening_n"] = std::vector< tk::real >(ntype, 1.0);
     checkStoreMatProp(sol_mat[imat+1], "hardening_n", ntype,
       mati_deck.get< tag::hardening_n >());
-
-    // hardening_m
-    if (!sol_mat[imat+1]["hardening_m"].valid())
-      sol_mat[imat+1]["hardening_m"] = std::vector< tk::real >(ntype, 1.0);
-    checkStoreMatProp(sol_mat[imat+1], "hardening_m", ntype,
-      mati_deck.get< tag::hardening_m >());
-
-    // t_melt
-    if (!sol_mat[imat+1]["t_melt"].valid())
-      sol_mat[imat+1]["t_melt"] = std::vector< tk::real >(ntype, 1.0e+30);
-    checkStoreMatProp(sol_mat[imat+1], "t_melt", ntype,
-      mati_deck.get< tag::t_melt >());
-
-    // t_room
-    if (!sol_mat[imat+1]["t_room"].valid())
-      sol_mat[imat+1]["t_room"] = std::vector< tk::real >(ntype, 300.0);
-    checkStoreMatProp(sol_mat[imat+1], "t_room", ntype,
-      mati_deck.get< tag::t_room >());
 
     // assign solid
     is_solid = true;
@@ -1704,24 +1650,6 @@ LuaParser::registerMaterials(
       sol_mat[imat+1]["hardening_n"] = std::vector< tk::real >(ntype, 1.0);
     checkStoreMatProp(sol_mat[imat+1], "hardening_n", ntype,
       mati_deck.get< tag::hardening_n >());
-
-    // hardening_m
-    if (!sol_mat[imat+1]["hardening_m"].valid())
-      sol_mat[imat+1]["hardening_m"] = std::vector< tk::real >(ntype, 1.0);
-    checkStoreMatProp(sol_mat[imat+1], "hardening_m", ntype,
-      mati_deck.get< tag::hardening_m >());
-
-    // t_melt
-    if (!sol_mat[imat+1]["t_melt"].valid())
-      sol_mat[imat+1]["t_melt"] = std::vector< tk::real >(ntype, 1.0e+30);
-    checkStoreMatProp(sol_mat[imat+1], "t_melt", ntype,
-      mati_deck.get< tag::t_melt >());
-
-    // t_room
-    if (!sol_mat[imat+1]["t_room"].valid())
-      sol_mat[imat+1]["t_room"] = std::vector< tk::real >(ntype, 300.0);
-    checkStoreMatProp(sol_mat[imat+1], "t_room", ntype,
-      mati_deck.get< tag::t_room >());
 
     // assign solid
     is_solid = true;
