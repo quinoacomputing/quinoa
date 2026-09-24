@@ -24,6 +24,22 @@
 #include "Vector.hpp"
 #include "Quadrature.hpp"
 
+// Lapacke forward declarations, used below to invert the 10x10 Taylor mass
+// matrix (DGP2), which is too large for the closed-form 3x3 inverse in
+// Vector.hpp.
+extern "C" {
+
+using lapack_int = long;
+
+#define LAPACK_ROW_MAJOR 101
+
+extern lapack_int LAPACKE_dgetrf( int, lapack_int, lapack_int, double*,
+  lapack_int, lapack_int* );
+extern lapack_int LAPACKE_dgetri( int, lapack_int, double*, lapack_int,
+  const lapack_int* );
+
+}
+
 std::array< tk::real, 3 >
 tk::eval_gp ( const std::size_t igp,
               const std::array< std::array< tk::real, 3>, 3 >& coordfa,

@@ -20,25 +20,10 @@
 #include "Types.hpp"
 #include "Exception.hpp"
 
-// ignore old-style-casts required for lapack/blas calls
+// ignore old-style-casts required for blas calls
 #if defined(__clang__)
   #pragma clang diagnostic ignored "-Wold-style-cast"
 #endif
-
-// Lapacke forward declarations
-extern "C" {
-
-using lapack_int = long;
-
-#define LAPACK_ROW_MAJOR 101
-#define LAPACK_COL_MAJOR 102
-
-extern lapack_int LAPACKE_dgetrf( int, lapack_int, lapack_int, double*,
-  lapack_int, lapack_int* );
-extern lapack_int LAPACKE_dgetri( int, lapack_int, double*, lapack_int,
-  const lapack_int* );
-
-}
 
 namespace tk {
 
@@ -525,7 +510,7 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     return {{}};
 
   // allocate matrices
-  double G[9], C[9];
+  double G[9], GGt[9];
 
   // initialize c-matrices
   for (std::size_t i=0; i<3; ++i) {
@@ -535,27 +520,16 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 
   // get g.g^T
   nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-    3, 3, 3, 1.0, G, 3, G, 3, 0.0, C, 3);
+    3, 3, 3, 1.0, G, 3, G, 3, 0.0, GGt, 3);
 
-  // get inv(g.g^T)
-  lapack_int ipiv[3];
+  // get inv(g.g^T) using the closed-form analytic 3x3 inverse. g.g^T is
+  // guaranteed symmetric positive definite as long as g is nonsingular, so
+  // this is always well defined for physically valid deformation states.
+  std::array< std::array< real, 3 >, 3 > C{{ {GGt[0], GGt[1], GGt[2]},
+                                              {GGt[3], GGt[4], GGt[5]},
+                                              {GGt[6], GGt[7], GGt[8]} }};
 
-  #ifndef NDEBUG
-  lapack_int ierr =
-  #endif
-    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, C, 3, ipiv);
-  Assert(ierr==0, "Lapack error in LU factorization of g.g^T");
-
-  #ifndef NDEBUG
-  lapack_int jerr =
-  #endif
-    LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, C, 3, ipiv);
-  Assert(jerr==0, "Lapack error in inverting g.g^T");
-
-  // Output C as 2D array
-  return {{ {C[0], C[1], C[2]},
-            {C[3], C[4], C[5]},
-            {C[6], C[7], C[8]} }};
+  return tk::inverse(C);
 }
 
 //! \brief Get the Left Cauchy-Green strain tensor from the inverse deformation
@@ -570,7 +544,7 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
     return {{}};
 
   // allocate matrices
-  double G[9], b[9];
+  double G[9], GtG[9];
 
   // initialize c-matrices
   for (std::size_t i=0; i<3; ++i) {
@@ -580,27 +554,16 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 
   // get g^T.g
   nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-    3, 3, 3, 1.0, G, 3, G, 3, 0.0, b, 3);
+    3, 3, 3, 1.0, G, 3, G, 3, 0.0, GtG, 3);
 
-  // get inv(g^T.g)
-  lapack_int ipiv[3];
+  // get inv(g^T.g) using the closed-form analytic 3x3 inverse. g^T.g is
+  // guaranteed symmetric positive definite as long as g is nonsingular, so
+  // this is always well defined for physically valid deformation states.
+  std::array< std::array< real, 3 >, 3 > b{{ {GtG[0], GtG[1], GtG[2]},
+                                              {GtG[3], GtG[4], GtG[5]},
+                                              {GtG[6], GtG[7], GtG[8]} }};
 
-  #ifndef NDEBUG
-  lapack_int ierr =
-  #endif
-    LAPACKE_dgetrf(LAPACK_ROW_MAJOR, 3, 3, b, 3, ipiv);
-  Assert(ierr==0, "Lapack error in LU factorization of g^T.g");
-
-  #ifndef NDEBUG
-  lapack_int jerr =
-  #endif
-    LAPACKE_dgetri(LAPACK_ROW_MAJOR, 3, b, 3, ipiv);
-  Assert(jerr==0, "Lapack error in inverting g^T.g");
-
-  // Output b as 2D array
-  return {{ {b[0], b[1], b[2]},
-            {b[3], b[4], b[5]},
-            {b[6], b[7], b[8]} }};
+  return tk::inverse(b);
 }
 
 //! \brief Get the volume-preserving part of the right Cauchy-Green strain
@@ -611,7 +574,15 @@ inline std::array< std::array< tk::real, 3 >, 3 >
 getIsochorRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
 {
   auto Ct = tk::getRightCauchyGreen(g);
-  auto detC = std::pow(tk::determinant(Ct), 1.0/3.0);
+
+  // det(C) = 1/det(g.g^T) = 1/det(g)^2, computed directly from det(g)
+  // instead of re-extracted from the inverted/multiplied matrix. Since
+  // det(g)^2 is analytically guaranteed nonnegative, this avoids the small
+  // spurious negative values that roundoff can otherwise introduce under
+  // extreme local compression (which previously fed a fractional power and
+  // produced NaN). Floored to guard against exact cell-volume collapse.
+  auto detg2 = std::max(tk::determinant(g)*tk::determinant(g), 1.0e-24);
+  auto detC = std::pow(1.0/detg2, 1.0/3.0);
   for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j)
       Ct[i][j] /= detC;
@@ -650,11 +621,12 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
   nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
     3, 3, 3, 1.0, G, 3, G, 3, 0.0, CInv, 3);
 
-  // volume-preserving part
-  auto detCInv = std::pow(tk::determinant(
-    {{ { CInv[0], CInv[1], CInv[2] },
-       { CInv[3], CInv[4], CInv[5] },
-       { CInv[6], CInv[7], CInv[8] } }} ), 1.0/3.0);
+  // volume-preserving part. det(CInv) = det(g.g^T) = det(g)^2, computed
+  // directly from det(g) rather than re-extracted from the matrix product,
+  // since det(g)^2 is analytically guaranteed nonnegative (see comment in
+  // getIsochorRightCauchyGreen above).
+  auto detCInv = std::pow(
+    std::max(tk::determinant(g)*tk::determinant(g), 1.0e-24), 1.0/3.0);
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       CInv[3*i+j] /= detCInv;
