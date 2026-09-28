@@ -2768,22 +2768,51 @@ DG::compute_jacobian_stage( std::size_t e,
     const std::size_t max_tries = 4;
     auto rim = DG::compute_stiff_rhs_local(e, x);
 
+    // Central differences: error scales with h^2*f''' instead of h*f'' for
+    // one-sided differences, which matters here because the stiff RHS
+    // (yield-law hardening term in particular) has large curvature near
+    // eps_p=0. enforceStiffBounds may clamp either perturbed state, so
+    // recompute the effective step from the clamped state and fall back to
+    // a one-sided difference if the two effective steps differ enormously
+    // (e.g. one side got clamped hard against a bound).
     for (std::size_t j=0; j<n; ++j) {
       tk::real dx = eta * std::max(std::abs(x[j]), scale);
       bool success = false;
 
       for (std::size_t itry=0; itry<max_tries; ++itry) {
-        auto x_perturb = x;
-        x_perturb[j] += dx;
-        g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x_perturb );
+        auto x_plus = x;
+        x_plus[j] += dx;
+        g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x_plus );
 
-        tk::real heff = x_perturb[j] - x[j];
-        if (std::abs(heff) > min_heff) {
-          auto rim_perturb = DG::compute_stiff_rhs_local(e, x_perturb);
+        auto x_minus = x;
+        x_minus[j] -= dx;
+        g_dgpde[d->MeshId()].enforceStiffBounds( e, m_u, x_minus );
+
+        tk::real heff_plus = x_plus[j] - x[j];
+        tk::real heff_minus = x[j] - x_minus[j];
+
+        if (std::abs(heff_plus) > min_heff && std::abs(heff_minus) > min_heff) {
+          auto rim_plus = DG::compute_stiff_rhs_local(e, x_plus);
+          auto rim_minus = DG::compute_stiff_rhs_local(e, x_minus);
 
           for (std::size_t i=0; i<n; ++i)
-            jrim[i*n + j] = (rim_perturb[i] - rim[i]) / heff;
+            jrim[i*n + j] =
+              (rim_plus[i] - rim_minus[i]) / (heff_plus + heff_minus);
 
+          success = true;
+          break;
+        }
+        if (std::abs(heff_plus) > min_heff) {
+          auto rim_plus = DG::compute_stiff_rhs_local(e, x_plus);
+          for (std::size_t i=0; i<n; ++i)
+            jrim[i*n + j] = (rim_plus[i] - rim[i]) / heff_plus;
+          success = true;
+          break;
+        }
+        if (std::abs(heff_minus) > min_heff) {
+          auto rim_minus = DG::compute_stiff_rhs_local(e, x_minus);
+          for (std::size_t i=0; i<n; ++i)
+            jrim[i*n + j] = (rim[i] - rim_minus[i]) / heff_minus;
           success = true;
           break;
         }
