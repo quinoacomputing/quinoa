@@ -1252,7 +1252,10 @@ class MultiMat {
             // Compute difference
             dpsi += psi - psi_star;
           }
-          tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+          // Must match the plasticity-suppression threshold in stiff_rhs()
+          // below, so the elastic-energy correction is scaled consistently
+          // with whatever plastic work was actually allowed to occur.
+          tk::real a_min = 0.9, a_max = 0.99;
           auto smoothstep = [&](tk::real a){
             tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
             return t*t*(3.0-2.0*t);
@@ -1395,8 +1398,15 @@ class MultiMat {
             if (phi > 0.0) {
               // Note: if plasticity becomes unstable, raise the power (below) to two
               rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
-              // Scale rel_factor by alpha
-              tk::real a_min = 1.0e-04, a_max = 2.0e-01;
+              // Scale rel_factor by alpha to suppress plasticity in mixed
+              // cells. Cells with a small solid volume fraction carry a
+              // deformation gradient driven by numerical (advection/
+              // interface-sharpening) noise rather than real physics, and
+              // the stiff Newton solve for g_ij/eps_p is run there
+              // regardless of alpha, so these cells can stall convergence
+              // without contributing meaningful plastic work. Only allow
+              // (near-)full plasticity once a cell is nearly pure solid.
+              tk::real a_min = 0.9, a_max = 0.99;
               auto smoothstep = [&](tk::real a){
                 tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
                 return t*t*(3.0-2.0*t);
