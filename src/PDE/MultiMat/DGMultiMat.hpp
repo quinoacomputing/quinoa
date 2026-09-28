@@ -1252,17 +1252,8 @@ class MultiMat {
             // Compute difference
             dpsi += psi - psi_star;
           }
-          // Must match the plasticity-suppression threshold in stiff_rhs()
-          // below, so the elastic-energy correction is scaled consistently
-          // with whatever plastic work was actually allowed to occur.
-          tk::real a_min = 0.9, a_max = 0.99;
-          auto smoothstep = [&](tk::real a){
-            tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
-            return t*t*(3.0-2.0*t);
-          };
-          tk::real a_tilde = smoothstep(alpha);
           tk::real beta = 1.0;
-          const tk::real dE_vol = alpha * a_tilde * beta * (-dpsi);
+          const tk::real dE_vol = alpha * beta * (-dpsi);
           for (std::size_t idof=0; idof<ndof; ++idof)
             // Should have B[idof] here for it to work for high order
             // Currently, only useful for ndof=1
@@ -1382,9 +1373,16 @@ class MultiMat {
             // offset: for hn<1 the exact d/d(eps_p)[eps_p^hn] diverges at
             // eps_p=0, which poisons the Newton solve's finite-difference
             // stiff Jacobian (probed at a fixed perturbation size) right at
-            // t=0, when eps_p is identically zero everywhere. The offset is
-            // negligible for any physically relevant eps_p.
-            constexpr tk::real eps_p_reg = 1.0e-06;
+            // t=0, when eps_p is identically zero everywhere. This is most
+            // acute in trace-material cells (near-zero solid volume
+            // fraction), where the deformation gradient is driven mostly by
+            // advection/interface-sharpening noise rather than real
+            // physics, and the FD Jacobian has no other stabilizing signal.
+            // eps_p_reg is picked large enough to flatten that initial
+            // slope and keep Newton well-conditioned there, while shifting
+            // yield_stress at eps_p=0 by only ~2%, negligible for any
+            // physically relevant eps_p.
+            constexpr tk::real eps_p_reg = 1.0e-04;
             tk::real yield_stress =
               c1 + c2*std::pow(eps_p_cur+eps_p_reg, hn);
             tk::real equiv_stress = 0.0;
@@ -1398,21 +1396,6 @@ class MultiMat {
             if (phi > 0.0) {
               // Note: if plasticity becomes unstable, raise the power (below) to two
               rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
-              // Scale rel_factor by alpha to suppress plasticity in mixed
-              // cells. Cells with a small solid volume fraction carry a
-              // deformation gradient driven by numerical (advection/
-              // interface-sharpening) noise rather than real physics, and
-              // the stiff Newton solve for g_ij/eps_p is run there
-              // regardless of alpha, so these cells can stall convergence
-              // without contributing meaningful plastic work. Only allow
-              // (near-)full plasticity once a cell is nearly pure solid.
-              tk::real a_min = 0.9, a_max = 0.99;
-              auto smoothstep = [&](tk::real a){
-                tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
-                return t*t*(3.0-2.0*t);
-              };
-              tk::real a_tilde = smoothstep(alpha);
-              rel_factor *= a_tilde;
             }
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
