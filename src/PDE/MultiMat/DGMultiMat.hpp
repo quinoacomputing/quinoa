@@ -1252,8 +1252,19 @@ class MultiMat {
             // Compute difference
             dpsi += psi - psi_star;
           }
+          // Damp the elastic-energy correction in true trace-material
+          // cells, consistent with the rel_factor damping applied to
+          // plasticity itself in stiff_rhs() below. Must use the same
+          // a_min/a_max thresholds so the energy correction reflects
+          // whatever plastic work was actually allowed to occur.
+          tk::real a_min = 1.0e-04, a_max = 0.2;
+          auto smoothstep = [&](tk::real a){
+            tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
+            return t*t*(3.0-2.0*t);
+          };
+          tk::real a_tilde = smoothstep(alpha);
           tk::real beta = 1.0;
-          const tk::real dE_vol = alpha * beta * (-dpsi);
+          const tk::real dE_vol = alpha * a_tilde * beta * (-dpsi);
           for (std::size_t idof=0; idof<ndof; ++idof)
             // Should have B[idof] here for it to work for high order
             // Currently, only useful for ndof=1
@@ -1396,6 +1407,21 @@ class MultiMat {
             if (phi > 0.0) {
               // Note: if plasticity becomes unstable, raise the power (below) to two
               rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
+              // Damp rel_factor toward zero only in true trace-material
+              // cells (alpha below a_max), where the deformation gradient
+              // is driven mostly by numerical (advection/interface-
+              // sharpening) noise rather than real physics, rather than
+              // any partially-mixed cell. A wider band here previously
+              // suppressed plasticity in real mixed cells, letting
+              // deviatoric stress sit above yield indefinitely; this
+              // narrow, low ceiling only targets near-void noise cells.
+              tk::real a_min = 1.0e-04, a_max = 0.2;
+              auto smoothstep = [&](tk::real a){
+                tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
+                return t*t*(3.0-2.0*t);
+              };
+              tk::real a_tilde = smoothstep(alpha);
+              rel_factor *= a_tilde;
             }
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)
