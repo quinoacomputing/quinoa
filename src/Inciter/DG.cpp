@@ -3001,6 +3001,47 @@ DG::nonlinear_newton_stage( std::size_t e,
     printf("Total iterations: %lu\n", niter);
     printf("Relative error: %e\n", rel_err);
     printf("Absolute error: %e\n", abs_err);
+
+    // Dump the failing element's stiff state so the actual pathological
+    // values (alpha, g_ij, eps_p, and the stiff-RHS source terms actually
+    // being fed to Newton) can be inspected, since periodic field output
+    // does not have fine enough time resolution to catch the exact instant
+    // Newton stalls. The stiff RHS itself (rim) already reflects whatever
+    // rel_factor/a_tilde suppression was applied inside stiff_rhs(), so
+    // there is no need to duplicate the yield-law math here.
+    {
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+      const auto rdof = g_inputdeck.get< tag::rdof >();
+      const auto diag_ndof = g_inputdeck.get< tag::ndof >();
+      auto rim = DG::compute_stiff_rhs_local(e, x);
+      std::size_t ksld = 0;
+      for (std::size_t k=0; k<nmat; ++k) {
+        if (solidx[k] == 0) continue;
+        tk::real alpha = m_u(e, volfracDofIdx(nmat, k, rdof, 0));
+
+        std::array< std::array< tk::real, 3 >, 3 > g{}, rim_g{};
+        for (std::size_t i=0; i<3; ++i)
+          for (std::size_t j=0; j<3; ++j) {
+            g[i][j] = x[solidTensorIdx(ksld,i,j)*diag_ndof];
+            rim_g[i][j] = rim[solidTensorIdx(ksld,i,j)*diag_ndof];
+          }
+        tk::real eps_p = x[solidEpsPIdx(ksld)*diag_ndof];
+        tk::real rim_eps_p = rim[solidEpsPIdx(ksld)*diag_ndof];
+
+        printf("  material %lu: alpha=%.6e eps_p=%.6e rim_eps_p=%.6e\n",
+          k, alpha, eps_p, rim_eps_p);
+        printf("  g = [%.6e %.6e %.6e; %.6e %.6e %.6e; %.6e %.6e %.6e]\n",
+          g[0][0], g[0][1], g[0][2], g[1][0], g[1][1], g[1][2],
+          g[2][0], g[2][1], g[2][2]);
+        printf("  rim_g = [%.6e %.6e %.6e; %.6e %.6e %.6e; %.6e %.6e %.6e]\n",
+          rim_g[0][0], rim_g[0][1], rim_g[0][2],
+          rim_g[1][0], rim_g[1][1], rim_g[1][2],
+          rim_g[2][0], rim_g[2][1], rim_g[2][2]);
+        ksld++;
+      }
+    }
+
     Throw("At element " + std::to_string(e) +
           " stage nonlinear solver was not able to converge. Error(rel/abs) = " +
           std::to_string(rel_err) + "/" + std::to_string(abs_err));
