@@ -217,13 +217,19 @@ cleanTraceMultiMat(
         tk::real prelax(0.0);
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
-          // for solids, reset deformation gradient and stress. By this
-          // point solidTensorUnphysical() has already confirmed the g
-          // tensor is genuinely degenerate, so this should fire rarely.
-          printf("cleanTraceMaterial: resetting unphysical g-tensor: "
-                 "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
-                 t, e, k, solidx[k], alk);
-          resetSolidTensors(nmat, k, e, U, P);
+          // Reset deformation gradient and stress ONLY if the g-tensor is
+          // actually degenerate. ctm_element can also be true here purely
+          // because alk < volfracPRelaxLim() (condition 1, which is not
+          // solid-specific), so this check is still needed even though
+          // condition 3 above already screens for it -- otherwise every
+          // solid cell below that fluid-oriented 1% cutoff gets its
+          // (possibly perfectly fine) tensor state stomped every stage.
+          if (solidTensorUnphysical(nmat, k, e, U)) {
+            printf("cleanTraceMaterial: resetting unphysical g-tensor: "
+                   "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
+                   t, e, k, solidx[k], alk);
+            resetSolidTensors(nmat, k, e, U, P);
+          }
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
               gmat[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
