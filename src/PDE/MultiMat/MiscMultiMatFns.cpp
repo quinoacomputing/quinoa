@@ -211,6 +211,8 @@ cleanTraceMultiMat(
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
           // for solids, reset deformation gradient and stress
+          printf("cleanTraceMaterial reset: t=%.6e e=%lu mat=%lu solidx=%lu "
+                 "alpha=%.6e\n", t, e, k, solidx[k], alk);
           resetSolidTensors(nmat, k, e, U, P);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
