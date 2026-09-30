@@ -723,10 +723,20 @@ resetSolidTensors(
       g[i][j] = g[j][i] = sij;
     }
 
-  // Robust determinant and spherical replacement
-  // Clamp to avoid NaNs; eps should be small but > 0
-  auto detg = std::max(1e-18, tk::determinant(g));
-  const tk::real new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
+  // Robust determinant and spherical replacement.
+  // det(g) = J^{-1} should be O(1) for any physically reasonable
+  // deformation. If it is not finite or falls far outside a plausible
+  // range, the input g itself is corrupted (e.g. from advection/flux
+  // noise) and cube-rooting it -- even after floor-clamping to avoid NaNs
+  // -- would just manufacture another unphysical g (such as gii ~ 1e-6,
+  // implying the solid collapsed to ~1e-18 of its volume). In that case,
+  // discard g entirely and fall back to the undeformed reference state.
+  auto detg = tk::determinant(g);
+  tk::real new_gii;
+  if (!std::isfinite(detg) || detg < 1e-3 || detg > 1e3)
+    new_gii = 1.0;
+  else
+    new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
 
   // Set g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not pressure)
   for (size_t i=0;i<3;++i)
