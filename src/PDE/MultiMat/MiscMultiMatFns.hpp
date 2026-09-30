@@ -74,6 +74,14 @@ soundSpeedMultiMat(
   const tk::Fields& P,
   std::vector< tk::real >& ss );
 
+//! Check if a solid's deformation gradient tensor is physically implausible
+bool
+solidTensorUnphysical(
+  std::size_t nmat,
+  std::size_t k,
+  std::size_t e,
+  const tk::Fields& U );
+
 //! Reset the solid tensors
 void
 resetSolidTensors(

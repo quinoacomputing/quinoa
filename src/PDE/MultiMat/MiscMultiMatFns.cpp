@@ -198,11 +198,18 @@ cleanTraceMultiMat(
         pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
         U(e, densityDofIdx(nmat, k, rdof, 0)), alk)) ||
         // 3. if current material is solid AND its volume fraction is below
-        //    the (wider) solid-specific trace threshold: a solid this close
-        //    to trace can still have its g-tensor degrade into a
-        //    non-physical state from advection/flux noise alone, well
-        //    before it is trace enough to trip threshold 1 above.
-        (solidx[k] > 0 && alk < volfracSolidResetLim())
+        //    the (wider) solid-specific trace threshold AND its g-tensor
+        //    has actually degraded into a non-physical state. The alpha
+        //    check alone is not sufficient: gating on alpha only meant a
+        //    solid sitting near/below this threshold with an otherwise
+        //    fine tensor got reset on every single stage, since alpha
+        //    itself does not change from the reset -- each such "clean"
+        //    reset is itself a discontinuity, which forced dt down to the
+        //    floor trying to resolve self-inflicted noise. Requiring the
+        //    tensor to actually be bad makes this a rare, targeted repair
+        //    instead of a per-stage stomp.
+        (solidx[k] > 0 && alk < volfracSolidResetLim() &&
+        solidTensorUnphysical(nmat, k, e, U))
       )
         ctm_element = true;
 
@@ -210,9 +217,12 @@ cleanTraceMultiMat(
         tk::real prelax(0.0);
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
-          // for solids, reset deformation gradient and stress
-          printf("cleanTraceMaterial reset: t=%.6e e=%lu mat=%lu solidx=%lu "
-                 "alpha=%.6e\n", t, e, k, solidx[k], alk);
+          // for solids, reset deformation gradient and stress. By this
+          // point solidTensorUnphysical() has already confirmed the g
+          // tensor is genuinely degenerate, so this should fire rarely.
+          printf("cleanTraceMaterial: resetting unphysical g-tensor: "
+                 "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
+                 t, e, k, solidx[k], alk);
           resetSolidTensors(nmat, k, e, U, P);
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
@@ -690,6 +700,40 @@ timeStepSizeViscousFV(
   }
 
   return mindt;
+}
+
+bool
+solidTensorUnphysical(
+  std::size_t nmat,
+  std::size_t k,
+  std::size_t e,
+  const tk::Fields& U )
+// *****************************************************************************
+//  Check if a solid's deformation gradient tensor is physically implausible
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] k Material id whose deformation gradient is checked
+//! \param[in] e Id of element whose solution is checked
+//! \param[in] U High-order solution vector
+//! \return true if this material's g-tensor is degenerate/non-finite and
+//!   warrants a reset; false if it is in a plausible range and should be
+//!   left alone (e.g. a low-volume-fraction solid that is otherwise fine)
+// *****************************************************************************
+{
+  const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+
+  if (solidx[k] == 0) return false; // fluid: nothing to check here
+
+  std::array<std::array<tk::real,3>,3> g{};
+  for (size_t i=0;i<3;++i)
+    for (size_t j=0;j<3;++j)
+      g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
+
+  // det(g) = J^{-1} should be O(1) for any physically reasonable
+  // deformation. Outside this range, g has degraded from advection/flux
+  // noise rather than reflecting real material deformation.
+  auto detg = tk::determinant(g);
+  return (!std::isfinite(detg) || detg < 1e-3 || detg > 1e3);
 }
 
 void
