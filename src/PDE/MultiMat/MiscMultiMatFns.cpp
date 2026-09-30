@@ -196,7 +196,13 @@ cleanTraceMultiMat(
         //    (effective) pressure is negative
         (solidx[k] == 0 && solidx[kmax] == 0 && matExists(alk) &&
         pk < mat_blk[k].compute< EOS::min_eff_pressure >(1e-12,
-        U(e, densityDofIdx(nmat, k, rdof, 0)), alk))
+        U(e, densityDofIdx(nmat, k, rdof, 0)), alk)) ||
+        // 3. if current material is solid AND its volume fraction is below
+        //    the (wider) solid-specific trace threshold: a solid this close
+        //    to trace can still have its g-tensor degrade into a
+        //    non-physical state from advection/flux noise alone, well
+        //    before it is trace enough to trip threshold 1 above.
+        (solidx[k] > 0 && alk < volfracSolidResetLim())
       )
         ctm_element = true;
 
@@ -733,6 +739,13 @@ resetSolidTensors(
         P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) = 0.0;
       }
     }
+
+  // Also reset accumulated equivalent plastic strain: a stale/corrupted
+  // eps_p history left behind by a g-reset would otherwise keep inflating
+  // the hardening-law yield stress indefinitely, even though the tensor
+  // state it was derived from has just been discarded as unreliable.
+  for (size_t l=0; l<rdof; ++l)
+    U(e, epsPDofIdx(nmat, solidx[k], rdof, l)) = 0.0;
 }
 
 std::array< std::array< tk::real, 3 >, 3 >

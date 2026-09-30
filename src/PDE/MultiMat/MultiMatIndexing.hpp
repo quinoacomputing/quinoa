@@ -235,6 +235,18 @@ inline bool matExists( tk::real volfrac )
 inline tk::real volfracPRelaxLim()
 { return 1.0e-02; }
 
+//! \brief Trigger threshold for resetting a trace solid's deformation
+//!   gradient/stress/eps_p (see resetSolidTensors()).
+//! \details Wider than volfracPRelaxLim() on purpose: that limit is tuned for
+//!   fluid pressure relaxation, but solids just above it are still trace
+//!   enough for their g-tensor to degrade into a non-physical state from
+//!   pure advection/flux noise, well before their volume fraction is low
+//!   enough to trip the fluid-oriented cleanup. Kept as a separate constant
+//!   (rather than raising volfracPRelaxLim() itself) so fluid trace-material
+//!   behavior, which the WARNING below governs, is left untouched.
+inline tk::real volfracSolidResetLim()
+{ return 2.0e-02; }
+
 //! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.
 //! \param[in] k Index of required material
