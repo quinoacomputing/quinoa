@@ -1061,18 +1061,6 @@ VertexBasedMultiSpecies_P1(
       PositivityLimiting(1, nspec, mat_blk, rdof, dof_el, ndofel, e,
         inpoel, coord, fd.Esuel(), U, P, phic, phic_p2, phip, phip_p2);
 
-      // TODO: Unit sum of mass fractions is maintained by using common limiter
-      // for all species densities. Investigate better approaches.
-      if (!g_inputdeck.get< tag::accuracy_test >()) {
-        tk::real phi_rhos_p1(1.0);
-        for (std::size_t k=0; k<nspec; ++k)
-          phi_rhos_p1 = std::min( phi_rhos_p1,
-            phic[multispecies::densityIdx(nspec, k)] );
-        // same limiter for all densities
-        for (std::size_t k=0; k<nspec; ++k)
-          phic[multispecies::densityIdx(nspec, k)] = phi_rhos_p1;
-      }
-
       // apply limiter function
       for (std::size_t c=0; c<ncomp; ++c)
       {
