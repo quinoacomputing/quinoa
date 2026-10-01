@@ -92,7 +92,8 @@ using multimatList = tk::TaggedTuple< brigand::list<
   tag::intsharp_param,   tk::real,
   tag::dt_sos_massavg,   int,
   tag::problem,          ProblemType,
-  tag::viscous,          bool
+  tag::viscous,          bool,
+  tag::strain_hardening, bool
 > >;
 
 // MultiSpecies

@@ -285,32 +285,45 @@ const std::array< std::array< std::size_t, 3 >, 3 > stressCmp{{
   {{3, 1, 5}},
   {{4, 5, 2}} }};
 
+//! \brief Packed-local stride per solid in the Newton stiff-solve arrays.
+//! \details 10 (9 g-tensor components + eps_p) when strain hardening is
+//!   active for this problem, 9 (g-tensor only, matching the pre-hardening
+//!   layout) when it is not -- see tag::strain_hardening, set in
+//!   LuaParser.cpp from whether any solid specifies a nonzero
+//!   hardening_c2. Must stay in lock-step with nstiffeq()/setStiffEqIdx()
+//!   in DGMultiMat.hpp.
+inline std::size_t stiffStride()
+{ return g_inputdeck.get< tag::multimat, tag::strain_hardening >() ? 10 : 9; }
+
 //! Get the index of the required material deformation gradient equation
-//! in the context of a list where only the g's (and eps_p) of solid
-//! materials are present, i.e. the compact packed-local layout used by the
-//! stiff (plasticity) Newton-solve machinery (x/x_star/jacobian arrays in
-//! DG.cpp and DGMultiMat.hpp's stiff_rhs()/balance_plastic_energy()).
+//! in the context of a list where only the g's (and eps_p, if strain
+//! hardening is active) of solid materials are present, i.e. the compact
+//! packed-local layout used by the stiff (plasticity) Newton-solve
+//! machinery (x/x_star/jacobian arrays in DG.cpp and DGMultiMat.hpp's
+//! stiff_rhs()/balance_plastic_energy()).
 //! If one needs to access the deformation tensor within the state array
 //! (the full ncomp-sized global solution vector) one should use deformIdx
-//! instead! Each solid now occupies a 10-wide packed-local block: 9
-//! deformation-gradient tensor components followed by eps_p (see
-//! solidEpsPIdx below) - do not conflate the two index families.
+//! instead! Each solid occupies a stiffStride()-wide packed-local block: 9
+//! deformation-gradient tensor components, followed by eps_p (see
+//! solidEpsPIdx below) only when strain hardening is active - do not
+//! conflate the two index families.
 //! \param[in] ksld Index of required solid
 //! \param[in] i Row-index of required tensor component
 //! \param[in] j Column-index of required tensor component
 //! \return Index of the required material deformation gradient equation
 //! in the context of a list where only the g's of solid materials are present.
 inline std::size_t solidTensorIdx( std::size_t ksld, std::size_t i, std::size_t j )
-{ return 10*ksld+(3*i+j); }
+{ return stiffStride()*ksld+(3*i+j); }
 
 //! Get the index of the required material equivalent plastic strain equation
 //! in the context of a list where only the g's (and eps_p) of solid
 //! materials are present. See solidTensorIdx above for the packed-local
-//! layout this belongs to.
+//! layout this belongs to. Only valid/called when strain hardening is
+//! active (stiffStride() == 10).
 //! \param[in] ksld Index of required solid
 //! \return Index of the required eps_p equation in the packed-local layout
 inline std::size_t solidEpsPIdx( std::size_t ksld )
-{ return 10*ksld+9; }
+{ return stiffStride()*ksld+9; }
 
 
 //@}

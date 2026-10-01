@@ -171,7 +171,7 @@ class MultiMat {
     {
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      return 10*numSolids(nmat, solidx);
+      return stiffStride()*numSolids(nmat, solidx);
     }
 
     //! Find how many 'non-stiff equations', which are the inverse
@@ -189,6 +189,8 @@ class MultiMat {
       stiffEqIdx.resize(nstiffeq(), 0);
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       std::size_t nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      bool hardening =
+        g_inputdeck.get< tag::multimat, tag::strain_hardening >();
       std::size_t icnt = 0;
       for (std::size_t k=0; k<nmat; ++k)
         if (solidx[k] > 0)
@@ -200,18 +202,32 @@ class MultiMat {
                 inciter::deformIdx(nmat, solidx[k], i, j);
               icnt++;
             }
-          stiffEqIdx[icnt] = inciter::epsPIdx(nmat, solidx[k]);
-          icnt++;
+          if (hardening) {
+            stiffEqIdx[icnt] = inciter::epsPIdx(nmat, solidx[k]);
+            icnt++;
+          }
         }
     }
 
     //! Locate the nonstiff equations.
     //! \param[out] nonStiffEqIdx list with pointers to nonstiff equations
+    //! \details The nonstiff equations are the complement of the stiff
+    //!   equations (see setStiffEqIdx()) within the full ncomp-sized
+    //!   component list. When strain hardening is disabled, eps_p's slot
+    //!   still exists in the solution vector but is excluded from the
+    //!   stiff set, so it is no longer true that the stiff set is simply
+    //!   the tail of the component list -- the complement must be
+    //!   computed explicitly rather than assumed contiguous.
     void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
     {
-      nonStiffEqIdx.resize(nnonstiffeq(), 0);
-      for (std::size_t icomp=0; icomp<nnonstiffeq(); icomp++)
-        nonStiffEqIdx[icomp] = icomp;
+      std::vector< std::size_t > stiffEqIdx;
+      setStiffEqIdx(stiffEqIdx);
+      std::unordered_set< std::size_t >
+        stiffSet(stiffEqIdx.begin(), stiffEqIdx.end());
+      nonStiffEqIdx.clear();
+      for (std::size_t icomp=0; icomp<m_ncomp; ++icomp)
+        if (!stiffSet.count(icomp))
+          nonStiffEqIdx.push_back(icomp);
     }
 
     //! Enforces the bounds of the defined stiff variables
@@ -226,6 +242,7 @@ class MultiMat {
       // strain (eps_p) to be non-negative for each solid. Higher-order
       // moments are left to the limiter's interface treatment instead of a
       // hard clamp here.
+      if (!g_inputdeck.get< tag::multimat, tag::strain_hardening >()) return;
       const auto ndof = g_inputdeck.get< tag::ndof >();
       std::size_t ksld = 0;
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -1291,6 +1308,8 @@ class MultiMat {
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
       const auto& solidx = inciter::g_inputdeck.get<
         tag::matidxmap, tag::solidx >();
+      bool hardening =
+        g_inputdeck.get< tag::multimat, tag::strain_hardening >();
 
       Assert( U.nprop() == rdof*m_ncomp, "Number of components in solution "
               "vector must equal "+ std::to_string(rdof*m_ncomp) );
@@ -1337,9 +1356,11 @@ class MultiMat {
               for (std::size_t j=0; j<3; ++j)
                 g[i][j] = state[inciter::deformIdx(nmat,solidx[k],i,j)];
 
-            // current eps_p (this solid's Newton-iterate value)
-            tk::real eps_p_cur =
-              std::max(0.0, state[inciter::epsPIdx(nmat,solidx[k])]);
+            // current eps_p (this solid's Newton-iterate value); pinned
+            // to zero when strain hardening is disabled, reducing the
+            // yield-stress law below to constant (perfect) plasticity
+            tk::real eps_p_cur = hardening ?
+              std::max(0.0, state[inciter::epsPIdx(nmat,solidx[k])]) : 0.0;
 
             // Compute Lp
             // Reference: Ortega, A. L., Lombardini, M., Pullin, D. I., &
@@ -1437,14 +1458,20 @@ class MultiMat {
                 }
 
             // eps_p rate = sqrt(2/3 * Lp:Lp), using the fully-scaled Lp
-            // (the same plastic velocity gradient that sources g_ij above)
-            tk::real Lp_contraction = 0.0;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                Lp_contraction += Lp[i][j]*Lp[i][j];
-            tk::real eps_p_rate = std::sqrt(2.0/3.0*Lp_contraction);
-            for (std::size_t idof=0; idof<ndof; ++idof)
-              s[9*ndof+idof] = B[idof] * eps_p_rate;
+            // (the same plastic velocity gradient that sources g_ij above).
+            // Only accumulated as a stiff unknown when strain hardening is
+            // active -- with hardening off, eps_p isn't part of the stiff
+            // set at all (see setStiffEqIdx()), so there is no RHS slot to
+            // write into.
+            if (hardening) {
+              tk::real Lp_contraction = 0.0;
+              for (std::size_t i=0; i<3; ++i)
+                for (std::size_t j=0; j<3; ++j)
+                  Lp_contraction += Lp[i][j]*Lp[i][j];
+              tk::real eps_p_rate = std::sqrt(2.0/3.0*Lp_contraction);
+              for (std::size_t idof=0; idof<ndof; ++idof)
+                s[9*ndof+idof] = B[idof] * eps_p_rate;
+            }
 
             auto wt = wgp[igp] * geoElem(e, 0);
 
@@ -1457,11 +1484,13 @@ class MultiMat {
                   std::size_t dofId = solidTensorIdx(ksld,i,j)*ndof+idof;
                   R(e, dofId) += wt * s[srcId];
                 }
-            for (std::size_t idof=0; idof<ndof; ++idof)
-            {
-              std::size_t srcId = 9*ndof+idof;
-              std::size_t dofId = solidEpsPIdx(ksld)*ndof+idof;
-              R(e, dofId) += wt * s[srcId];
+            if (hardening) {
+              for (std::size_t idof=0; idof<ndof; ++idof)
+              {
+                std::size_t srcId = 9*ndof+idof;
+                std::size_t dofId = solidEpsPIdx(ksld)*ndof+idof;
+                R(e, dofId) += wt * s[srcId];
+              }
             }
 
             ksld++;

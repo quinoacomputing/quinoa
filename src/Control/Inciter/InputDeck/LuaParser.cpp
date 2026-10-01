@@ -522,6 +522,17 @@ LuaParser::storeInputDeck(
           ntot += 10;
       }
       gideck.get< tag::ncomp >() = ntot;
+
+      // Strain hardening is only "on" if some solid actually specifies a
+      // nonzero hardening_c2 -- otherwise fall back to the pre-hardening,
+      // constant-yield-stress plasticity model (no eps_p stiff DOF), so a
+      // sanity-check run with hardening parameters omitted isolates
+      // whether a crash is caused by hardening itself.
+      bool hardening = false;
+      for (const auto& m : gideck.get< tag::material >())
+        for (auto c2 : m.get< tag::hardening_c2 >())
+          if (c2 > 0.0) hardening = true;
+      gideck.get< tag::multimat, tag::strain_hardening >() = hardening;
     }
 
     // Store species information

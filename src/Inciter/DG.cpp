@@ -3014,6 +3014,8 @@ DG::nonlinear_newton_stage( std::size_t e,
       const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       const auto diag_ndof = g_inputdeck.get< tag::ndof >();
+      bool hardening =
+        g_inputdeck.get< tag::multimat, tag::strain_hardening >();
       auto rim = DG::compute_stiff_rhs_local(e, x);
       std::size_t ksld = 0;
       for (std::size_t k=0; k<nmat; ++k) {
@@ -3026,8 +3028,10 @@ DG::nonlinear_newton_stage( std::size_t e,
             g[i][j] = x[solidTensorIdx(ksld,i,j)*diag_ndof];
             rim_g[i][j] = rim[solidTensorIdx(ksld,i,j)*diag_ndof];
           }
-        tk::real eps_p = x[solidEpsPIdx(ksld)*diag_ndof];
-        tk::real rim_eps_p = rim[solidEpsPIdx(ksld)*diag_ndof];
+        // eps_p has no packed-local slot when strain hardening is off
+        tk::real eps_p = hardening ? x[solidEpsPIdx(ksld)*diag_ndof] : 0.0;
+        tk::real rim_eps_p =
+          hardening ? rim[solidEpsPIdx(ksld)*diag_ndof] : 0.0;
 
         printf("  material %lu: alpha=%.6e eps_p=%.6e rim_eps_p=%.6e\n",
           k, alpha, eps_p, rim_eps_p);
