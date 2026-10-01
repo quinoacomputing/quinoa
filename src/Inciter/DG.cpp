@@ -2996,6 +2996,43 @@ DG::nonlinear_newton_stage( std::size_t e,
   if (niter > 0) m_imex_activeElem[m_stage] += 1;
   m_imex_maxiter = std::max(m_imex_maxiter, niter);
 
+  // Early-warning diagnostic: catch the stage at which a solid's
+  // deformation gradient first drifts from a physically plausible state
+  // (det(g) ~ O(1)) into one that will eventually trip
+  // cleanTraceMaterial()'s much wider reset threshold (det(g) outside
+  // [1e-3,1e3]). This fires several stages before the eventual
+  // reset/crash, which periodic field output is too coarse to catch.
+  // Self-throttling by construction: only prints on the actual
+  // plausible -> implausible transition for a given element/material in
+  // this stage, not on every stage, so it cannot flood the log the way an
+  // unconditional per-stage dump would.
+  {
+    auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+    const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
+    const auto diag_ndof = g_inputdeck.get< tag::ndof >();
+    std::size_t ksld = 0;
+    for (std::size_t k=0; k<nmat; ++k) {
+      if (solidx[k] == 0) continue;
+      std::array< std::array< tk::real, 3 >, 3 > g0{}, g1{};
+      for (std::size_t i=0; i<3; ++i)
+        for (std::size_t j=0; j<3; ++j) {
+          g0[i][j] = stage_base[solidTensorIdx(ksld,i,j)*diag_ndof];
+          g1[i][j] = x[solidTensorIdx(ksld,i,j)*diag_ndof];
+        }
+      auto det0 = tk::determinant(g0);
+      auto det1 = tk::determinant(g1);
+      bool was_fine = std::isfinite(det0) && det0 > 0.2 && det0 < 5.0;
+      bool now_bad = !std::isfinite(det1) || det1 < 0.2 || det1 > 5.0;
+      if (was_fine && now_bad) {
+        printf("Newton warning: element %lu mat %lu det(g) %e -> %e "
+               "(t=%e dt=%e stage=%lu niter=%lu success=%d)\n",
+               e, k, det0, det1, d->T(), d->Dt(), m_stage, niter,
+               solver_success?1:0);
+      }
+      ksld++;
+    }
+  }
+
   if (!solver_success) {
     printf("Stage Newton failed at element %lu\n", e);
     printf("Total iterations: %lu\n", niter);
