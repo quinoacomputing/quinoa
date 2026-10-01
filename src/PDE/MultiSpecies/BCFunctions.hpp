@@ -155,7 +155,7 @@ namespace inciter {
     } else if (Ma >= 0 && Ma < 1) {  // Subsonic outflow
       // For subsonic outflow, there is 1 incoming characteristic and 4
       // outgoing characteristics. Therefore, we calculate the ghost cell state
-      // by taking pressure from the outside and other quantities from the
+      // by taking temperature from the outside and other quantities from the
       // internal cell.
       std::vector< tk::real > massfrac_l(nspec,
         1.0/static_cast< tk::real >(nspec));
@@ -164,7 +164,8 @@ namespace inciter {
       Mixture mixr(nspec, massfrac_l, fp, Tl, mat_blk);
 
       ur[multispecies::energyIdx(nspec,0)] = mixr.totalenergy(rhol, v1l,
-        v2l, v3l, fp, mat_blk);
+        v2l, v3l, ft, mat_blk);
+      ur[ncomp+multispecies::temperatureIdx(nspec,0)] = ft;
     }
     // Otherwise, for supersonic outflow, all the characteristics are from
     // internal cell. Therefore, we calculate the ghost cell state using the
