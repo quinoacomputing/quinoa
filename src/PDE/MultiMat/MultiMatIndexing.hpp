@@ -247,6 +247,21 @@ inline tk::real volfracPRelaxLim()
 inline tk::real volfracSolidResetLim()
 { return 2.0e-02; }
 
+//! \brief Per-call relaxation fraction used by resetSolidTensors() to blend
+//!   a trace solid's g/stress/eps_p toward their target (undeformed/
+//!   unstressed) state, rather than snapping to it in one step.
+//! \details A hard snap injects a flux discontinuity at every shared face
+//!   sized to the FULL jump between the corrupted state and the target --
+//!   for a badly-diverged g (components O(1e3) instead of O(1)) that is
+//!   large enough to detonate a Newton failure on a neighboring element in
+//!   the very next stage. Since resetSolidTensors() is invoked again on any
+//!   subsequent stage where solidTensorUnphysical() still flags this
+//!   material, damping the step still converges geometrically to the target
+//!   (over roughly log(jump)/log(1/(1-factor)) stages) while bounding the
+//!   discontinuity injected into neighbors at each individual stage.
+inline tk::real solidResetRelaxFactor()
+{ return 0.25; }
+
 //! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.
 //! \param[in] k Index of required material

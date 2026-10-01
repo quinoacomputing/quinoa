@@ -790,24 +790,39 @@ resetSolidTensors(
   else
     new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
 
-  // Set g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not pressure)
+  // Blend g/stress/eps_p toward their target (spherical g / zero stress /
+  // zero eps_p) instead of snapping to it in one step. A hard snap makes the
+  // face flux at the very next stage jump by the FULL error (which can be
+  // O(1e3) for a badly-diverged g), large enough to blow up a neighboring
+  // element's Newton solve. Damping bounds that per-stage jump; since this
+  // element keeps re-triggering solidTensorUnphysical() on subsequent
+  // stages until it actually converges, the state still relaxes fully to
+  // the target over a few stages.
+  const auto relax = solidResetRelaxFactor();
+
+  // Blend g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not
+  // pressure)
   for (size_t i=0;i<3;++i)
     for (size_t j=0;j<3;++j) {
-      U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) = (i==j) ? new_gii : 0.0;
-      P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
-      // Clear higher DOFs for g and elastic stress
+      tk::real gtarget = (i==j) ? new_gii : 0.0;
+      U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) =
+        g[i][j] + relax * (gtarget - g[i][j]);
+      P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) *=
+        (1.0 - relax);
+      // Blend higher DOFs for g and elastic stress toward zero
       for (size_t l=1; l<rdof; ++l) {
-        U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) = 0.0;
-        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) = 0.0;
+        U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) *= (1.0 - relax);
+        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) *=
+          (1.0 - relax);
       }
     }
 
-  // Also reset accumulated equivalent plastic strain: a stale/corrupted
-  // eps_p history left behind by a g-reset would otherwise keep inflating
-  // the hardening-law yield stress indefinitely, even though the tensor
-  // state it was derived from has just been discarded as unreliable.
+  // Also blend accumulated equivalent plastic strain toward zero: a stale/
+  // corrupted eps_p history left behind by a g-reset would otherwise keep
+  // inflating the hardening-law yield stress indefinitely, even though the
+  // tensor state it was derived from has just been discarded as unreliable.
   for (size_t l=0; l<rdof; ++l)
-    U(e, epsPDofIdx(nmat, solidx[k], rdof, l)) = 0.0;
+    U(e, epsPDofIdx(nmat, solidx[k], rdof, l)) *= (1.0 - relax);
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
