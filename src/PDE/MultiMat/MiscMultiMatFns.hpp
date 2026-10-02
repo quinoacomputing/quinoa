@@ -82,6 +82,11 @@ solidTensorUnphysical(
   std::size_t e,
   const tk::Fields& U );
 
+//! Check if a locally-extracted deformation gradient tensor is degenerate
+bool
+degenerateDeformGrad(
+  const std::array< std::array< tk::real, 3 >, 3 >& g );
+
 //! Reset the solid tensors
 void
 resetSolidTensors(

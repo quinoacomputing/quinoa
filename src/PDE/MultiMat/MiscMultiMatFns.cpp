@@ -735,6 +735,19 @@ solidTensorUnphysical(
     for (size_t j=0;j<3;++j)
       g[i][j] = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0));
 
+  return degenerateDeformGrad(g);
+}
+
+bool
+degenerateDeformGrad(
+  const std::array< std::array< tk::real, 3 >, 3 >& g )
+// *****************************************************************************
+//  Check if a locally-extracted deformation gradient tensor is degenerate
+//! \param[in] g Inverse deformation gradient tensor
+//! \return true if g is degenerate/non-finite and should not be trusted for
+//!   stress/sound-speed evaluation; false if it is in a plausible range
+// *****************************************************************************
+{
   // det(g) = J^{-1} should be O(1) for any physically reasonable
   // deformation. Outside this range, g has degraded from advection/flux
   // noise rather than reflecting real material deformation.

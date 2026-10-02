@@ -585,8 +585,17 @@ class MultiMat {
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
 
             if (solidx[imat] > 0) {
+              // A degenerate g (not yet caught by cleanTraceMaterial(),
+              // which only runs after the full stage update) must not be
+              // fed into the stress EoS: WilkinsAluminum::CauchyStress()
+              // derives the Hencky strain directly from g with no upper
+              // bound, so a corrupted g here produces an enormous stress
+              // that then poisons the shared HLLC wave speed at every face
+              // this element touches. Fall back to the undeformed state.
+              static const std::array< std::array< tk::real, 3 >, 3 > idT{{
+                {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
               auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
-              alphamat, imat, gmat );
+              alphamat, imat, degenerateDeformGrad(gmat) ? idT : gmat );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -1370,9 +1379,16 @@ class MultiMat {
             // 414-441
             std::array< std::array< tk::real, 3 >, 3 > Lp;
 
-            // 1. Compute dev(sigma)
+            // 1. Compute dev(sigma). Guard against a degenerate g the same
+            // way as updatePrimitives(): WilkinsAluminum::CauchyStress() has
+            // no upper bound on the stress it returns for a bad g, and
+            // feeding that into Lp below would only drive g further from
+            // physical, compounding the degradation this Newton solve is
+            // trying to relax away.
+            static const std::array< std::array< tk::real, 3 >, 3 > idT{{
+              {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
-              alpha, k, g );
+              alpha, k, degenerateDeformGrad(g) ? idT : g );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
