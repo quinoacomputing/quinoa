@@ -22,6 +22,7 @@
 #include "Reconstruction.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MiscMultiMatFns.hpp"
+#include "MultiMat/MultiMatIndexing.hpp"
 #include "EoS/GetMatProp.hpp"
 
 namespace inciter {
@@ -916,6 +917,24 @@ surfInt_constP(
 
       // compute flux
       auto fl = flux( mat_blk, fn, state, v, wn_igp );
+
+      // Bounded diagnostic: flag an anomalously large Riemann flux at this
+      // internal face, which is what would inject a nonphysical jump into
+      // the density/momentum/energy of the neighboring elements (el, er) on
+      // this stage. Legitimate Taylor-impact fluxes (GPa-scale pressures,
+      // few-hundred m/s velocities) stay many orders of magnitude below this
+      // threshold, so this only fires on the actual blowup event -- it
+      // cannot flood the log the way an unconditional per-face dump would.
+      {
+        tk::real flmax = 0.0;
+        for (auto v_fl : fl) flmax = std::max(flmax, std::abs(v_fl));
+        if (flmax > 1.0e13) {
+          printf("Flux warning: t=%e face el=%lu er=%lu |fl|max=%e fl=",
+                 t, el, er, flmax);
+          for (auto v_fl : fl) printf(" %e", v_fl);
+          printf("\n");
+        }
+      }
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndof, ndof, wt, fn,
