@@ -642,6 +642,29 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
   for (std::size_t i=0; i<3; ++i)
     devH[i][i] -= trH/3.0;
 
+  // Hencky (logarithmic) strain for a real metal under even extreme plastic
+  // deformation stays O(1) -- e.g. a 10x stretch in one direction is only
+  // ln(10) ~ 2.3. g degraded by advection/flux noise (rather than real
+  // deformation) can slip past the upstream det(g) sanity checks -- e.g. a
+  // highly anisotropic g with det(g)~1 but eigenvalues like 1e3/1/1e-3 --
+  // and feed this function a devH with magnitude many orders beyond that.
+  // Since every consumer (elastic energy, deviatoric stress) scales directly
+  // with devH, cap its Frobenius norm here, at the source, rather than
+  // continuing to chase every way an upstream g can be degenerate.
+  tk::real normH = 0.0;
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      normH += devH[i][j]*devH[i][j];
+  normH = std::sqrt(normH);
+
+  const tk::real maxNormH = 10.0;
+  if (normH > maxNormH) {
+    auto scale = maxNormH / normH;
+    for (std::size_t i=0; i<3; ++i)
+      for (std::size_t j=0; j<3; ++j)
+        devH[i][j] *= scale;
+  }
+
   // Output devH
   return devH;
 }
