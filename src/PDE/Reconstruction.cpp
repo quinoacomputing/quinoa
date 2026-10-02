@@ -664,9 +664,14 @@ THINCFunction( std::size_t rdof,
   // If the majority material has no resolved gradient in this cell, the
   // interface normal is undefined. Proceeding would form exp(0)/... = 0/0 in
   // the tanh profile inversion below. In this degenerate case there is no
-  // interface to sharpen, so retain the TVD reconstruction already stored in
-  // alReco and return.
-  if (!std::isfinite(nMag) || nMag < 1.0e-8) return;
+  // interface to sharpen, so revert to first-order (since TVD limiter has not
+  // been applied, alSol is potentially non-monotone).
+  if (!std::isfinite(nMag) || nMag < 1.0e-8) {
+    for (std::size_t k=0; k<nmat; ++k) {
+      alReco[k] = alSol[k*rdof];
+    }
+    return;
+  }
 
   for (std::size_t i=0; i<3; ++i)
     nInt[i] /= nMag;
