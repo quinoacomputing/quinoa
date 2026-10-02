@@ -81,6 +81,20 @@ struct HLLCMultiMat {
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > gnl, gnr;
     std::vector< std::array< std::array< tk::real, 3 >, 3 > > asignnl, asignnr;
 
+    // Mirrors the det(g) criterion in solidTensorUnphysical(), but operates
+    // on a locally-extracted tensor instead of indexing into the global
+    // solution field (not available here). Used below to keep a degenerate
+    // solid g-tensor from poisoning the shared wave speeds Sl/Sm/Sr -- a bad
+    // sound speed from one trace cell's broken g would otherwise corrupt the
+    // (Sm-Sl)/(Sm-Sr) denominators used in every material's star-state
+    // update at this face, including a perfectly healthy neighboring fluid.
+    auto degenerateG = []( const std::array< std::array< tk::real, 3 >, 3 >& g ) {
+      auto detg = tk::determinant(g);
+      return (!std::isfinite(detg) || detg < 1e-3 || detg > 1e3);
+    };
+    const std::array< std::array< tk::real, 3 >, 3 > idT{{
+      {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
+
     for (std::size_t k=0; k<nmat; ++k) {
       // Left state
       apl[k] = u[0][ncomp+pressureIdx(nmat, k)];
@@ -105,8 +119,8 @@ struct HLLCMultiMat {
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnl.push_back(tk::rotateTensor(gl[k], fn));
       auto amatl = mat_blk[k].compute< EOS::soundspeed >(
-        u[0][densityIdx(nmat, k)], apl[k],
-        u[0][volfracIdx(nmat, k)], k, gnl[k] );
+        u[0][densityIdx(nmat, k)], apl[k], u[0][volfracIdx(nmat, k)], k,
+        (solidx[k] > 0 && degenerateG(gnl[k])) ? idT : gnl[k] );
 
       // Right state
       apr[k] = u[1][ncomp+pressureIdx(nmat, k)];
@@ -131,8 +145,8 @@ struct HLLCMultiMat {
       // rotate deformation gradient tensor for speed of sound in normal dir
       gnr.push_back(tk::rotateTensor(gr[k], fn));
       auto amatr = mat_blk[k].compute< EOS::soundspeed >(
-        u[1][densityIdx(nmat, k)], apr[k],
-        u[1][volfracIdx(nmat, k)], k, gnr[k] );
+        u[1][densityIdx(nmat, k)], apr[k], u[1][volfracIdx(nmat, k)], k,
+        (solidx[k] > 0 && degenerateG(gnr[k])) ? idT : gnr[k] );
 
       // Mixture speed of sound
       acl += u[0][densityIdx(nmat, k)] * amatl * amatl;
