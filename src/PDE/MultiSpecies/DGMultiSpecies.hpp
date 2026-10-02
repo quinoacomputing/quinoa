@@ -888,7 +888,7 @@ class MultiSpecies {
 
         // Check if this BC is symmetry by comparing function pointers.
         // Both symmetry and slip-wall are configured with the symmetry function.
-        const auto* target = bstatefn.target< decltype(&symmetry) >();
+        const auto* target = bstatefn.template target< decltype(&symmetry) >();
         if (target == nullptr || *target != &symmetry) {
           continue;
         }
