@@ -642,22 +642,27 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
   for (std::size_t i=0; i<3; ++i)
     devH[i][i] -= trH/3.0;
 
-  // Hencky (logarithmic) strain for a real metal under even extreme plastic
-  // deformation stays O(1) -- e.g. a 10x stretch in one direction is only
-  // ln(10) ~ 2.3. g degraded by advection/flux noise (rather than real
-  // deformation) can slip past the upstream det(g) sanity checks -- e.g. a
-  // highly anisotropic g with det(g)~1 but eigenvalues like 1e3/1/1e-3 --
-  // and feed this function a devH with magnitude many orders beyond that.
-  // Since every consumer (elastic energy, deviatoric stress) scales directly
-  // with devH, cap its Frobenius norm here, at the source, rather than
-  // continuing to chase every way an upstream g can be degenerate.
+  // devH is *elastic* Hencky strain -- the plastic relaxation (Lp) is
+  // continuously driving it back toward the yield strain, which for a
+  // typical metal (e.g. aluminum: mu~25 GPa, yield_stress~300 MPa) is
+  // yield_stress/(2*mu) ~ 1e-2. A g degraded by advection/flux noise
+  // (rather than real deformation) can slip past the upstream det(g)
+  // sanity checks -- e.g. a highly anisotropic g with det(g)~1 but
+  // eigenvalues like 1e3/1/1e-3 -- and feed this function a devH many
+  // orders beyond that physical scale. Since every consumer (elastic
+  // energy, deviatoric stress = 2*mu*devH) scales directly with devH, cap
+  // its Frobenius norm here, at the source, generously above the yield
+  // strain (to tolerate real elastic loading/unloading transients and
+  // momentary plastic overshoot before relaxation catches up) but far
+  // below the magnitudes that correspond to a corrupted tensor, rather
+  // than continuing to chase every way an upstream g can be degenerate.
   tk::real normH = 0.0;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       normH += devH[i][j]*devH[i][j];
   normH = std::sqrt(normH);
 
-  const tk::real maxNormH = 10.0;
+  const tk::real maxNormH = 0.5;
   if (normH > maxNormH) {
     auto scale = maxNormH / normH;
     for (std::size_t i=0; i<3; ++i)
