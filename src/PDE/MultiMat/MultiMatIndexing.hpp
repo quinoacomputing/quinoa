@@ -262,6 +262,24 @@ inline tk::real volfracSolidResetLim()
 inline tk::real solidResetRelaxFactor()
 { return 0.25; }
 
+//! \brief Floor on solid volume fraction below which a solid's elastic
+//!   stress/plastic-relaxation physics is skipped outright: the deformation
+//!   gradient is treated as the identity (zero deviatoric stress) directly,
+//!   rather than computing Cauchy stress/Newton plastic relaxation from a g
+//!   that, at this volume fraction, is driven almost entirely by advection/
+//!   interface-sharpening noise rather than real deformation. This is a
+//!   proactive bypass -- applied unconditionally for any alpha below this
+//!   floor, before a bad g has a chance to produce a bad stress -- rather
+//!   than the reactive cleanup in cleanTraceMaterial()/solidTensorUnphysical(),
+//!   which only runs after a stage has already baked a degraded g into
+//!   stress/flux. Matches the a_min already used by the plastic-relaxation
+//!   damping (see stiff_rhs()/balance_plastic_energy()): below that value the
+//!   damping already drives rel_factor to zero, so this just makes that
+//!   boundary a hard skip of the stress computation itself, instead of a
+//!   soft ramp applied after the fact.
+inline tk::real solidPhysicsAlphaFloor()
+{ return 1.0e-04; }
+
 //! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.
 //! \param[in] k Index of required material

@@ -592,10 +592,18 @@ class MultiMat {
               // bound, so a corrupted g here produces an enormous stress
               // that then poisons the shared HLLC wave speed at every face
               // this element touches. Fall back to the undeformed state.
+              // Also bypass the stress EoS proactively -- before g has a
+              // chance to degrade at all -- for any trace solid below
+              // solidPhysicsAlphaFloor(): at that volume fraction, g is
+              // driven almost entirely by advection/interface-sharpening
+              // noise rather than real deformation, so computing elastic
+              // stress from it just injects noise into the shared flux.
               static const std::array< std::array< tk::real, 3 >, 3 > idT{{
                 {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
               auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
-              alphamat, imat, degenerateDeformGrad(gmat) ? idT : gmat );
+              alphamat, imat,
+              (alphamat < solidPhysicsAlphaFloor() || degenerateDeformGrad(gmat))
+                ? idT : gmat );
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -1384,11 +1392,18 @@ class MultiMat {
             // no upper bound on the stress it returns for a bad g, and
             // feeding that into Lp below would only drive g further from
             // physical, compounding the degradation this Newton solve is
-            // trying to relax away.
+            // trying to relax away. Also skip proactively, before g has a
+            // chance to degrade, for any trace solid below
+            // solidPhysicsAlphaFloor() (see updatePrimitives()) -- with
+            // dev(sigma)=0 there, phi<=0 below and this material's Lp (and
+            // thus its contribution to the Newton stiff solve) is exactly
+            // zero rather than merely damped by the a_tilde ramp further
+            // down.
             static const std::array< std::array< tk::real, 3 >, 3 > idT{{
               {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
+            bool traceSolid = alpha < solidPhysicsAlphaFloor();
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
-              alpha, k, degenerateDeformGrad(g) ? idT : g );
+              alpha, k, (traceSolid || degenerateDeformGrad(g)) ? idT : g );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
