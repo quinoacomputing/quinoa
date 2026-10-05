@@ -540,7 +540,7 @@ ALE::meshvelbc( tk::real maxv )
       auto mult = g_inputdeck.get< tag::ale, tag::vortmult >();
       for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
         for (std::size_t p=0; p<m_vorticity[0].size(); ++p)
-          m_w(p,j) *= std::max( 0.0, 1.0 - mult*m_vorticity[0][p]/maxv );
+          m_w(p,j) *= 0.25 * std::max( 0.0, 1.0 - mult*m_vorticity[0][p]/maxv );
     }
 
     // Set mesh velocity smoother linear solve boundary conditions
@@ -949,13 +949,8 @@ ALE::needVelocityDerivatives() const
 // *****************************************************************************
 {
   const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-  if (smoother == ctr::MeshVelocitySmootherType::HELMHOLTZ)
-    return true;
-
-  const auto eps = std::numeric_limits< tk::real >::epsilon();
-  return smoother == ctr::MeshVelocitySmootherType::LAPLACE &&
-    (std::abs(g_inputdeck.get< tag::ale, tag::vortmult >()) > eps ||
-     !zeroMeshForce());
+  if (smoother == ctr::MeshVelocitySmootherType::NONE) return false;
+  else return true;
 }
 
 #include "NoWarning/ale.def.h"
