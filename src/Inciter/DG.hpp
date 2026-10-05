@@ -123,12 +123,6 @@ class DG : public CBase_DG {
                  const std::vector< std::vector< tk::real > >& u,
                  const std::vector< std::vector< tk::real > >& prim );
 
-    //! Receive chare-boundary reconstructed data from neighboring chares
-    void comreco( int fromch,
-                  const std::vector< std::size_t >& tetid,
-                  const std::vector< std::vector< tk::real > >& u,
-                  const std::vector< std::vector< tk::real > >& prim );
-
     //! Receive chare-boundary ghost data from neighboring chares
     void comsol( int fromch,
                  std::size_t fromstage,
@@ -234,7 +228,6 @@ class DG : public CBase_DG {
       p | m_nnod;
       p | m_nrefine;
       p | m_nsmooth;
-      p | m_nreco;
       p | m_nale;
       p | m_nbnorm;
       p | m_u;
@@ -309,8 +302,6 @@ class DG : public CBase_DG {
     std::size_t m_nrefine;
     //! Counter signaling that we have received all smoothed ndof
     std::size_t m_nsmooth;
-    //! Counter signaling that we have received all our reconstructed ghost data
-    std::size_t m_nreco;
     //! Counter signaling that we have received all ALE ghost mesh updates
     std::size_t m_nale;
     //! Counter for receiving boundary point normals

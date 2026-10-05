@@ -107,7 +107,6 @@ DG::DG( const CProxy_Discretization& disc,
   m_nnod( 0 ),
   m_nrefine( 0 ),
   m_nsmooth( 0 ),
-  m_nreco( 0 ),
   m_nale( 0 ),
   m_nbnorm( 0 ),
   m_nstiffeq( g_dgpde[Disc()->MeshId()].nstiffeq() ),
@@ -195,7 +194,6 @@ DG::DG( const CProxy_Discretization& disc,
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4ale();
     thisProxy[ thisIndex ].wait4nod();
-    thisProxy[ thisIndex ].wait4reco();
   }
 
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
@@ -815,68 +813,12 @@ DG::reco()
       myGhosts()->m_fd, myGhosts()->m_esup, myGhosts()->m_inpoel,
       myGhosts()->m_coord, m_u, m_p, pref, m_ndof );
 
-  // Send reconstructed solution to neighboring chares
-  if (myGhosts()->m_sendGhost.empty())
-    comreco_complete();
-  else
-    for(const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
-      std::vector< std::size_t > tetid( ghostdata.size() );
-      std::vector< std::vector< tk::real > > u( ghostdata.size() ),
-                                             prim( ghostdata.size() );
-      std::size_t j = 0;
-      for(const auto& i : ghostdata) {
-        Assert( i < myGhosts()->m_fd.Esuel().size()/4, "Sending reconstructed ghost "
-          "data" );
-        tetid[j] = i;
-        u[j] = m_u[i];
-        prim[j] = m_p[i];
-        ++j;
-      }
-      thisProxy[ cid ].comreco( thisIndex, tetid, u, prim );
-    }
-
-  ownreco_complete();
-}
-
-void
-DG::comreco( int fromch,
-             const std::vector< std::size_t >& tetid,
-             const std::vector< std::vector< tk::real > >& u,
-             const std::vector< std::vector< tk::real > >& prim )
-// *****************************************************************************
-//  Receive chare-boundary reconstructed ghost data from neighboring chares
-//! \param[in] fromch Sender chare id
-//! \param[in] tetid Ghost tet ids we receive solution data for
-//! \param[in] u Reconstructed high-order solution
-//! \param[in] prim Limited high-order primitive quantities
-//! \details This function receives contributions to the reconstructed solution
-//!   from fellow chares.
-// *****************************************************************************
-{
-  Assert( u.size() == tetid.size(), "Size mismatch in DG::comreco()" );
-  Assert( prim.size() == tetid.size(), "Size mismatch in DG::comreco()" );
-
-  // Find local-to-ghost tet id map for sender chare
-  const auto& n = tk::cref_find( myGhosts()->m_ghost, fromch );
-
-  for (std::size_t i=0; i<tetid.size(); ++i) {
-    auto j = tk::cref_find( n, tetid[i] );
-    Assert( j >= myGhosts()->m_fd.Esuel().size()/4,
-      "Receiving solution non-ghost data" );
-    auto b = tk::cref_find( myGhosts()->m_bid, j );
-    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
-    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
-    m_uc[1][b] = u[i];
-    m_pc[1][b] = prim[i];
-  }
-
-  // if we have received all solution ghost contributions from neighboring
-  // chares (chares we communicate along chare-boundary faces with), and
-  // contributed our solution to these neighbors, proceed to limiting
-  if (++m_nreco == myGhosts()->m_sendGhost.size()) {
-    m_nreco = 0;
-    comreco_complete();
-  }
+  // Reconstruction only needs cell averages of neighboring (ghost) cells,
+  // which are already available from the solution ghost exchange (comsol).
+  // Limiting likewise only needs local gradients and neighboring cell
+  // averages, so it can proceed immediately without a separate
+  // chare-boundary exchange of the reconstructed (but unlimited) solution.
+  lim();
 }
 
 void
@@ -886,23 +828,8 @@ DG::lim()
 // *****************************************************************************
 {
   auto d = Disc();
-  auto gid = d->Gid();
-  auto bid = d->Bid();
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
-
-  // Combine own and communicated contributions of unlimited solution, and
-  // if a p-adaptive algorithm is used, degrees of freedom in cells
-  for (const auto& [boundary, localtet] : myGhosts()->m_bid) {
-    Assert( m_uc[1][localtet].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[1][localtet].size() == m_p.nprop(), "ncomp size mismatch" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(boundary,c) = m_uc[1][localtet][c];
-    }
-    for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(boundary,c) = m_pc[1][localtet][c];
-    }
-  }
 
   if (rdof > 1) {
     g_dgpde[d->MeshId()].limit( d->T(), pref, myGhosts()->m_geoFace,
@@ -1489,7 +1416,6 @@ DG::solve( tk::real newdt )
   thisProxy[ thisIndex ].wait4sol();
   if (pref) thisProxy[ thisIndex ].wait4refine();
   thisProxy[ thisIndex ].wait4smooth();
-  thisProxy[ thisIndex ].wait4reco();
   thisProxy[ thisIndex ].wait4lim();
   thisProxy[ thisIndex ].wait4ale();
   thisProxy[ thisIndex ].wait4nod();

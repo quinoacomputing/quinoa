@@ -48,10 +48,6 @@ module dg {
       entry void comsmooth( int fromch,
                             const std::vector< std::size_t >& tetid,
                             const std::vector< std::size_t >& ndof );
-      entry void comreco( int fromch,
-                          const std::vector< std::size_t >& tetid,
-                          const std::vector< std::vector< tk::real > >& u,
-                          const std::vector< std::vector< tk::real > >& prim );
       entry void comsol( int fromch,
                          std::size_t fromstage,
                          const std::vector< std::size_t >& tetid,
@@ -98,10 +94,6 @@ module dg {
         when ownsmooth_complete(), comsmooth_complete() serial "smooth" { reco(); }
       }
 
-      entry void wait4reco() {
-        when ownreco_complete(), comreco_complete() serial "reco"
-        { lim(); } }
-
       entry void wait4lim() {
         when ownlim_complete(), comlim_complete() serial "lim" { ALEComm(); } }
 
@@ -122,8 +114,6 @@ module dg {
       entry void comrefine_complete();
       entry void ownsmooth_complete();
       entry void comsmooth_complete();
-      entry void ownreco_complete();
-      entry void comreco_complete();
       entry void ownlim_complete();
       entry void comlim_complete();
       entry void ownnod_complete( CkCallback c, const std::unordered_map< std::size_t, std::size_t >& addedTets );

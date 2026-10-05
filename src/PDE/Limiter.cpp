@@ -320,7 +320,6 @@ VertexBasedCompflow_P1(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
-  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -335,7 +334,6 @@ VertexBasedCompflow_P1(
 // //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] flux Riemann flux function to use
-//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for compflow.
@@ -355,8 +353,8 @@ VertexBasedCompflow_P1(
     // Indicator based on momentum flux jump
     std::set< std::size_t > vars;
     for (std::size_t i=1; i<=3; ++i) vars.insert(i);
-    MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+    MarkShockCells(false, nelem, 1, rdof, mat_blk, ndofel,
+      inpoel, coord, fd, geoFace, geoElem, flux, U, P,
       vars, shockmarker);
   }
 
@@ -412,7 +410,6 @@ VertexBasedCompflow_P2(
   [[maybe_unused]] const std::unordered_map< std::size_t, std::size_t >& bid,
   [[maybe_unused]] const std::vector< std::vector<tk::real> >& mtInv,
   const tk::FluxFn& flux,
-  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   std::vector< std::size_t >& shockmarker )
 // *****************************************************************************
@@ -431,7 +428,6 @@ VertexBasedCompflow_P2(
 //!   global node ids (key)
 //! \param[in] mtInv Inverse of Taylor mass matrix
 //! \param[in] flux Riemann flux function to use
-//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] shockmarker Shock detection marker array
 //! \details This vertex-based limiter function should be called for compflow.
@@ -451,8 +447,8 @@ VertexBasedCompflow_P2(
     // Indicator based on momentum flux jump
     std::set< std::size_t > vars;
     for (std::size_t i=1; i<=3; ++i) vars.insert(i);
-    MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+    MarkShockCells(false, nelem, 1, rdof, mat_blk, ndofel,
+      inpoel, coord, fd, geoFace, geoElem, flux, U, P,
       vars, shockmarker);
   }
 
@@ -557,8 +553,8 @@ VertexBasedMultiMat_P1(
     // Indicator based on momentum flux jump
     std::set< std::size_t > vars;
     for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
-    MarkShockCells(false, nelem, nmat, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+    MarkShockCells(false, nelem, nmat, rdof, mat_blk, ndofel,
+      inpoel, coord, fd, geoFace, geoElem, flux, U, P,
       vars, shockmarker);
   }
 
@@ -735,8 +731,8 @@ VertexBasedMultiMat_P2(
     // Indicator based on momentum flux jump
     std::set< std::size_t > vars;
     for (std::size_t i=0; i<3; ++i) vars.insert(momentumIdx(nmat, i));
-    MarkShockCells(pref, nelem, nmat, ndof, rdof, mat_blk, ndofel,
-      inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+    MarkShockCells(pref, nelem, nmat, rdof, mat_blk, ndofel,
+      inpoel, coord, fd, geoFace, geoElem, flux, U, P,
       vars, shockmarker);
   }
 
@@ -966,7 +962,6 @@ VertexBasedMultiSpecies_P1(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
-  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nspec,
@@ -983,7 +978,6 @@ VertexBasedMultiSpecies_P1(
 //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] flux Riemann flux function to use
-//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order primitive vector which gets limited
 //! \param[in] nspec Number of species in this PDE system
@@ -1006,8 +1000,8 @@ VertexBasedMultiSpecies_P1(
     std::set< std::size_t > vars;
     for (std::size_t i=0; i<3; ++i)
       vars.insert(multispecies::momentumIdx(nspec, i));
-    MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk,
-      ndofel, inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+    MarkShockCells(false, nelem, 1, rdof, mat_blk,
+      ndofel, inpoel, coord, fd, geoFace, geoElem, flux, U, P,
       vars, shockmarker);
   }
 
@@ -1092,7 +1086,6 @@ VertexBasedMultiSpecies_P2(
   const tk::Fields& geoElem,
   const tk::UnsMesh::Coords& coord,
   const tk::FluxFn& flux,
-  const std::vector< std::size_t >& solidx,
   tk::Fields& U,
   tk::Fields& P,
   std::size_t nspec,
@@ -1109,7 +1102,6 @@ VertexBasedMultiSpecies_P2(
 //! \param[in] geoElem Element geometry array
 //! \param[in] coord Array of nodal coordinates
 //! \param[in] flux Riemann flux function to use
-//! \param[in] solidx Solid material index indicator
 //! \param[in,out] U High-order solution vector which gets limited
 //! \param[in,out] P High-order primitive vector which gets limited
 //! \param[in] nspec Number of species in this PDE system
@@ -1130,8 +1122,8 @@ VertexBasedMultiSpecies_P2(
     std::set< std::size_t > vars;
     for (std::size_t i=0; i<3; ++i)
       vars.insert(multispecies::momentumIdx(nspec, i));
-    MarkShockCells(false, nelem, 1, ndof, rdof, mat_blk,
-      ndofel, inpoel, coord, fd, geoFace, geoElem, flux, solidx, U, P,
+    MarkShockCells(false, nelem, 1, rdof, mat_blk,
+      ndofel, inpoel, coord, fd, geoFace, geoElem, flux, U, P,
       vars, shockmarker);
   }
 
@@ -2491,7 +2483,6 @@ interfaceIndicator( std::size_t nmat,
 void MarkShockCells ( const bool pref,
                       const std::size_t nelem,
                       const std::size_t nmat,
-                      const std::size_t ndof,
                       const std::size_t rdof,
                       const std::vector< inciter::EOS >& mat_blk,
                       const std::vector< std::size_t >& ndofel,
@@ -2501,7 +2492,6 @@ void MarkShockCells ( const bool pref,
                       [[maybe_unused]] const tk::Fields& geoFace,
                       const tk::Fields& geoElem,
                       const tk::FluxFn& flux,
-                      const std::vector< std::size_t >& solidx,
                       const tk::Fields& U,
                       const tk::Fields& P,
                       const std::set< std::size_t >& vars,
@@ -2512,7 +2502,6 @@ void MarkShockCells ( const bool pref,
 //! \param[in] pref Indicator for p-adaptive algorithm
 //! \param[in] nelem Number of elements
 //! \param[in] nmat Number of materials in this PDE system
-//! \param[in] ndof Maximum number of degrees of freedom
 //! \param[in] rdof Maximum number of reconstructed degrees of freedom
 //! \param[in] mat_blk EOS material block
 //! \param[in] ndofel Vector of local number of degrees of freedome
@@ -2522,7 +2511,6 @@ void MarkShockCells ( const bool pref,
 //! \param[in] geoFace Face geometry array
 //! \param[in] geoElem Element geometry array
 //! \param[in] flux Flux function to use
-//! \param[in] solidx Solid material index indicator
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
 //! \param[in] vars Vector of variable indices to evaluate flux jump
@@ -2537,16 +2525,24 @@ void MarkShockCells ( const bool pref,
 {
   const auto coeff = g_inputdeck.get< tag::shock_detector_coeff >();
 
-  std::vector< tk::real > IC(U.nunk(), 0.0);
-  const auto& esuf = fd.Esuf();
-  const auto& inpofa = fd.Inpofa();
+  for (std::size_t e=0; e<nelem; ++e) shockmarker[e] = 0;
 
-  const auto& cx = coord[0];
-  const auto& cy = coord[1];
-  const auto& cz = coord[2];
+  // Threshold against which the interface indicator is compared for
+  // element e, to decide if e contains a discontinuity
+  auto threshold = [&]( std::size_t e ){
+    std::size_t dof_el = pref ? ndofel[e] : rdof;
+    tk::real power = (dof_el == 10) ? 1.5 : 1.0;
+    return coeff * std::pow(geoElem(e, 4), power);
+  };
+
+  const auto& esuf = fd.Esuf();
+  const auto& localFaceId = fd.FaceLocalId();
 
   auto ncomp = U.nprop()/rdof;
   auto nprim = P.nprop()/rdof;
+
+  // Only the P0 (cell-averaged) solution is used below
+  const std::vector< tk::real > B(1, 1.0);
 
   std::array< std::vector< tk::real >, 2 > state;
   state[0].resize(ncomp+nprim);
@@ -2560,45 +2556,14 @@ void MarkShockCells ( const bool pref,
     std::size_t el = static_cast< std::size_t >(esuf[2*f]);
     std::size_t er = static_cast< std::size_t >(esuf[2*f+1]);
 
-    // When the number of gauss points for the left and right element are
-    // different, choose the larger ng
-    auto ng_l = tk::NGfa(ndofel[el]);
-    auto ng_r = tk::NGfa(ndofel[er]);
+    // face normal
+    std::array< tk::real, 3 > fn{{geoFace(f,1), geoFace(f,2), geoFace(f,3)}};
 
-    auto ng = std::max( ng_l, ng_r );
+    auto f_Lid = static_cast< std::size_t >(localFaceId[2*f]);
+    auto f_Rid = static_cast< std::size_t >(localFaceId[2*f+1]);
 
-    std::array< std::vector< tk::real >, 2 > coordgp
-      { std::vector<tk::real>(ng), std::vector<tk::real>(ng) };
-    std::vector< tk::real > wgp( ng );
-
-    tk::GaussQuadratureTri( ng, coordgp, wgp );
-
-    // Extract the element coordinates
-    std::array< std::array< tk::real, 3>, 4 > coordel_l {{
-      {{ cx[ inpoel[4*el  ] ], cy[ inpoel[4*el  ] ], cz[ inpoel[4*el  ] ] }},
-      {{ cx[ inpoel[4*el+1] ], cy[ inpoel[4*el+1] ], cz[ inpoel[4*el+1] ] }},
-      {{ cx[ inpoel[4*el+2] ], cy[ inpoel[4*el+2] ], cz[ inpoel[4*el+2] ] }},
-      {{ cx[ inpoel[4*el+3] ], cy[ inpoel[4*el+3] ], cz[ inpoel[4*el+3] ] }} }};
-
-    std::array< std::array< tk::real, 3>, 4 > coordel_r {{
-      {{ cx[ inpoel[4*er  ] ], cy[ inpoel[4*er  ] ], cz[ inpoel[4*er  ] ] }},
-      {{ cx[ inpoel[4*er+1] ], cy[ inpoel[4*er+1] ], cz[ inpoel[4*er+1] ] }},
-      {{ cx[ inpoel[4*er+2] ], cy[ inpoel[4*er+2] ], cz[ inpoel[4*er+2] ] }},
-      {{ cx[ inpoel[4*er+3] ], cy[ inpoel[4*er+3] ], cz[ inpoel[4*er+3] ] }} }};
-
-    // Compute the determinant of Jacobian matrix
-    auto detT_l =
-      tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], coordel_l[3] );
-    auto detT_r =
-      tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], coordel_r[3] );
-
-    std::array< std::array< tk::real, 3>, 3 > coordfa {{
-      {{ cx[ inpofa[3*f  ] ], cy[ inpofa[3*f  ] ], cz[ inpofa[3*f  ] ] }},
-      {{ cx[ inpofa[3*f+1] ], cy[ inpofa[3*f+1] ], cz[ inpofa[3*f+1] ] }},
-      {{ cx[ inpofa[3*f+2] ], cy[ inpofa[3*f+2] ], cz[ inpofa[3*f+2] ] }} }};
-
-    std::array< tk::real, 3 >
-      fn{{ geoFace(f,1), geoFace(f,2), geoFace(f,3) }};
+    auto ref_gp_l = tk::fc_coord[f_Lid];
+    auto ref_gp_r = tk::fc_coord[f_Rid];
 
     // Numerator and denominator of the shock indicator
     tk::real numer(0.0), denom(0.0);
@@ -2606,64 +2571,26 @@ void MarkShockCells ( const bool pref,
     fl_jump.resize(3, 0.0);
     fl_avg.resize(3, 0.0);
 
-    for (std::size_t igp=0; igp<ng; ++igp) {
-      auto gp = tk::eval_gp( igp, coordfa, coordgp );
-      std::size_t dof_el, dof_er;
-      if (rdof > ndof)
-      {
-        dof_el = rdof;
-        dof_er = rdof;
+    // Evaluate P0 solution at the face-center
+    tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
+      nmat, el, 1, inpoel, coord, geoElem, ref_gp_l, B, U, P, state[0]);
+    tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
+      nmat, er, 1, inpoel, coord, geoElem, ref_gp_r, B, U, P, state[1]);
+
+    // Evaluate the flux
+    auto fl = flux( ncomp, mat_blk, state[0], {} );
+    auto fr = flux( ncomp, mat_blk, state[1], {} );
+
+    std::size_t i(0);
+    for (const auto& c : vars) {
+      tk::real fn_l(0.0), fn_r(0.0);
+      for(std::size_t idir = 0; idir < 3; idir++) {
+        fn_l += fl[c][idir] * fn[idir];
+        fn_r += fr[c][idir] * fn[idir];
       }
-      else
-      {
-        dof_el = ndofel[el];
-        dof_er = ndofel[er];
-      }
-      std::array< tk::real, 3> ref_gp_l{
-        tk::Jacobian( coordel_l[0], gp, coordel_l[2], coordel_l[3] ) / detT_l,
-        tk::Jacobian( coordel_l[0], coordel_l[1], gp, coordel_l[3] ) / detT_l,
-        tk::Jacobian( coordel_l[0], coordel_l[1], coordel_l[2], gp ) / detT_l };
-      std::array< tk::real, 3> ref_gp_r{
-        tk::Jacobian( coordel_r[0], gp, coordel_r[2], coordel_r[3] ) / detT_r,
-        tk::Jacobian( coordel_r[0], coordel_r[1], gp, coordel_r[3] ) / detT_r,
-        tk::Jacobian( coordel_r[0], coordel_r[1], coordel_r[2], gp ) / detT_r };
-      std::vector< tk::real > B_l(dof_el), B_r(dof_er);
-      tk::eval_basis( dof_el, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
-      tk::eval_basis( dof_er, ref_gp_r[0], ref_gp_r[1], ref_gp_r[2], B_r );
-
-      // Evaluate the high order solution at the qudrature point
-      tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
-        nmat, el, dof_el, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, state[0]);
-      tk::evalPolynomialSol(mat_blk, 0, ncomp, nprim, rdof,
-        nmat, er, dof_er, inpoel, coord, geoElem, ref_gp_r, B_r, U, P, state[1]);
-
-      // Force deformation unknown to first order
-      for (std::size_t k=0; k<nmat; ++k)
-        if (solidx[k] > 0)
-          for (std::size_t i=0; i<3; ++i)
-            for (std::size_t j=0; j<3; ++j)
-            {
-              state[0][deformIdx(nmat, solidx[k], i, j)] = U(el,deformDofIdx(
-                nmat, solidx[k], i, j, rdof, 0));
-              state[1][deformIdx(nmat, solidx[k], i, j)] = U(er,deformDofIdx(
-                nmat, solidx[k], i, j, rdof, 0));
-            }
-
-      // Evaluate the flux
-      auto fl = flux( ncomp, mat_blk, state[0], {} );
-      auto fr = flux( ncomp, mat_blk, state[1], {} );
-
-      std::size_t i(0);
-      for (const auto& c : vars) {
-        tk::real fn_l(0.0), fn_r(0.0);
-        for(std::size_t idir = 0; idir < 3; idir++) {
-          fn_l += fl[c][idir] * fn[idir];
-          fn_r += fr[c][idir] * fn[idir];
-        }
-        fl_jump[i] += wgp[igp] * (fn_l - fn_r) * (fn_l - fn_r);
-        fl_avg[i]  += wgp[igp] * (fn_l + fn_r) * (fn_l + fn_r) * 0.25;
-        ++i;
-      }
+      fl_jump[i] = (fn_l - fn_r) * (fn_l - fn_r);
+      fl_avg[i]  = (fn_l + fn_r) * (fn_l + fn_r) * 0.25;
+      ++i;
     }
 
     // Evaluate the numerator and denominator
@@ -2672,27 +2599,12 @@ void MarkShockCells ( const bool pref,
       denom += std::sqrt(fl_avg[idir]);
     }
 
+    // Mark as shocked cell
     tk::real Ind(0.0);
     if(denom > 1e-8)
       Ind = numer / denom;
-    IC[el] = std::max(IC[el], Ind);
-    IC[er] = std::max(IC[er], Ind);
-  }
-
-  // Loop over element to mark shock cell
-  for (std::size_t e=0; e<nelem; ++e) {
-    std::size_t dof_el = pref ? ndofel[e] : rdof;
-
-    tk::real power = 0.0;
-    if(dof_el == 10)  power = 1.5;
-    else              power = 1.0;
-
-    // Evaluate the threshold
-    auto thres = coeff * std::pow(geoElem(e, 4), power);
-    if(IC[e] > thres)
-      shockmarker[e] = 1;
-    else
-      shockmarker[e] = 0;
+    if (Ind > threshold(el)) shockmarker[el] = 1;
+    if (Ind > threshold(er)) shockmarker[er] = 1;
   }
 }
 

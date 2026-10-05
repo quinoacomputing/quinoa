@@ -351,7 +351,6 @@ class CompFlow {
     {
       const auto limiter = g_inputdeck.get< tag::limiter >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
-      const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
       if (limiter == ctr::LimiterType::WENOP1)
         WENO_P1( fd.Esuel(), U );
@@ -359,12 +358,12 @@ class CompFlow {
         Superbee_P1( fd.Esuel(), inpoel, ndofel, coord, U );
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
         VertexBasedCompflow_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, U,
           shockmarker);
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
         VertexBasedCompflow_P2( esup, inpoel, ndofel, fd.Esuel().size()/4,
           m_mat_blk, fd, geoFace, geoElem, coord, gid, bid,
-          mtInv, flux, solidx, U, shockmarker);
+          mtInv, flux, U, shockmarker);
     }
 
     //! Update the conservative variable solution for this PDE system
