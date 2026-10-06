@@ -2603,8 +2603,8 @@ void MarkShockCells ( const bool pref,
     tk::real Ind(0.0);
     if(denom > 1e-8)
       Ind = numer / denom;
-    if (Ind > threshold(el)) shockmarker[el] = 1;
-    if (Ind > threshold(er)) shockmarker[er] = 1;
+    if (Ind > threshold(el) && el < nelem) shockmarker[el] = 1;
+    if (Ind > threshold(er) && er < nelem) shockmarker[er] = 1;
   }
 }
 

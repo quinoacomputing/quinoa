@@ -190,7 +190,7 @@ DG::DG( const CProxy_Discretization& disc,
   if (m_initial) {
     thisProxy[ thisIndex ].wait4sol();
     if (pref) thisProxy[ thisIndex ].wait4refine();
-    thisProxy[ thisIndex ].wait4smooth();
+    if (pref) thisProxy[ thisIndex ].wait4smooth();
     thisProxy[ thisIndex ].wait4lim();
     thisProxy[ thisIndex ].wait4ale();
     thisProxy[ thisIndex ].wait4nod();
@@ -818,18 +818,6 @@ DG::reco()
   // Limiting likewise only needs local gradients and neighboring cell
   // averages, so it can proceed immediately without a separate
   // chare-boundary exchange of the reconstructed (but unlimited) solution.
-  lim();
-}
-
-void
-DG::lim()
-// *****************************************************************************
-// Compute limiter function
-// *****************************************************************************
-{
-  auto d = Disc();
-  const auto rdof = g_inputdeck.get< tag::rdof >();
-  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
   if (rdof > 1) {
     g_dgpde[d->MeshId()].limit( d->T(), pref, myGhosts()->m_geoFace,
@@ -851,7 +839,6 @@ DG::lim()
       std::vector< std::size_t > tetid( ghostdata.size() );
       std::vector< std::vector< tk::real > > u( ghostdata.size() ),
                                              prim( ghostdata.size() );
-      std::vector< std::size_t > ndof;
       std::size_t j = 0;
       for(const auto& i : ghostdata) {
         Assert( i < myGhosts()->m_fd.Esuel().size()/4,
@@ -987,10 +974,10 @@ DG::comlim( int fromch,
     Assert( j >= myGhosts()->m_fd.Esuel().size()/4,
       "Receiving solution non-ghost data" );
     auto b = tk::cref_find( myGhosts()->m_bid, j );
-    Assert( b < m_uc[2].size(), "Indexing out of bounds" );
-    Assert( b < m_pc[2].size(), "Indexing out of bounds" );
-    m_uc[2][b] = u[i];
-    m_pc[2][b] = prim[i];
+    Assert( b < m_uc[1].size(), "Indexing out of bounds" );
+    Assert( b < m_pc[1].size(), "Indexing out of bounds" );
+    m_uc[1][b] = u[i];
+    m_pc[1][b] = prim[i];
   }
 
   // if we have received all solution ghost contributions from neighboring
@@ -1283,13 +1270,13 @@ DG::dt()
   // Combine own and communicated contributions of limited solution and degrees
   // of freedom in cells (if p-adaptive)
   for (const auto& b : myGhosts()->m_bid) {
-    Assert( m_uc[2][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[2][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    Assert( m_uc[1][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[1][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
     for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c) = m_uc[2][b.second][c];
+      m_u(b.first,c) = m_uc[1][b.second][c];
     }
     for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c) = m_pc[2][b.second][c];
+      m_p(b.first,c) = m_pc[1][b.second][c];
     }
   }
 
@@ -1415,7 +1402,7 @@ DG::solve( tk::real newdt )
   // Enable SDAG wait for building the solution vector during the next stage
   thisProxy[ thisIndex ].wait4sol();
   if (pref) thisProxy[ thisIndex ].wait4refine();
-  thisProxy[ thisIndex ].wait4smooth();
+  if (pref) thisProxy[ thisIndex ].wait4smooth();
   thisProxy[ thisIndex ].wait4lim();
   thisProxy[ thisIndex ].wait4ale();
   thisProxy[ thisIndex ].wait4nod();

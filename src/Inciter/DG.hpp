@@ -352,9 +352,9 @@ class DG : public CBase_DG {
     //! Vector of number of degrees of freedom for each PDE equation/component
     std::vector< std::size_t > m_numEqDof;
     //! Solution receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_uc;
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_uc;
     //! Primitive-variable receive buffers for ghosts only
-    std::array< std::vector< std::vector< tk::real > >, 3 > m_pc;
+    std::array< std::vector< std::vector< tk::real > >, 2 > m_pc;
     //! \brief Number of degrees of freedom (for p-adaptive) receive buffers
     //!   for ghosts only
     std::array< std::vector< std::size_t >, 3 > m_ndofc;
@@ -437,9 +437,6 @@ class DG : public CBase_DG {
 
     //! Compute solution reconstructions
     void reco();
-
-    //! Compute limiter function
-    void lim();
 
     //! Recompute chare-boundary face geometry after ALE ghost updates arrive
     void updateChareBoundaryGeoFace();
