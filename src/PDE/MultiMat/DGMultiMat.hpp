@@ -1398,12 +1398,40 @@ class MultiMat {
             // dev(sigma)=0 there, phi<=0 below and this material's Lp (and
             // thus its contribution to the Newton stiff solve) is exactly
             // zero rather than merely damped by the a_tilde ramp further
-            // down.
+            // down. traceSolid is alpha-based (not a function of the
+            // Newton unknown x), so it is safe to apply as a hard switch.
+            // degenerateDeformGrad(g), however, is evaluated on the
+            // CURRENT NEWTON ITERATE's g, which the Jacobian/line-search
+            // probe as part of solving for x -- a hard idT:g switch there
+            // makes this residual (and the FD Jacobian built from it)
+            // discontinuous in x right at the det(g) threshold, which can
+            // stall Newton near that threshold (observed: a real,
+            // well-resolved cell parked at det(g)~0.000999, just inside
+            // the degenerate side of the 1e-3 cutoff, failed to converge
+            // in 250 iterations). Blend smoothly between g and idT in
+            // log(det(g)) space instead, over a half-decade margin
+            // straddling each threshold, so the residual stays C1 in x.
             static const std::array< std::array< tk::real, 3 >, 3 > idT{{
               {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
             bool traceSolid = alpha < solidPhysicsAlphaFloor();
+            tk::real w_g = 0.0;
+            if (!traceSolid) {
+              auto detg = tk::determinant(g);
+              if (std::isfinite(detg) && detg > 0.0) {
+                constexpr tk::real log_lo = -3.0, log_hi = 3.0; // log10(1e-3/1e3)
+                constexpr tk::real log_margin = 0.5; // half a decade
+                tk::real logd = std::log10(detg);
+                tk::real dist = std::min(logd-log_lo, log_hi-logd);
+                tk::real t = std::clamp(dist/log_margin, 0.0, 1.0);
+                w_g = t*t*(3.0-2.0*t);
+              }
+            }
+            std::array< std::array< tk::real, 3 >, 3 > g_blend;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                g_blend[i][j] = w_g*g[i][j] + (1.0-w_g)*idT[i][j];
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
-              alpha, k, (traceSolid || degenerateDeformGrad(g)) ? idT : g );
+              alpha, k, g_blend );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 sigma_dev[i][j] /= alpha;
