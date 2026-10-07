@@ -662,7 +662,7 @@ getDevHencky(const std::array< std::array< real, 3 >, 3 >& g)
       normH += devH[i][j]*devH[i][j];
   normH = std::sqrt(normH);
 
-  const tk::real maxNormH = 0.5;
+  const tk::real maxNormH = 10.0;
   if (normH > maxNormH) {
     auto scale = maxNormH / normH;
     for (std::size_t i=0; i<3; ++i)
