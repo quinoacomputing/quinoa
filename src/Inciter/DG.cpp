@@ -82,7 +82,7 @@ static const tk::real a33_impl_imex3a =
   (1.0/6.0-b2_imex3a*std::pow(c2_imex3a,2.0)
    -b3_imex3a*c2_imex3a*c3_imex3a)/
   (b3_imex3a*(c3_imex3a-c2_imex3a));
-static const tk::real a32_impl_imex3a = a33_impl_imex3a-c3_imex3a;
+static const tk::real a32_impl_imex3a = c3_imex3a-a33_impl_imex3a;
 
 //! IMEXRKCB3d coefficients (Cavaglieri & Bewley 2015, eq. 29a)
 static const tk::real c2_imex3d =
@@ -2392,7 +2392,7 @@ DG::imex_integrate_cb3a()
 
       auto x_star = x;
       x = DG::nonlinear_newton_stage( e, x, stage_base, aii );
-      g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
+      g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, U);
 
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
@@ -2516,7 +2516,7 @@ DG::imex_integrate_cb3d()
 
       auto x_star = x;
       x = DG::nonlinear_newton_stage( e, x, stage_base, aii );
-      g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_un);
+      g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, U);
 
       for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
         for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
