@@ -2485,7 +2485,7 @@ void MarkShockCells ( const bool pref,
                       const std::size_t nmat,
                       const std::size_t rdof,
                       const std::vector< inciter::EOS >& mat_blk,
-                      const std::vector< std::size_t >& ndofel,
+                      [[maybe_unused]] const std::vector< std::size_t >& ndofel,
                       const std::vector< std::size_t >& inpoel,
                       const tk::UnsMesh::Coords& coord,
                       const inciter::FaceData& fd,
@@ -2530,8 +2530,10 @@ void MarkShockCells ( const bool pref,
   // Threshold against which the interface indicator is compared for
   // element e, to decide if e contains a discontinuity
   auto threshold = [&]( std::size_t e ){
-    std::size_t dof_el = pref ? ndofel[e] : rdof;
-    tk::real power = (dof_el == 10) ? 1.5 : 1.0;
+    // Threshold = c * h^((p+1)/2)
+    //std::size_t dof_el = pref ? ndofel[e] : rdof;
+    //tk::real power = (dof_el == 10) ? 1.5 : 1.0;
+    tk::real power = 0.5; // Assuming P0 in above expression
     return coeff * std::pow(geoElem(e, 4), power);
   };
 
