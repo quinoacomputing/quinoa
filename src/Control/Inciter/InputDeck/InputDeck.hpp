@@ -394,6 +394,7 @@ using ConfigMembers = brigand::list<
     tag::meshforce,                std::vector< tk::real >,
     tag::dvcfl,                    tk::real,
     tag::vortmult,                 tk::real,
+    tag::vortscale,                tk::real,
     tag::maxit,                    std::size_t,
     tag::tolerance,                tk::real,
     tag::dirichlet,                std::vector< std::size_t >,
@@ -1545,6 +1546,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is coefficient a1 in Eq.(23) of Bakosi, Waltz, Morgan, Improved ALE mesh
         velocities for complex flows, International Journal for Numerical Methods
         in Fluids, 2017. )", "real"});
+
+      keywords.insert({"vortscale",
+        "Configure vorticity scale for ALE mesh velocity",
+        R"(This keyword is used to configure the scale factor for the vorticity
+        correction term in the mesh velocity smoother (mesh_velocity=fluid) for
+        ALE mesh motion.)", "real"});
 
       keywords.insert({"maxit",
         "Set the max number of iterations for the ALE mesh velocity linear solve",

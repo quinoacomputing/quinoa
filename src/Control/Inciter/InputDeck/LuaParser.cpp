@@ -932,6 +932,10 @@ LuaParser::storeInputDeck(
     storeIfSpecd< tk::real >(lua_ideck["ale"], "vortmult",
       ale_deck.get< tag::vortmult >(), 1.0);
 
+    // Vorticity scale
+    storeIfSpecd< tk::real >(lua_ideck["ale"], "vortscale",
+      ale_deck.get< tag::vortscale >(), 0.25);
+
     // Mesh velocity max iterations
     storeIfSpecd< std::size_t >(lua_ideck["ale"], "maxit",
       ale_deck.get< tag::maxit >(), 5);

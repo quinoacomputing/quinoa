@@ -265,6 +265,7 @@ DEFTAG(mesh_motion_directions);
 DEFTAG(meshforce);
 DEFTAG(dvcfl);
 DEFTAG(vortmult);
+DEFTAG(vortscale);
 DEFTAG(maxit);
 DEFTAG(tolerance);
 DEFTAG(move);

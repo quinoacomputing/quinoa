@@ -538,9 +538,10 @@ ALE::meshvelbc( tk::real maxv )
     // scale mesh velocity with a function of the fluid vorticity
     if (maxv > 1.0e-8) {
       auto mult = g_inputdeck.get< tag::ale, tag::vortmult >();
+      auto scale = g_inputdeck.get< tag::ale, tag::vortscale >();
       for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >())
         for (std::size_t p=0; p<m_vorticity[0].size(); ++p)
-          m_w(p,j) *= 0.25 * std::max( 0.0, 1.0 - mult*m_vorticity[0][p]/maxv );
+          m_w(p,j) *= scale * std::max( 0.0, 1.0 - mult*m_vorticity[0][p]/maxv );
     }
 
     // Set mesh velocity smoother linear solve boundary conditions
@@ -943,13 +944,14 @@ ALE::zeroMeshForce() const
 bool
 ALE::needVelocityDerivatives() const
 // *****************************************************************************
-//  Query if ALE mesh velocity smoothing requires velocity derivatives
-//! \return True if the selected smoother requires velocity-divergence or
-//!   vorticity data
+//  Query if ALE requires velocity derivatives
+//! \return True if the selected smoother or mesh force requires
+//!   velocity-divergence or vorticity data
 // *****************************************************************************
 {
   const auto smoother = g_inputdeck.get< tag::ale, tag::smoother >();
-  if (smoother == ctr::MeshVelocitySmootherType::NONE) return false;
+  if (smoother == ctr::MeshVelocitySmootherType::NONE)
+    return !zeroMeshForce();
   else return true;
 }
 
