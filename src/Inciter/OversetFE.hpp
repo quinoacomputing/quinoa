@@ -157,6 +157,9 @@ class OversetFE : public CBase_OversetFE {
     // Evaluate whether to do load balancing
     void evalLB( int nrestart );
 
+    // Continue evaluating whether to do load balancing and proceed to next step
+    void continueEvalLB();
+
     //! Evaluate whether to continue with next time step stage
     void stage();
 

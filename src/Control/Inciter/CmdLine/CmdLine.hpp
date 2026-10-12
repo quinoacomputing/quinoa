@@ -169,7 +169,29 @@ class CmdLine : public tk::TaggedTuple< CmdLineMembers > {
     ///@{
     //! \brief Pack/Unpack serialize member function
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
-    void pup( PUP::er& p ) { tk::TaggedTuple< CmdLineMembers >::pup(p); }
+    //! \details cmdinfo, ctrinfo, and helpkw are intentionally skipped: they
+    //!   are always reconstructed identically by the constructors from
+    //!   compile-time string literals and must not be checkpointed, as their
+    //!   large size (MB of help text) can corrupt the PUP stream offset.
+    void pup( PUP::er& p ) {
+      p | get< tag::io >();
+      p | get< tag::virtualization >();
+      p | get< tag::verbose >();
+      p | get< tag::chare >();
+      p | get< tag::nonblocking >();
+      p | get< tag::benchmark >();
+      p | get< tag::feedback >();
+      p | get< tag::help >();
+      p | get< tag::helpctr >();
+      p | get< tag::quiescence >();
+      p | get< tag::trace >();
+      p | get< tag::version >();
+      p | get< tag::license >();
+      p | get< tag::error >();
+      p | get< tag::lbfreq >();
+      p | get< tag::rsfreq >();
+      // tag::cmdinfo, tag::ctrinfo, tag::helpkw intentionally not PUP'd
+    }
     //! \brief Pack/Unpack serialize operator|
     //! \param[in,out] p Charm++'s PUP::er serializer object reference
     //! \param[in,out] c CmdLine object reference

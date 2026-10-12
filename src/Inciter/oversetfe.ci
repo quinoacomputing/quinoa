@@ -62,6 +62,7 @@ module oversetfe {
       entry void next();
       entry void stage();
       entry void evalLB( int nrestart );
+      entry void continueEvalLB();
       //! [Entry methods]
 
       // SDAG code follows. See http://charm.cs.illinois.edu/manuals/html/
