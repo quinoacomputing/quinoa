@@ -1258,88 +1258,59 @@ class MultiMat {
       }
     }
 
-    void output_internal_energy( std::size_t nelem,
-                                 const tk::real time,
-                                 const tk::Fields& geoElem,
-                                 const tk::Fields& U,
-                                 tk::real& internal_energy ) const
+    //! Specific internal energy of an element
+    //! \param[in] e Element id
+    //! \param[in] U Solution vector at recent time step
+    //! \return Internal energy (total energy minus kinetic energy, summed
+    //!   over all materials) in element e, scaled by 8 for Verney's
+    //!   octant-of-sphere domain symmetry. Verney is always run as a single
+    //!   solid material (nmat=1), so the sum reduces to that one material.
+    tk::real sp_internal_energy( std::size_t e, const tk::Fields& U ) const
     {
-      const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
       auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto& solidx = inciter::g_inputdeck.get<
-        tag::matidxmap, tag::solidx >();
 
-      // Loop over elements, if element belongs to material 3 (alpha_2 >= 0.8),
-      // retrieve its internal energy and add it to the sum
-      internal_energy = 0.0;
-      for (std::size_t e=0; e<nelem; ++e) {
-        // if (U(e, volfracDofIdx(nmat, 1, rdof, 0)) >= 1.0e-08) {
-          // Compute bulk properties
-          tk::real rho = 0.0;
-          for (std::size_t k=0; k<nmat; ++k) {
-            rho += U(e, densityDofIdx(nmat, k, rdof, 0));
-          }
-          tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
-          tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
-          tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
-          std::size_t k = 0;
-          // Retrieve alpha*rho*E
-          tk::real intE = U(e, energyDofIdx(nmat, k, rdof, 0));
-          // Substract kinetic energy
-          tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
-          tk::real arho = U(e, densityDofIdx(nmat, k, rdof, 0));
-          intE -= 0.5 * arho * (u*u+v*v+w*w);
-          // Finally, multiply by volume and then add it to internal_energy
-          // Also multiply by 8 because I am running an octant of the sphere
-          internal_energy += intE * geoElem(e, 0) * 8;
-          // }
+      tk::real rho(0.0), rhoE(0.0);
+      for (std::size_t k=0; k<nmat; ++k) {
+        rho += U(e, densityDofIdx(nmat, k, rdof, 0));
+        rhoE += U(e, energyDofIdx(nmat, k, rdof, 0));
       }
+      tk::real u = U(e, momentumDofIdx(nmat, 0, rdof, 0))/rho;
+      tk::real v = U(e, momentumDofIdx(nmat, 1, rdof, 0))/rho;
+      tk::real w = U(e, momentumDofIdx(nmat, 2, rdof, 0))/rho;
+      // Retrieve alpha*rho*E and subtract kinetic energy
+      tk::real intE = rhoE - 0.5 * rho * (u*u+v*v+w*w);
+
+      // multiply by 8 because typically solved on an octant only
+      return intE * 8.0;
     }
 
-    void output_inner_radius( std::size_t nelem,
-                              const tk::real time,
-                              const tk::Fields& geoElem,
-                              const tk::Fields& U,
-                              const std::array< std::vector< tk::real >, 3 >& coord,
-                              const std::vector< std::size_t >& inpoel,
-                              tk::real& inner_radius ) const
+    //! Minimum nodal radius of an element
+    //! \param[in] e Element id
+    //! \param[in] coord Mesh node coordinates
+    //! \param[in] inpoel Mesh element connectivity
+    //! \return Minimum radius among the 4 nodes of element e
+    //! \details Assumes the mesh boundary exactly tracks the (single-solid-
+    //!   material) shell surfaces via prescribed mesh-velocity BCs, so the
+    //!   global minimum of this quantity over all elements is the current
+    //!   inner shell radius.
+    tk::real sp_inner_radius( std::size_t e,
+      const std::array< std::vector< tk::real >, 3 >& coord,
+      const std::vector< std::size_t >& inpoel ) const
     {
-      const auto ndof = g_inputdeck.get< tag::ndof >();
-      const auto rdof = g_inputdeck.get< tag::rdof >();
-      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
-      const auto& solidx = inciter::g_inputdeck.get<
-        tag::matidxmap, tag::solidx >();
-
-      // Find minimum radius where solid material exists
-      inner_radius = std::numeric_limits<tk::real>::max();
-
       const auto& x = coord[0];
       const auto& y = coord[1];
       const auto& z = coord[2];
 
-      for (std::size_t e=0; e<nelem; ++e) {
-        // Check if this element contains solid material (alpha > threshold)
-        bool has_solid = false;
-        for (std::size_t k=0; k<nmat; ++k) {
-          if (solidx[k] > 0) {
-            tk::real alpha = U(e, volfracDofIdx(nmat, k, rdof, 0));
-            if (alpha > 0.1) {  // threshold for "has solid"
-              has_solid = true;
-              break;
-            }
-          }
-        }
-
-        if (has_solid) {
-          // Get nodes of this element and find minimum radius
-          for (std::size_t n=0; n<4; ++n) {
-            auto node = inpoel[e*4 + n];
-            tk::real r = std::sqrt(x[node]*x[node] + y[node]*y[node] + z[node]*z[node]);
-            inner_radius = std::min(inner_radius, r);
-          }
-        }
+      tk::real inner_radius = std::numeric_limits< tk::real >::max();
+      for (std::size_t n=0; n<4; ++n) {
+        auto node = inpoel[e*4 + n];
+        tk::real r =
+          std::sqrt(x[node]*x[node] + y[node]*y[node] + z[node]*z[node]);
+        inner_radius = std::min(inner_radius, r);
       }
+
+      return inner_radius;
     }
 
     //! Compute stiff terms for a single element

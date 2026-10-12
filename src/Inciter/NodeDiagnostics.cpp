@@ -12,6 +12,8 @@
 */
 // *****************************************************************************
 
+#include <limits>
+
 #include "CGPDE.hpp"
 #include "NodeDiagnostics.hpp"
 #include "DiagReducer.hpp"
@@ -93,9 +95,14 @@ NodeDiagnostics::compute(
   if ( !((d.It()+1) % diagfreq) || d.It() == 1 ) {   // if remainder, don't dump
 
     // Diagnostics vector (of vectors) during aggregation. See
-    // Inciter/Diagnostics.h.
+    // Inciter/Diagnostics.h. TOTALSOL also carries internal energy (index 1)
+    // and minimum inner radius (index 2) as extra aggregate scalars (unused
+    // for CG schemes, but DiagReducer accesses them unconditionally), so it
+    // must have at least 3 entries.
     std::vector< std::vector< tk::real > >
       diag( NUMDIAG, std::vector< tk::real >( u.nprop(), 0.0 ) );
+    if (diag[TOTALSOL].size() < 3) diag[TOTALSOL].resize( 3, 0.0 );
+    diag[TOTALSOL][2] = std::numeric_limits< tk::real >::max();
 
     const auto& coord = d.Coord();
     const auto& x = coord[0];

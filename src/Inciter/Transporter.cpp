@@ -1167,6 +1167,8 @@ Transporter::diagHeader()
       for (std::size_t i=0; i<nv; ++i) d.push_back( "L2(d" + var[i] + ')' );
     }
     d.push_back( "mE" );
+    d.push_back( "intE" );
+    d.push_back( "rIn" );
 
     // Augment diagnostics variables with the following:
     // 1. resultant force vector on mesh boundaries that is used for rigid body
@@ -1547,8 +1549,10 @@ Transporter::diagnostics( CkReductionMsg* msg )
   Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
-     Assert( d[i].size() == ncomp, "Size mismatch at final stage of "
-             "diagnostics aggregation for mesh " + id );
+     Assert( d[i].size() ==
+               (i == TOTALSOL ? std::max(ncomp,std::size_t(3)) : ncomp),
+             "Size mismatch at final stage of diagnostics aggregation for "
+             "mesh " + id );
 
   // Allocate storage for those diagnostics that are always computed
   std::vector< tk::real > diag( ncomp, 0.0 );
@@ -1605,8 +1609,10 @@ Transporter::diagnostics( CkReductionMsg* msg )
     diag.push_back( l2res[i] );
   }
 
-  // Append total energy
+  // Append total energy, internal energy, and minimum inner radius
   diag.push_back( d[TOTALSOL][0] );
+  diag.push_back( d[TOTALSOL][1] );
+  diag.push_back( d[TOTALSOL][2] );
 
   // Append resultant force, torque, displacement, and rotation vector
   if (scheme == ctr::SchemeType::OversetFE) {

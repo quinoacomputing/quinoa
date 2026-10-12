@@ -112,6 +112,10 @@ mergeDiag( int nmsg, CkReductionMsg **msgs )
       if (w[LINFERR][i] > v[LINFERR][i]) v[LINFERR][i] = w[LINFERR][i];
     // Sum of the total energy over the entire domain
     v[TOTALSOL][0] += w[TOTALSOL][0];
+    // Sum of the internal energy over the entire domain
+    v[TOTALSOL][1] += w[TOTALSOL][1];
+    // Minimum inner radius over the entire domain
+    if (w[TOTALSOL][2] < v[TOTALSOL][2]) v[TOTALSOL][2] = w[TOTALSOL][2];
     // Copy resultant force and torque vector on mesh boundaries (reduction-sum
     // is expected to have been done in Discretization-child)
     for (std::size_t i=0; i<3; ++i) v[RESFORCE][i] = w[RESFORCE][i];

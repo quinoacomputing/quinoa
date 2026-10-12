@@ -522,21 +522,15 @@ class Transport {
                                  std::vector< tk::real > /*x*/,
                                  tk::Fields& /*U*/ ) const {}
 
-    void output_internal_energy( std::size_t /*nelem*/,
-                                 const tk::real /*time*/,
-                                 const tk::Fields& /*geoElem*/,
-                                 const tk::Fields& /*U*/,
-                                 tk::real& /*internal_energy*/ ) const
-    {}
+    //! Specific internal energy of an element. No-op in Transport
+    tk::real sp_internal_energy( std::size_t /*e*/, const tk::Fields& /*U*/ )
+     const { return 0.0; }
 
-    void output_inner_radius( std::size_t /*nelem*/,
-                              const tk::real /*time*/,
-                              const tk::Fields& /*geoElem*/,
-                              const tk::Fields& /*U*/,
-                              const std::array< std::vector< tk::real >, 3 >& /*coord*/,
-                              const std::vector< std::size_t >& /*inpoel*/,
-                              tk::real& /*inner_radius*/ ) const
-    {}
+    //! Minimum nodal radius of an element. No-op in Transport
+    tk::real sp_inner_radius( std::size_t /*e*/,
+      const std::array< std::vector< tk::real >, 3 >& /*coord*/,
+      const std::vector< std::size_t >& /*inpoel*/ ) const
+    { return std::numeric_limits< tk::real >::max(); }
 
     //! Compute stiff terms for a single element, not implemented here
     // //! \param[in] e Element number

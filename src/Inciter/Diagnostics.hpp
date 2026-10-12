@@ -24,7 +24,11 @@ enum Diag { L2SOL=0,    //!< L2 norm of numerical solution
             L2ERR,      //!< L2 norm of numerical-analytic solution
             L2RES,      //!< L2 norm of the residual
             LINFERR,    //!< L_inf norm of numerical-analytic solution
-            TOTALSOL,   //!< Sum of conserved solution over entire domain
+            TOTALSOL,   //!< Aggregate scalars over the entire domain:
+                        //!  index 0 : sum of conserved (total) energy,
+                        //!  index 1 : sum of internal energy,
+                        //!  index 2 : minimum inner radius.
+                        //!  Indices 1 and 2 are only meaningful for MultiMat
             RESFORCE,   //!< Resultant force vector on mesh boundaries
             RESTORQUE,  //!< Resultant torque vector on mesh boundaries
             DISPLACEMNT,//!< Total displacement of rigid body center-of-mass

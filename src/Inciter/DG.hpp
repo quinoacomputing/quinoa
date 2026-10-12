@@ -215,9 +215,6 @@ class DG : public CBase_DG {
     //! Evaluate whether to continue with next time step
     void step();
 
-    void print_internal_energy( tk::real internal_energy );
-    void print_inner_radius( tk::real inner_radius );
-
     //! Start computing the boundary normals for ALE
     void computeBNorm();
 
@@ -517,9 +514,6 @@ class DG : public CBase_DG {
     //! Non-linear function necessary to integrate with IMEX
     std::vector< tk::real > nonlinear_func(std::size_t e,
                                            std::vector< tk::real > x);
-
-    void output_internal_energy();
-    void output_inner_radius();
 
     //! Solve element-local implicit system using Newton's method
     bool element_implicit_step(std::size_t e,

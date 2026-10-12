@@ -15,6 +15,7 @@
 #include <array>
 #include <vector>
 #include <cmath>
+#include <limits>
 
 #include "DGPDE.hpp"
 #include "ElemDiagnostics.hpp"
@@ -87,9 +88,14 @@ ElemDiagnostics::compute( Discretization& d,
     const auto rdof = g_inputdeck.get< tag::rdof >();
 
     // Diagnostics vector (of vectors) during aggregation. See
-    // Inciter/Diagnostics.h.
+    // Inciter/Diagnostics.h. TOTALSOL also carries internal energy (index 1)
+    // and minimum inner radius (index 2) as extra aggregate scalars, so it
+    // must have at least 3 entries.
+    auto ncomp = u.nprop()/rdof;
     std::vector< std::vector< tk::real > >
-      diag( NUMDIAG, std::vector< tk::real >( u.nprop()/rdof, 0.0 ) );
+      diag( NUMDIAG, std::vector< tk::real >( ncomp, 0.0 ) );
+    if (diag[TOTALSOL].size() < 3) diag[TOTALSOL].resize( 3, 0.0 );
+    diag[TOTALSOL][2] = std::numeric_limits< tk::real >::max();
 
     // Compute diagnostics for DG
     compute_diag(d, rdof, nchGhost, geoElem, ndofel, u, un, diag);
@@ -227,9 +233,16 @@ const
     // cppcheck-suppress useStlAlgorithm
     sp_te += g_dgpde[d.MeshId()].sp_totalenergy(e, u);
 
-    // Compute sum of the total energy over the entire domain (only the
-    // first entry is used)
+    // Compute sum of the total energy over the entire domain (index 0)
     diag[TOTALSOL][0] += geoElem(e,0) * sp_te;
+
+    // Compute sum of the internal energy over the entire domain (index 1)
+    diag[TOTALSOL][1] +=
+      geoElem(e,0) * g_dgpde[d.MeshId()].sp_internal_energy(e, u);
+
+    // Compute minimum inner radius over the entire domain (index 2)
+    auto r = g_dgpde[d.MeshId()].sp_inner_radius(e, coord, inpoel);
+    if (r < diag[TOTALSOL][2]) diag[TOTALSOL][2] = r;
 
     // Compute sum for L2 norm of the cell-avg residual
     for (std::size_t c=0; c<u.nprop()/rdof; ++c)
