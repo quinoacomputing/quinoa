@@ -64,6 +64,16 @@ timeStepSizeViscousFV(
   std::size_t nmat,
   const tk::Fields& U );
 
+//! Compute relevant sound speed for output
+void
+soundSpeedMultiMat(
+  const std::vector< EOS >& mat_blk,
+  std::size_t nielem,
+  std::size_t nmat,
+  const tk::Fields& U,
+  const tk::Fields& P,
+  std::vector< tk::real >& ss );
+
 //! Reset the solid tensors
 void
 resetSolidTensors(

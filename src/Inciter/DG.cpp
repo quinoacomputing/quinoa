@@ -156,6 +156,7 @@ DG::DG( const CProxy_Discretization& disc,
   m_pNodefieldsc(),
   m_outmesh(),
   m_boxelems(),
+  m_srcFlag(m_u.nunk(), 0),
   m_shockmarker(m_u.nunk(), 1),
   m_nodevel( {{ std::vector<tk::real>(Disc()->Lid().size(), 0.0),
                 std::vector<tk::real>(Disc()->Lid().size(), 0.0),
@@ -199,6 +200,9 @@ DG::DG( const CProxy_Discretization& disc,
 
   m_ghosts[thisIndex].insert(m_disc, bface, triinpoel, m_u.nunk(),
     CkCallback(CkIndex_DG::resizeSolVectors(), thisProxy[thisIndex]));
+
+  // Only one stage for point implicit
+  if (g_inputdeck.get< tag::point_implicit >()) m_nstage = 1;
 
   // Query ALE mesh velocity boundary condition node lists
   Disc()->meshvelBnd( m_bface, m_bnode, m_triinpoel );
@@ -270,6 +274,7 @@ DG::resizeSolVectors()
   m_rhsprev.resize( myGhosts()->m_nunk );
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_stiffrhsprev.resize( myGhosts()->m_nunk );
+  m_srcFlag.resize( myGhosts()->m_nunk );
   for (std::size_t i=0; i<3; ++i)
     m_nodevel[i].resize( Disc()->Coord()[0].size() );
   m_dte.resize( myGhosts()->m_nunk );
@@ -334,8 +339,17 @@ DG::setup()
     d->histheader( std::move(histnames) );
   }
 
-  // If working with IMEX-RK, Store stiff equations into m_stiffEqIdx
-  if (g_inputdeck.get< tag::imex_runge_kutta >())
+  // Select the stiff-equation residual mode for the run. The schemes are
+  // mutually exclusive (enforced by the parser), so this is set once here.
+  if (g_inputdeck.get< tag::operator_split_plasticity >())
+    m_stiffSolverMode = StiffSolverMode::OperatorSplit;
+  else
+    m_stiffSolverMode = StiffSolverMode::IMEX;
+
+  // If working with IMEX-RK or operator-split plasticity, store stiff equations
+  // into m_stiffEqIdx (both schemes integrate the same stiff plasticity eqs)
+  if (g_inputdeck.get< tag::imex_runge_kutta >() ||
+      g_inputdeck.get< tag::operator_split_plasticity >())
   {
     g_dgpde[Disc()->MeshId()].setStiffEqIdx(m_stiffEqIdx);
     g_dgpde[Disc()->MeshId()].setNonStiffEqIdx(m_nonStiffEqIdx);
@@ -894,7 +908,7 @@ DG::lim()
     g_dgpde[d->MeshId()].limit( d->T(), pref, myGhosts()->m_geoFace,
               myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_esup,
               myGhosts()->m_inpoel, myGhosts()->m_coord, m_ndof, d->Gid(),
-              d->Bid(), m_mtInv, m_u, m_p, m_shockmarker );
+              d->Bid(), m_mtInv, m_srcFlag, m_u, m_p, m_shockmarker );
 
     if (g_inputdeck.get< tag::limsol_projection >())
       g_dgpde[d->MeshId()].CPL(m_p, myGhosts()->m_geoElem,
@@ -1371,7 +1385,7 @@ DG::dt()
         g_dgpde[d->MeshId()].dt( myGhosts()->m_coord, myGhosts()->m_inpoel,
           myGhosts()->m_fd,
           myGhosts()->m_geoFace, myGhosts()->m_geoElem, m_ndof, m_u, m_p,
-          myGhosts()->m_fd.Esuel().size()/4, m_dte );
+          myGhosts()->m_fd.Esuel().size()/4, m_srcFlag, m_dte );
       if (eqdt < mindt) mindt = eqdt;
 
       // time-step suppression for unsteady problems
@@ -1490,20 +1504,34 @@ DG::solve( tk::real newdt )
   if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
     d->setdt( newdt );
 
-  // Update Un
-  if (m_stage == 0) m_un = m_u;
-
   // Explicit or IMEX
   const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
   const auto implicit_ts = g_inputdeck.get< tag::implicit_timestepping >();
+  const auto point_implicit = g_inputdeck.get< tag::point_implicit >();
+  // Operator-split plasticity wraps a relaxation substep around explicit SSP-RK3
+  const auto op_split_plasticity =
+    g_inputdeck.get< tag::operator_split_plasticity >();
 
-  // physical time at time-stage for computing exact source terms
+  // Physical time at time-stage for computing exact source terms.
+  // The stage time must match the abscissae of the tableau actually in use:
+  // the explicit RK3 (Shu-Osher) uses c = {0, 1, 1/2}, while the IMEX
+  // (Cavaglieri-Bewley) explicit part uses c = {0, c2, c3}.
   tk::real physT(d->T());
-  if (m_stage == 1) {
-    physT += d->Dt();
+  if (imex_runge_kutta) {
+    if (m_stage == 1) {
+      physT += c2*d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += c3*d->Dt();
+    }
   }
-  else if (m_stage == 2) {
-    physT += 0.5*d->Dt();
+  else {
+    if (m_stage == 1) {
+      physT += d->Dt();
+    }
+    else if (m_stage == 2) {
+      physT += 0.5*d->Dt();
+    }
   }
 
   if (imex_runge_kutta) {
@@ -1515,20 +1543,44 @@ DG::solve( tk::real newdt )
     }
   }
 
-  if (!imex_runge_kutta || m_stage < m_nstage-1) {
-    if (imex_runge_kutta && m_stage < m_nstage-1) m_rhsprev = m_rhs;
-    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, m_u, m_p, d->meshvel(), m_ndof, d->Dt(), m_rhs );
-  }
+  // Evaluate the explicit (hyperbolic) RHS on the current solution. For IMEX,
+  // the two-register combination at the final stage requires
+  // m_rhsprev = R_ex(u^0) and m_rhs = R_ex(u^1) simultaneously (see the b2/b3
+  // row of expl_rkcoef and imex_integrate()). We therefore advance the register
+  // pair every stage: copy m_rhsprev = m_rhs (the previous stage's RHS) and then
+  // recompute m_rhs on the current m_u.
+  if (imex_runge_kutta) m_rhsprev = m_rhs;
+  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+    myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
+    d->Dt(), m_rhs, m_srcFlag );
+
+  // Update Un
+  if (m_stage == 0) m_un = m_u;
 
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping using RK3 to discretize time-derivative
     DG::imex_integrate();
+
+    // Re-apply the external source term after the IMEX update. Sources can
+    // modify the solution vector m_u in place rather than contributing through
+    // the RHS. The IMEX explicit update rebuilds m_u from m_un + RHS only (see
+    // imex_integrate()), which discards those in-place edits. Re-applying the
+    // source here reinstates them on the updated m_u.
+    // A scratch RHS is used so that the source's zeroing of RHS entries does
+    // not corrupt m_rhs/m_rhsprev used by subsequent stages.
+    tk::Fields srcrhs( m_rhs.nunk(), m_rhs.nprop() );
+    srcrhs.fill( 0.0 );
+    g_dgpde[d->MeshId()].physSrc( physT, myGhosts()->m_geoElem,
+      d->ElemBlockId(), m_u, m_p, srcrhs, m_srcFlag );
   }
   else if (implicit_ts) {
     // Implicit time-stepping using BDF1 to discretize time-derivative
     DG::BDF1_integrate();
+  }
+  else if (point_implicit) {
+    // Point-implicit time-stepping using BDF1 to discretize time-derivative
+    DG::point_implicit_integrate();
   }
   else {
     // Explicit time-stepping using RK3 to discretize time-derivative
@@ -1579,6 +1631,12 @@ DG::solve( tk::real newdt )
         }
       }
     }
+
+  // Operator-split plasticity: after the explicit SSP-RK3 step has updated
+  // m_u using the hyperbolic operator, relax the stiff plasticity source at
+  // the final RK stage.
+  if (op_split_plasticity && m_stage == m_nstage-1)
+    DG::plasticity_split_integrate();
 
   // Update primitives based on the evolved solution
   g_dgpde[d->MeshId()].updateInterfaceCells( m_u,
@@ -1766,6 +1824,7 @@ DG::resizePostAMR(
   m_rhsprev.resize( nelem );
   m_stiffrhs.resize( nelem );
   m_stiffrhsprev.resize( nelem );
+  m_srcFlag.resize( nelem );
   for (std::size_t i=0; i<3; ++i) m_nodevel[i].resize( coord[0].size() );
 
   myGhosts()->m_fd = FaceData( myGhosts()->m_inpoel, bface,
@@ -1937,12 +1996,33 @@ DG::writeFields(
     shockmarker[child] = static_cast< tk::real >(m_shockmarker[parent]);
   elemfields.push_back( shockmarker );
 
+  // Add source flag array to element-centered field output
+  std::vector< tk::real > srcFlag( begin(m_srcFlag), end(m_srcFlag) );
+  // Here m_srcFlag has a size of m_u.nunk() which is the number of the
+  // elements within this partition (nelem) plus the ghost partition cells.
+  // For the purpose of output, we only need the solution data within this
+  // partition. Therefore, resizing it to nelem removes the extra partition
+  // boundary allocations in the srcFlag vector. Since the code assumes that
+  // the boundary elements are on the top, the resize operation keeps the lower
+  // portion.
+  srcFlag.resize( nelem );
+  for (const auto& [child,parent] : addedTets)
+    srcFlag[child] = static_cast< tk::real >( m_srcFlag[parent] );
+  elemfields.push_back( srcFlag );
+
   // Compute plastic deformation averaged for all materials
   std::vector< tk::real > plasticDeformation(nelem);
   g_dgpde[d->MeshId()].computePlasticDeformation(nelem, m_u, m_p, plasticDeformation);
   for (const auto& [child,parent] : addedTets)
     plasticDeformation[child] = 0.0;
   if (plasticDeformation.size() > 0) elemfields.push_back( plasticDeformation );
+
+  // Add sound speed vector
+  std::vector< tk::real > soundspd(nelem, 0.0);
+  g_dgpde[d->MeshId()].soundspeed(nelem, m_u, m_p, soundspd);
+  for (const auto& [child,parent] : addedTets)
+    soundspd[child] = soundspd[parent];
+  if (soundspd.size() > 0) elemfields.push_back( soundspd );
 
   // Query fields names requested by user
   auto elemfieldnames = numericFieldNames( tk::Centering::ELEM );
@@ -1958,8 +2038,13 @@ DG::writeFields(
 
   elemfieldnames.push_back( "shock_marker" );
 
+  elemfieldnames.push_back( "src_flag" );
+
   if (plasticDeformation.size() > 0)
     elemfieldnames.push_back( "plastic_deformation" );
+
+  if (soundspd.size() > 0)
+    elemfieldnames.push_back( "sound speed" );
 
   //! Lambda to put in a field for output if not empty
   auto add_node_field = [&]( const auto& name, const auto& field ){
@@ -2477,6 +2562,73 @@ DG::imex_integrate()
 }
 
 void
+DG::plasticity_split_integrate()
+// *****************************************************************************
+// Perform the operator-split plasticity relaxation substep
+//! \details Lie operator split: the explicit SSP-RK3 step has already
+//!   advanced every equation over the full time step using the hyperbolic
+//!   operators. This routine relaxes the stiff plasticity source, locally per
+//!   element, by a backward-Euler solve about the post-RK state (after RK's
+//!   final stage in this time-step). Then, it balances the elastic energy
+//!   change.
+// *****************************************************************************
+{
+  auto d = Disc();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+
+  // The split residual carries no tableau history; clear the stiff RHS register.
+  m_stiffrhs.fill(0.0);
+
+  for (std::size_t e=0; e<nelem; ++e)
+  {
+    // Gather the stiff DOFs of this element as the relaxation state.
+    // m_numEqDof is indexed by global equation index, so the DOF count of a
+    // stiff equation is m_numEqDof[m_stiffEqIdx[ieq]] (not m_numEqDof[ieq]).
+    std::vector< tk::real > x(m_nstiffeq*ndof, 0.0);
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        x[ieq*ndof+idof] = m_u(e, stiffrmark);
+      }
+
+    // g_afterRK (constant term of the backward-Euler residual) and the
+    // pre-relaxation state used to balance the plastic (elastic) energy.
+    m_gStar = x;
+    auto x_star = x;
+
+    // Solve the local nonlinear system, first try Broyden then fall back to
+    // Newton, reusing the IMEX nonlinear solvers (m_stiffSolverMode selects the
+    // residual assembled in nonlinear_func()).
+    bool solver_failed = false;
+    x = DG::nonlinear_broyden(e, x, solver_failed);
+    if (solver_failed) {
+      solver_failed = false;
+      x = DG::nonlinear_newton(e, x, solver_failed);
+    }
+    if (solver_failed)
+      Throw("At element " + std::to_string(e) +
+            " operator-split plasticity nonlinear solver did not converge");
+
+    // Balance the elastic-energy change from the relaxation into total energy.
+    // Unlike IMEX (which defers the stiff combination to the final stage and
+    // deposits into m_un), the split writes the converged solution directly, so
+    // the correction goes into the live m_u.
+    g_dgpde[d->MeshId()].balance_plastic_energy(e, x_star, x, m_u);
+
+    // Update the state with the converged relaxed stiff DOFs.
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        m_u(e, stiffrmark) = x[ieq*ndof+idof];
+      }
+  }
+}
+
+void
 DG::BDF1_integrate()
 // *****************************************************************************
 //  Perform the BDF1 update
@@ -2506,8 +2658,10 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
   std::size_t n = x.size();
 
   // m_u <- x
+  // m_numEqDof is indexed by global equation index, so the DOF count of a
+  // stiff equation is m_numEqDof[m_stiffEqIdx[ieq]] (not m_numEqDof[ieq]).
   for (size_t ieq=0; ieq<m_nstiffeq; ++ieq)
-    for (size_t idof=0; idof<m_numEqDof[ieq]; ++idof)
+    for (size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
     {
       auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
       m_u(e, stiffrmark) = x[ieq*ndof+idof];
@@ -2515,6 +2669,25 @@ std::vector< tk::real > DG::nonlinear_func(std::size_t e,
 
   auto vole = myGhosts()->m_geoElem(e,0);
   auto vole_n = m_geoElemn(e,0);
+
+  // Operator-split plasticity: pure backward-Euler relaxation of the stiff
+  // source about the post-RK state g_afterRK (m_gStar), with no IMEX tableau
+  // history. Residual: F_i = x_i - g_afterRK_i - dt*stiff_rhs_i(x)/mm_i.
+  if (m_stiffSolverMode == StiffSolverMode::OperatorSplit) {
+    g_dgpde[d->MeshId()].stiff_rhs( e, myGhosts()->m_geoElem,
+      m_u, m_ndof, m_stiffrhs );
+    std::vector< tk::real > f(n, 0.0);
+    for (std::size_t ieq=0; ieq<m_nstiffeq; ++ieq)
+      for (std::size_t idof=0; idof<m_numEqDof[m_stiffEqIdx[ieq]]; ++idof)
+      {
+        auto stiffrmark = m_stiffEqIdx[ieq]*rdof+idof;
+        auto mm_i = vole * mass_dubiner[idof];
+        f[ieq*ndof+idof] = m_u(e, stiffrmark)
+          - m_gStar[ieq*ndof+idof]
+          - d->Dt() * m_stiffrhs(e,ieq*ndof+idof) / mm_i;
+      }
+    return f;
+  }
 
   // Compute explicit terms (Should be computed once)
   std::vector< tk::real > expl_terms(n, 0.0);
@@ -2977,6 +3150,350 @@ std::vector< tk::real > DG::nonlinear_newton(std::size_t e,
 
   return x;
 
+}
+
+void
+DG::point_implicit_integrate()
+// *****************************************************************************
+//  Perform the point-implicit update
+//! \details This function updates the solution using the point-implicit
+//!   time discretization.
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+
+  if (ndof != 1) {
+    Throw(
+      "Point-implicit integrator currently only implemented for P0 (ndof=1)");
+  }
+
+  if (!g_inputdeck.get< tag::steady_state >()) {
+    Throw("Point-implicit integrator currently only for steady-state");
+  }
+
+  // Currently no p-refinement
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    Throw("Point-implicit integrator currently requires pref=false");
+  }
+
+  // Frozen neighbors
+  const tk::Fields Ubase( m_un );
+  const tk::Fields Pbase( m_p );
+
+  // Jacobian of RHS of all elements
+  const auto dRdu = point_implicit_jacobian_analytic( Ubase, Pbase );
+
+  tk::Fields Unew( m_u );
+
+  // Element-local implicit solve
+  for (std::size_t e=0; e<nelem; ++e) {
+    auto vole = myGhosts()->m_geoElem(e,0);
+    auto dte = Disc()->Dt();
+
+    // Extract element DOFs
+    std::vector< tk::real > u_old(neq*ndof), u_new(neq*ndof);
+    for (std::size_t c=0; c<neq; ++c)
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+        const auto rmark = c*rdof + k;
+        const auto mark = c*ndof + k;
+        u_old[mark] = Ubase(e, rmark);
+        // guess previous value
+        u_new[mark] = Ubase(e, rmark);
+      }
+
+    // Get value at next time step
+    auto converged = element_implicit_step(
+      e, u_old, u_new, dte, vole, dRdu[e] );
+
+    if (!converged)
+      Throw( "Point-implicit solver failed at element " + std::to_string(e) );
+
+    // Update global solution
+    for (std::size_t c=0; c<neq; ++c)
+      for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+        const auto rmark = c*rdof + k;
+        const auto mark = c*ndof + k;
+        Unew(e, rmark) = u_new[mark];
+      }
+  }
+
+  m_u = std::move(Unew);
+}
+
+bool
+DG::element_implicit_step(
+  std::size_t e,
+  const std::vector< tk::real >& u_old,
+  std::vector< tk::real >& u_new,
+  tk::real dte,
+  tk::real vole,
+  const std::vector< std::vector< tk::real > >& dRdu
+ )
+// *****************************************************************************
+//  Solve one iteration of an element-local, linearized implicit system
+//! \param[in] e Element index
+//! \param[in] u_old Solution at previous time step (element DOFs)
+//! \param[in,out] u_new Updated solution
+//! \param[in] dte Element-local time step size
+//! \param[in] vole Element volume
+//! \param[in] dRdU Jacobian of RHS for element
+//! \return True if invert is successful, false otherwise
+//! \details Solves the linearized system
+//!   M(u - u_old) = dt( R(u)^n + dR(u)/du^n)
+//!   The Jacobian and RHS are obtained from the physics-specific
+//!   implementations
+// *****************************************************************************
+{
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+
+  // Intermediate variable that ends up equal to ndof * neq
+  const auto n = u_new.size();
+
+  if ( n != m_u.nprop()/g_inputdeck.get< tag::rdof >()*ndof ) {
+    Throw("Size mismatch in element_implicit_step()");
+  }
+  if( dRdu.size() != n ) {
+    Throw("Jacobian row size mismatch" );
+  };
+
+  std::vector< double > A(n*n, 0.0);
+  std::vector< double > b(n, 0.0);
+
+  // For this element, take solve for one step of u
+  for (std::size_t i=0; i<n; ++i) {
+    if( dRdu[i].size() != n ) {
+      Throw("Jacobian column size mismatch" );
+    }
+    const auto k = i % ndof;
+    const auto scale = dte / (vole * mass_dubiner[k]);
+
+    // RHS: dt M^-1 R^n
+    b[i] = static_cast< double >(scale * m_rhs(e, i));
+
+    // LHS: I - dt M^-1 dR/du
+    for (std::size_t j=0; j<n; ++j) {
+      A[i*n + j] =
+        static_cast< double >(
+          (i == j ? tk::real(1.0) : tk::real(0.0))
+          - scale * dRdu[i][j] );
+    }
+  }
+
+  const auto ln = static_cast< lapack_int >(n);
+
+  std::vector< lapack_int > ipiv(n);
+
+  const auto info = LAPACKE_dgesv( LAPACK_ROW_MAJOR, ln, 1, A.data(), ln,
+    ipiv.data(), b.data(), 1 );
+
+  // LAPACK didn't converge
+  if (info != 0) return false;
+
+  // b has been overwritten with du, add to previous solution
+  u_new = u_old;
+  for (std::size_t i=0; i<n; ++i) {
+    const auto du = static_cast< tk::real >(b[i]);
+
+    if (!std::isfinite(du)) return false;
+
+    u_new[i] += du;
+  }
+
+  return true;
+}
+
+std::vector< std::vector< std::vector< tk::real > > >
+DG::point_implicit_jacobian(
+  const tk::Fields& Ubase,
+  const tk::Fields& Pbase,
+  const tk::Fields& Rbase ) const
+// *****************************************************************************
+// Calculates element-local residual Jacobian
+//! \param[in] Ubase Base conservative field with lagged neighbor states
+//! \param[in] Pbase Base primitive field with lagged neighbor states
+//! \param[in] Rbase Base RHS field
+//! \return Dense matrix dR_e/du_e for all elements
+//! \details WIP that performs finite differencing to calculate Jacobian, with
+//! the exact Jacobian to be wired in later.
+// *****************************************************************************
+{
+  const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto nunk = neq*ndof;
+  auto d = Disc();
+  tk::real physT(d->T());
+
+  const auto elemColor = point_implicit_elem_coloring();
+
+  const auto ncolor = static_cast< std::size_t >(
+    *std::max_element( begin(elemColor), end(elemColor) ) + 1);
+
+  // Allocate each element's Jacobian
+  std::vector< std::vector< std::vector< tk::real > > >
+    dRdu( nelem,
+      std::vector< std::vector< tk::real > >(
+        nunk, std::vector< tk::real >( nunk, 0.0 ) ) );
+
+  for (std::size_t c=0; c<neq; ++c) {
+    for (std::size_t k=0; k<m_numEqDof[c]; ++k) {
+      const auto col = c*ndof + k;
+      const auto rcol = c*rdof + k;
+
+      // Loop over different colors
+      for (std::size_t color=0; color<ncolor; ++color) {
+        // Re-allocate to base state
+        tk::Fields Up( Ubase );
+        tk::Fields Pp( Pbase );
+        tk::Fields Rp( Rbase.nunk(), Rbase.nprop() );
+
+        std::vector< tk::real > eps( nelem, 0.0 );
+
+        // Skip element if it's not the right color
+        for (std::size_t e=0; e<nelem; ++e) {
+          if (elemColor[e] != static_cast< int >( color )) continue;
+
+          eps[e] = 1e-4 * (1.0 + std::sqrt(Ubase(e, rcol) * Ubase(e, rcol)));
+
+          // Perturb solutions of this color
+          Up(e,rcol) += eps[e];
+        }
+
+        // Calculate perturbed RHS
+        g_dgpde[d->MeshId()].updatePrimitives( Up, myGhosts()->m_geoElem, Pp,
+          nelem, m_ndof );
+
+        auto srcFlag = m_srcFlag;
+        g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+          myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel,
+          m_boxelems, myGhosts()->m_coord, d->ElemBlockId(), Up, Pp, d->meshvel(), m_ndof,
+          d->Dt(), Rp, srcFlag );
+
+        for (std::size_t e=0; e<nelem; ++e) {
+          if (elemColor[e] != color) continue;
+
+          for (std::size_t ceq=0; ceq<neq; ++ceq) {
+            for (std::size_t keq=0; keq<m_numEqDof[ceq]; ++keq) {
+              const auto row = ceq*ndof + keq;
+              dRdu[e][row][col] = ( Rp(e,row) - Rbase(e,row) ) / eps[e];
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return dRdu;
+}
+std::vector< std::vector< std::vector< tk::real > > >
+DG::point_implicit_jacobian_analytic(
+  const tk::Fields& Ubase,
+  const tk::Fields& Pbase) const
+// *****************************************************************************
+// Calculates element-local residual Jacobian using analytic PDE flux Jacobians
+//! \param[in] Ubase Base conservative field with lagged neighbor states
+//! \param[in] Pbase Base primitive field with lagged neighbor states
+//! \return Dense matrix dR_e/du_e for all owned elements
+//! \details WIP using information specific to Riemann solver and PDE to
+//! calculate jacobian
+// *****************************************************************************
+{
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto neq = m_u.nprop()/rdof;
+  const auto nunk = neq*ndof;
+
+  if (ndof != 1) {
+    Throw(
+      "Analytic point-implicit Jacobian currently only implemented for P0 "
+      "(ndof=1)");
+  }
+
+  if (g_inputdeck.get< tag::pref, tag::pref >()) {
+    Throw("Analytic point-implicit Jacobian currently requires pref=false");
+  }
+
+  auto d = Disc();
+
+  auto dRdu =
+    g_dgpde[d->MeshId()].point_implicit_jacobian_analytic(
+      d->T(), myGhosts()->m_geoFace, myGhosts()->m_geoElem, myGhosts()->m_fd,
+      myGhosts()->m_inpoel, myGhosts()->m_coord, Ubase, Pbase, m_ndof );
+
+  if (dRdu.size() != nelem) {
+    Throw("Analytic point-implicit Jacobian element count mismatch");
+  }
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    if (dRdu[e].size() != nunk) {
+      Throw("Analytic point-implicit Jacobian row count mismatch");
+    }
+
+    for (std::size_t i=0; i<nunk; ++i) {
+      if (dRdu[e][i].size() != nunk) {
+        Throw("Analytic point-implicit Jacobian column count mismatch");
+      }
+    }
+  }
+
+  return dRdu;
+}
+
+std::vector< int >
+DG::point_implicit_elem_coloring() const
+// *****************************************************************************
+//  Color owned elements for simultaneous finite-difference perturbations
+//! \return Element color for each owned element
+//! \details Elements with the same color do not share a face, so their
+//! point-implicit residual stencils do not overlap for the P0 face-flux
+//! residual.
+// *****************************************************************************
+{
+  const auto nelem = myGhosts()->m_fd.Esuel().size()/4;
+  const auto& esuel = myGhosts()->m_fd.Esuel();
+
+  const auto invalid = -1;
+
+  std::vector< int > elemColor( nelem, invalid );
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    std::vector< int > used;
+
+    for (std::size_t f=0; f<4; ++f) {
+      const auto n = esuel[4*e+f];
+
+      if (n < 0) continue;
+
+      const auto en = static_cast< std::size_t >( n );
+
+      if (en >= nelem) continue;
+
+      if (elemColor[en] != invalid) {
+        used.push_back( elemColor[en] );
+      }
+    }
+
+    int color = 0;
+
+    while (std::find( begin(used), end(used), color ) != end(used)) {
+      ++color;
+    }
+
+    elemColor[e] = color;
+  }
+
+  for (std::size_t e=0; e<nelem; ++e) {
+    if(elemColor[e] == invalid)
+      Throw("Invalid element color in point_implicit_elem_coloring()" );
+  }
+
+  return elemColor;
 }
 
 //------------------------------------------------------------------------------

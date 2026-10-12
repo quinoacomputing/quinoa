@@ -161,10 +161,12 @@ DEFTAG(shock_detector_coeff);
 DEFTAG(accuracy_test);
 DEFTAG(limsol_projection);
 DEFTAG(implicit_timestepping);
+DEFTAG(point_implicit);
 DEFTAG(imex_runge_kutta);
 DEFTAG(imex_maxiter);
 DEFTAG(imex_reltol);
 DEFTAG(imex_abstol);
+DEFTAG(operator_split_plasticity);
 
 DEFTAG(nasa9_filepath);
 
@@ -263,6 +265,7 @@ DEFTAG(mesh_motion_directions);
 DEFTAG(meshforce);
 DEFTAG(dvcfl);
 DEFTAG(vortmult);
+DEFTAG(vortscale);
 DEFTAG(maxit);
 DEFTAG(tolerance);
 DEFTAG(move);

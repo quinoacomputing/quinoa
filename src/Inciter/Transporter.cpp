@@ -249,6 +249,8 @@ Transporter::info( const InciterPrint& print )
   print.item( "Local time stepping", steady );
   auto implicitts = g_inputdeck.get< tag::implicit_timestepping >();
   print.item( "Implicit time stepping", implicitts );
+  auto point_implicit = g_inputdeck.get< tag::point_implicit >();
+  print.item( "Point-implicit time stepping", point_implicit );
   if (steady || implicitts) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::residual >() );
@@ -372,6 +374,8 @@ Transporter::info( const InciterPrint& print )
     print.item( "Mesh velocity force coefficients", tk::parameters(meshforce) );
     print.item( "Vorticity multiplier",
                 g_inputdeck.get< tag::ale, tag::vortmult >() );
+    print.item( "Vorticity scale",
+                g_inputdeck.get< tag::ale, tag::vortscale >() );
     print.item( "Mesh velocity linear solver tolerance",
                 g_inputdeck.get< tag::ale, tag::tolerance >() );
     print.item( "Mesh velocity linear solver maxit",

@@ -18,7 +18,7 @@
 #include "Inciter/Options/Material.hpp"
 #include "EoS/StiffenedGas.hpp"
 #include "EoS/JWL.hpp"
-#include "EoS/SmallShearSolid.hpp"
+#include "EoS/NeoHookeanSolid.hpp"
 #include "EoS/LinearMieGruneisen.hpp"
 #include "EoS/WilkinsAluminum.hpp"
 #include "EoS/GodunovRomenski.hpp"
@@ -39,7 +39,7 @@ class EOS {
     //! Variant type listing all eos types modeling the same concept
     std::variant< StiffenedGas
                 , JWL
-                , SmallShearSolid
+                , NeoHookeanSolid
                 , LinearMieGruneisen
                 , WilkinsAluminum
                 , GodunovRomenski
@@ -70,6 +70,7 @@ class EOS {
     struct cv {};
     struct cp {};
     struct viscCoeff {};
+    struct dcvdT {};
     //! Call EOS function
     //! \tparam Fn Function tag identifying the function to call
     //! \tparam Args Types of arguments to pass to function
@@ -126,6 +127,9 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, viscCoeff > )
             return m.viscCoeff( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, dcvdT > )
+            return m.dcvdT( std::forward< Args >( args )... );
         }, m_material );
     }
 

@@ -18,7 +18,6 @@
 #include "Types.hpp"
 #include "TaggedTuple.hpp"
 #include "Inciter/CmdLine/CmdLine.hpp"
-#include "Transfer.hpp"
 #include "Inciter/OutVar.hpp"
 #include "Inciter/Options/PDE.hpp"
 #include "Inciter/Options/Problem.hpp"
@@ -320,12 +319,14 @@ using ConfigMembers = brigand::list<
   tag::imex_maxiter,     uint32_t,
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
+  tag::operator_split_plasticity, uint32_t,
 
   // NASA9 database location for MultiSpecies
   tag::nasa9_filepath, std::string,
 
   // steady-state solver options
   tag::implicit_timestepping, bool,
+  tag::point_implicit,        bool,
   tag::steady_state,          bool,
   tag::residual,              tk::real,
   tag::rescomp,               uint32_t,
@@ -377,7 +378,6 @@ using ConfigMembers = brigand::list<
   tag::bc, std::vector< bcList >,
   tag::ic, icList,
   tag::mesh, std::vector< meshList >,
-  tag::transfer, std::vector< Transfer >,
 
   // Rigid-body motion solver
   tag::rigid_body_motion, tk::TaggedTuple< brigand::list<
@@ -396,6 +396,7 @@ using ConfigMembers = brigand::list<
     tag::meshforce,                std::vector< tk::real >,
     tag::dvcfl,                    tk::real,
     tag::vortmult,                 tk::real,
+    tag::vortscale,                tk::real,
     tag::maxit,                    std::size_t,
     tag::tolerance,                tk::real,
     tag::dirichlet,                std::vector< std::size_t >,
@@ -559,6 +560,16 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         PDEType::MULTISPECIES, i.e. implicit_timestepping can only be used for
         multispecies currently.)", "bool"});
 
+      keywords.insert({"point_implicit",
+        "Toggle use of a point-implicit time-stepping scheme",
+        R"(This keywords is used to trigger point-implicit time integration for
+        the DG/DGP1/DGP2/PDG spatial discretizations. This will activate the
+        point-implicit, element-local scheme which replaces the explicit RK3
+        that is usually used. This requires PDE-specific implementation of the
+        Jacobian matrix. Jacobian implementation is complete only for
+        PDEType::MULTISPECIES, i.e. point_implicit can only be used for 
+        multispecies currently.)", "bool"});
+
       keywords.insert({"imex_runge_kutta",
         "Toggle use of IMplicit-EXplicit Runge-Kutta scheme",
         R"(This keywords is used to turn IMEX integrator on/off for solid materials
@@ -586,6 +597,17 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keywords is used to specify the absolute tolerance that
         the non-linear solver uses to obtain the implicit unknowns within the
         Implicit-Explicit Runge-Kutta scheme.)", "real"});
+
+      keywords.insert({"operator_split_plasticity",
+        "Toggle use of operator-split plasticity around explicit SSP-RK3",
+        R"(This keyword toggles a Lie operator-split treatment of the
+        stiff plasticity source for solid materials in multimat, as an SSP
+        alternative to imex_runge_kutta. The explicit SSP-RK3 scheme
+        advances all equations over the full time step, then the plastic terms
+        are relaxed once per step by a per-element backward-Euler solve. The
+        non-linear solver reuses imex_maxiter/imex_reltol/imex_abstol. Mutually
+        exclusive with imex_runge_kutta and implicit_timestepping.)",
+        "uint 0/1"});
 
       // -----------------------------------------------------------------------
       // MultiSpecies option to provide NASA9 DB filepath
@@ -1223,9 +1245,9 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         R"(This keyword is used to select the Jones, Wilkins, Lee equation of
         state.)"});
 
-      keywords.insert({"smallshearsolid",
-        "Select the SMALLSHEARSOLID equation of state",
-        R"(This keyword is used to select the small shear strain equation of state
+      keywords.insert({"neohookeansolid",
+        "Select the NEOHOOKEANSOLID equation of state",
+        R"(This keyword is used to select the Neo-Hookean equation of state
         for solids. This EOS uses a small-shear approximation for the elastic
         contribution, and a stiffened gas EOS for the hydrodynamic contribution of
         the internal energy See Plohr, J. N., & Plohr, B. J. (2005). Linearized
@@ -1526,6 +1548,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is coefficient a1 in Eq.(23) of Bakosi, Waltz, Morgan, Improved ALE mesh
         velocities for complex flows, International Journal for Numerical Methods
         in Fluids, 2017. )", "real"});
+
+      keywords.insert({"vortscale",
+        "Configure vorticity scale for ALE mesh velocity",
+        R"(This keyword is used to configure the scale factor for the vorticity
+        correction term in the mesh velocity smoother (mesh_velocity=fluid) for
+        ALE mesh motion.)", "real"});
 
       keywords.insert({"maxit",
         "Set the max number of iterations for the ALE mesh velocity linear solve",

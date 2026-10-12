@@ -66,6 +66,7 @@ class MultiMat {
   public:
     //! Constructor
     explicit MultiMat() :
+      m_physics(),
       m_ncomp( g_inputdeck.get< tag::ncomp >() ),
       m_nprim(nprim()),
       m_riemann( multimatRiemannSolver(
@@ -352,6 +353,21 @@ class MultiMat {
             plasticDeformation[e] = alpha*std::sqrt(plasticDeformation[e]);
           }
       }
+    }
+
+    //! Compute relevant sound speed for output
+    //! \param[in] nielem Number of internal elements
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] P Primitive vector at recent time step
+    //! \param[in,out] ss Sound speed vector
+    void soundspeed(
+      std::size_t nielem,
+      const tk::Fields& U,
+      const tk::Fields& P,
+      std::vector< tk::real >& ss) const
+    {
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      inciter::soundSpeedMultiMat( m_mat_blk, nielem, nmat, U, P, ss );
     }
 
     //! Update the interface cells to first order dofs
@@ -716,6 +732,7 @@ class MultiMat {
     //! \param[in] bid Local chare-boundary node ids (value) associated to
     //!   global node ids (key)
     //! \param[in] mtInv Inverse of Taylor mass matrix
+    //! \param[in] srcFlag Whether the energy source was added
     //! \param[in,out] U Solution vector at recent time step
     //! \param[in,out] P Vector of primitives at recent time step
     //! \param[in,out] shockmarker Vector of shock-marker values
@@ -731,6 +748,7 @@ class MultiMat {
                 const std::vector< std::size_t >& gid,
                 const std::unordered_map< std::size_t, std::size_t >& bid,
                 const std::vector< std::vector<tk::real> >& mtInv,
+                const std::vector< int >& srcFlag,
                 tk::Fields& U,
                 tk::Fields& P,
                 std::vector< std::size_t >& shockmarker ) const
@@ -753,7 +771,7 @@ class MultiMat {
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 4)
       {
         VertexBasedMultiMat_P1( esup, inpoel, ndofel, fd.Esuel().size()/4,
-          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, U, P,
+          m_mat_blk, fd, geoFace, geoElem, coord, flux, solidx, srcFlag, U, P,
           nmat, shockmarker );
       }
       else if (limiter == ctr::LimiterType::VERTEXBASEDP1 && rdof == 10)
@@ -799,6 +817,33 @@ class MultiMat {
 
       correctLimConservMultiMat(nielem, m_mat_blk, nmat, inpoel,
         coord, geoElem, prim, unk);
+    }
+
+    //! Apply the configured physics source term to the solution
+    //! \param[in] t Physical time
+    //! \param[in] geoElem Element geometry array
+    //! \param[in] elemblkid Element ids associated with mesh block ids where
+    //!   user ICs are set
+//    //! \param[in,out] U Solution vector at recent time step
+//    //! \param[in] P Vector of primitives at recent time step
+    //! \param[in,out] R Right-hand side vector
+    //! \param[in,out] srcFlag Whether the energy source was added
+    //! \details This is a public pass-through to the physics-policy source
+    //!   term. It is used by the IMEX-RK integrator to re-apply the
+    //!   physics source, which modifies the solution vector U in place
+    //!   (its effect is not carried through R); the IMEX explicit update
+    //!   rebuilds U from U_n + R only, and would otherwise discard it.
+    void physSrc( tk::real t,
+      const tk::Fields& geoElem,
+      const std::unordered_map< std::size_t, std::set< std::size_t > >&
+        elemblkid,
+      tk::Fields& /*U*/,
+      const tk::Fields& /*P*/,
+      tk::Fields& R,
+      std::vector< int >& srcFlag ) const
+    {
+      auto nmat = g_inputdeck.get< tag::multimat, tag::nmat >();
+      m_physics.physSrc(nmat, t, geoElem, elemblkid, R, srcFlag);
     }
 
     //! Return cell-average deformation gradient tensor
@@ -888,12 +933,15 @@ class MultiMat {
     //! \param[in] fd Face connectivity and boundary conditions object
     //! \param[in] inpoel Element-node connectivity
     //! \param[in] coord Array of nodal coordinates
+//    //! \param[in] elemblkid Element ids associated with mesh block ids where
+//    //!   user-defined block-dependent settings apply
     //! \param[in] U Solution vector at recent time step
     //! \param[in] P Primitive vector at recent time step
     //! \param[in] W Mesh velocity vector at recent time step
     //! \param[in] ndofel Vector of local number of degrees of freedom
     //! \param[in] dt Delta time
     //! \param[in,out] R Right-hand side vector computed
+    //! \param[in,out] srcFlag Whether a source was added to each element
     void rhs( tk::real t,
               const bool pref,
               const tk::Fields& geoFace,
@@ -902,12 +950,15 @@ class MultiMat {
               const std::vector< std::size_t >& inpoel,
               const std::vector< std::unordered_set< std::size_t > >&,
               const tk::UnsMesh::Coords& coord,
+              const std::unordered_map< std::size_t, std::set< std::size_t > >&
+                elemblkid,
               const tk::Fields& U,
               const tk::Fields& P,
               const tk::Fields& W,
               const std::vector< std::size_t >& ndofel,
               const tk::real dt,
-              tk::Fields& R ) const
+              tk::Fields& R,
+              std::vector< int >& srcFlag ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
       const auto rdof = g_inputdeck.get< tag::rdof >();
@@ -960,36 +1011,38 @@ class MultiMat {
         // compute internal surface flux integrals
         tk::surfInt_constP( nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
           coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-          dt, R, riemannDeriv, intsharp );
+          dt, srcFlag, R, riemannDeriv, intsharp );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt_constP( nmat, m_mat_blk, ndof, rdof,
             std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-            m_riemann, velfn, std::get<1>(b), U, P, W, R,
+            m_riemann, velfn, std::get<1>(b), U, P, W, srcFlag, R,
             riemannDeriv, intsharp );
 
         // compute volume integrals
         tk::volInt_constP( nmat, t, m_mat_blk, ndof, rdof, nelem, inpoel, coord,
-          geoElem, flux, velfn, Problem::src, U, P, W, R, intsharp );
+          geoElem, flux, velfn, Problem::src, U, P, W, srcFlag, R,
+          intsharp );
       }
       else {
         // compute internal surface flux integrals
         tk::surfInt( pref, nmat, m_mat_blk, t, ndof, rdof, inpoel, solidx,
                      coord, fd, geoFace, geoElem, m_riemann, velfn, U, P, W,
-                     ndofel, dt, R, riemannDeriv, intsharp );
+                     ndofel, dt, srcFlag, R, riemannDeriv, intsharp );
 
         // compute boundary surface flux integrals
         for (const auto& b : m_bc)
           tk::bndSurfInt( pref, nmat, m_mat_blk, ndof, rdof,
                           std::get<0>(b), fd, geoFace, geoElem, inpoel, coord, t,
-                          m_riemann, velfn, std::get<1>(b), U, P, W, ndofel, R,
+                          m_riemann, velfn, std::get<1>(b), U, P, W, ndofel,
+                          srcFlag, R,
                           riemannDeriv, intsharp );
 
         // compute volume integrals
         tk::volInt( nmat, t, m_mat_blk, ndof, rdof, nelem,
                     inpoel, coord, geoElem, flux, velfn, Problem::src, U, P, W,
-                    ndofel, R, intsharp );
+                    ndofel, srcFlag, R, intsharp );
       }
 
       Assert( riemannDeriv.size() == 3*nmat+ndof+3*nsld+27*nsld, "Size of "
@@ -1007,7 +1060,10 @@ class MultiMat {
       // compute volume integrals of non-conservative terms
       tk::nonConservativeInt( pref, nmat, m_mat_blk, ndof, rdof, nelem,
                               inpoel, coord, geoElem, U, P, riemannDeriv,
-                              ndofel, R, intsharp );
+                              ndofel, srcFlag, R, intsharp );
+
+      // compute external sources from configured physics
+      m_physics.physSrc(nmat, t, geoElem, elemblkid, R, srcFlag);
 
       // compute finite pressure relaxation terms
       if (g_inputdeck.get< tag::multimat, tag::prelax >())
@@ -1016,8 +1072,24 @@ class MultiMat {
                                          tag::prelax_timescale >();
         tk::pressureRelaxationInt( pref, nmat, m_mat_blk, ndof,
                                    rdof, nelem, inpoel, coord, geoElem, U, P,
-                                   ndofel, ct, R, intsharp );
+                                   ndofel, ct, srcFlag, R, intsharp );
       }
+    }
+    
+    std::vector< std::vector< std::vector< tk::real > > >
+    point_implicit_jacobian_analytic(
+      tk::real,
+      const tk::Fields&,
+      const tk::Fields&,
+      const inciter::FaceData&,
+      const std::vector< std::size_t >&,
+      const tk::UnsMesh::Coords&,
+      const tk::Fields&,
+      const tk::Fields&,
+      const std::vector< std::size_t >& ) const
+    {
+      Throw("Analytic point-implicit Jacobian not implemented for this PDE");
+      return {};
     }
 
     //! Evaluate the adaptive indicator and mark the ndof for each element
@@ -1078,6 +1150,7 @@ class MultiMat {
                  const tk::Fields& U,
                  const tk::Fields& P,
                  const std::size_t nielem,
+                 const std::vector< int >& srcFlag,
                  std::vector< tk::real >& local_dte ) const
     {
       const auto ndof = g_inputdeck.get< tag::ndof >();
@@ -1101,7 +1174,9 @@ class MultiMat {
       mindt /= (2.0*dgp + 1.0);
       for (std::size_t e=0; e<nielem; ++e)
         local_dte[e] /= (2.0*dgp + 1.0);
-      return mindt;
+
+      auto dt_p = m_physics.dtRestriction(geoElem, nielem, srcFlag);
+      return std::min(mindt, dt_p);
     }
 
     //! Balances elastic energy after plastic update
@@ -1655,6 +1730,8 @@ class MultiMat {
     }
 
   private:
+    //! Physics policy
+    const Physics m_physics;
     //! Number of components in this PDE system
     const ncomp_t m_ncomp;
     //! Number of primitive quantities stored in this PDE system

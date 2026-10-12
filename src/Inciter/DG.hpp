@@ -258,6 +258,7 @@ class DG : public CBase_DG {
       p | m_diag;
       p | m_nstage;
       p | m_stage;
+      p | m_stiffSolverMode;
       p | m_ndof;
       p | m_interface;
       p | m_numEqDof;
@@ -274,6 +275,7 @@ class DG : public CBase_DG {
       p | m_pNodefieldsc;
       p | m_outmesh;
       p | m_boxelems;
+      p | m_srcFlag;
       p | m_shockmarker;
       p | m_nodevel;
       p | m_bnode;
@@ -338,6 +340,13 @@ class DG : public CBase_DG {
     tk::Fields m_stiffrhsprev;
     //! Vectors that indicates which equations are stiff and non-stiff
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
+    //! Which stiff-equation residual nonlinear_func() should assemble.
+    enum class StiffSolverMode { IMEX=0, OperatorSplit=1 };
+    StiffSolverMode m_stiffSolverMode = StiffSolverMode::IMEX;
+    //! \brief Post-RK stiff DOFs of the element currently being relaxed, used as
+    //!   the constant term in the operator-split backward-Euler residual. Transient
+    //!   per-element scratch (not PUPed).
+    std::vector< tk::real > m_gStar;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
     //! Counter for number of nodes on this chare excluding ghosts
@@ -387,6 +396,8 @@ class DG : public CBase_DG {
     Ghosts::OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
+    //! Vector indicating if a source was added to element
+    std::vector< int > m_srcFlag;
     //! Shock detection marker for field output
     std::vector< std::size_t > m_shockmarker;
     //! Velocity at nodes for ALE
@@ -484,8 +495,14 @@ class DG : public CBase_DG {
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
 
+    //! Perform the operator-split plasticity relaxation substep
+    void plasticity_split_integrate();
+
     //! Perform the BDF1 update
     void BDF1_integrate();
+
+    //! Perform the point-implicit update
+    void point_implicit_integrate();
 
     //! Non-linear solver using Broyden's method
     std::vector< tk::real > nonlinear_broyden(std::size_t e,
@@ -503,6 +520,38 @@ class DG : public CBase_DG {
 
     void output_internal_energy();
     void output_inner_radius();
+
+    //! Solve element-local implicit system using Newton's method
+    bool element_implicit_step(std::size_t e,
+                                const std::vector< tk::real >& u_old,
+                                std::vector< tk::real >& u_new,
+                                tk::real dte,
+                                tk::real vole,
+                                const std::vector< std::vector< tk::real > >&
+                                  dRdu );
+
+    //! Calculate element-local RHS for point-implicit solve
+    std::vector< tk::real > point_implicit_rhs(std::size_t e,
+                                              const std::vector< tk::real >& ue,
+                                              const tk::Fields& Ubase,
+                                              const tk::Fields& Pbase ) const;
+
+    //! Calculate element-local Jacobian for point-implicit solve
+    std::vector< std::vector< std::vector< tk::real > > >
+      point_implicit_jacobian(
+        const tk::Fields& Ubase,
+        const tk::Fields& Pbase,
+        const tk::Fields& Rbase ) const;
+
+    //! Calculate element-local Jacobian for point-implicit solve using
+    //! analytic solution
+    std::vector< std::vector< std::vector< tk::real > > >
+      point_implicit_jacobian_analytic(
+        const tk::Fields& Ubase,
+        const tk::Fields& Pbase ) const;
+
+    //! Coloring algorithm to separate elements that share a face
+    std::vector< int > point_implicit_elem_coloring() const;
 };
 
 } // inciter::
