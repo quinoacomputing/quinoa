@@ -1,19 +1,19 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Problem/VerneyImplosion.hpp
+  \file      src/PDE/MultiMat/Problem/VerneyShell.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Problem configuration for Verney shell implosion
+  \brief     Problem configuration for Verney shell
   \details   This file defines a policy class for the multi-material
     compressible flow equations, defined in PDE/MultiMat/DGMultiMat.hpp.
     See PDE/MultiMat/Problem.hpp for general requirements on Problem policy
     classes for MultiMat.
 */
 // *****************************************************************************
-#ifndef MultiMatProblemVerneyImplosion_h
-#define MultiMatProblemVerneyImplosion_h
+#ifndef MultiMatProblemVerneyShell_h
+#define MultiMatProblemVerneyShell_h
 
 #include <string>
 
@@ -26,11 +26,11 @@
 
 namespace inciter {
 
-//! MultiMat system of PDEs problem: Verney Implosion.
+//! MultiMat system of PDEs problem: Verney Shell.
 //! See: Chiravalle, Vincent P. "Verification and validation of two
 //! hydrodynamic methods for simulations of high energy density physics
 //! problems." Laser and Particle Beams 2022 (2022): e5.
-class MultiMatProblemVerneyImplosion {
+class MultiMatProblemVerneyShell {
 
   protected:
     using ncomp_t = tk::ncomp_t;
@@ -61,9 +61,9 @@ class MultiMatProblemVerneyImplosion {
 
     //! Return problem type
     static ctr::ProblemType type() noexcept
-    { return ctr::ProblemType::VERNEY_IMPLOSION; }
+    { return ctr::ProblemType::VERNEY_SHELL; }
 };
 
 } // inciter::
 
-#endif // MultiMatProblemVerneyImplosion_h
+#endif // MultiMatProblemVerneyShell_h

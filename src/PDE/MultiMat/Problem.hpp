@@ -50,7 +50,7 @@
 #include "Problem/EquilInterfaceAdvect.hpp"
 #include "Problem/RichtmyerMeshkov.hpp"
 #include "Problem/SinewavePacket.hpp"
-#include "Problem/VerneyImplosion.hpp"
+#include "Problem/VerneyShell.hpp"
 
 namespace inciter {
 
@@ -63,7 +63,7 @@ using MultiMatProblems =
                , MultiMatProblemEquilInterfaceAdvect
                , MultiMatProblemRichtmyerMeshkov
                , MultiMatProblemSinewavePacket
-               , MultiMatProblemVerneyImplosion >;
+               , MultiMatProblemVerneyShell >;
 
 } // inciter::
 

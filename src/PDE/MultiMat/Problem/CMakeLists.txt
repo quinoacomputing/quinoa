@@ -7,7 +7,7 @@ add_library(MultiMatProblem
             EquilInterfaceAdvect.cpp
             RichtmyerMeshkov.cpp
             SinewavePacket.cpp
-            VerneyImplosion.cpp)
+            VerneyShell.cpp)
 
 target_include_directories(MultiMatProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}

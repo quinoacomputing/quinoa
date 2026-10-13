@@ -1,6 +1,6 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/MultiMat/Problem/VerneyImplosion.cpp
+  \file      src/PDE/MultiMat/Problem/VerneyShell.cpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
@@ -13,7 +13,7 @@
 */
 // *****************************************************************************
 
-#include "VerneyImplosion.hpp"
+#include "VerneyShell.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 #include "MultiMat/MultiMatIndexing.hpp"
 
@@ -23,15 +23,15 @@ extern ctr::InputDeck g_inputdeck;
 
 } // ::inciter
 
-using inciter::MultiMatProblemVerneyImplosion;
+using inciter::MultiMatProblemVerneyShell;
 
 tk::InitializeFn::result_type
-MultiMatProblemVerneyImplosion::initialize( ncomp_t ncomp,
-                                            const std::vector< EOS >& mat_blk,
-                                            tk::real x,
-                                            tk::real y,
-                                            tk::real z,
-                                            tk::real )
+MultiMatProblemVerneyShell::initialize( ncomp_t ncomp,
+                                        const std::vector< EOS >& mat_blk,
+                                        tk::real x,
+                                        tk::real y,
+                                        tk::real z,
+                                        tk::real )
 // *****************************************************************************
 //! Evaluate analytical solution at (x,y,z,t) for all components
 //! \param[in] ncomp Number of scalar components in this PDE system
@@ -40,12 +40,11 @@ MultiMatProblemVerneyImplosion::initialize( ncomp_t ncomp,
 //! \param[in] z Z coordinate where to evaluate the solution
 //! \return Values of all components evaluated at (x)
 //! \note The function signature must follow tk::InitializeFn
-//! \details This function only initializes the Verney shell implosion
-//!          problem
+//! \details This function only initializes the Verney shell problem
 // *****************************************************************************
 {
   auto nmat = g_inputdeck.get< eq, tag::nmat >();
-  auto alphamin = g_inputdeck.get< eq, tag::min_volumefrac >();
+  if (nmat > 1) Throw ("Verney is a single material problem");
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
 
   tk::real p;
@@ -54,30 +53,8 @@ MultiMatProblemVerneyImplosion::initialize( ncomp_t ncomp,
 
   // Compute radial position
   tk::real r = std::sqrt(x*x+y*y+z*z);
-  // Inner region (air)
-  // if (r < 0.08) {
-  //   alpha = {{ 1.0-2*alphamin, alphamin, alphamin }};
-  //   rho = {{ 0.01, 7900.0, 0.01 }};
-  //   vel = {{ 0.0, 0.0, 0.0 }};
-  //   p = 100.0;
-  // }
-  // else if (0.08 <= r && r <= 0.085) {
-  //   alpha = {{ alphamin, 1.0-2*alphamin, alphamin }};
-  //   rho = {{ 0.01, 7900.0, 0.01 }};
-  //   tk::real r0 = 0.08;
-  //   tk::real u0 = 1400.0;
-  //   tk::real vel_mag = u0 * std::pow(r0/r,2.0);
-  //   vel = {{ -vel_mag*x/r, -vel_mag*y/r, -vel_mag*z/r }};
-  //   p = 100.0;
-  // }
-  // else {
-  //   alpha = {{ alphamin, alphamin, 1.0-2*alphamin }};
-  //   rho = {{ 0.01, 7900.0, 0.01 }};
-  //   vel = {{ 0.0, 0.0, 0.0 }};
-  //   p = 100.0;
-  // }
 
-  // Lagrangian run..
+  // ICs
   alpha = {{ 1.0 }};
   rho = {{ 7900.0 }};
   tk::real r0 = 0.08;
@@ -85,7 +62,7 @@ MultiMatProblemVerneyImplosion::initialize( ncomp_t ncomp,
   tk::real vel_mag = u0 * std::pow(r0/r,2.0);
   vel = {{ -vel_mag*x/r, -vel_mag*y/r, -vel_mag*z/r }};
   p = 100.0;
-    
+
   tk::real rhob = 0.0;
   for (std::size_t k=0; k<nmat; ++k) rhob += alpha[k]*rho[k];
   s[momentumIdx(nmat, 0)] = rhob * vel[0];
@@ -111,10 +88,8 @@ MultiMatProblemVerneyImplosion::initialize( ncomp_t ncomp,
     // printf("alpha, rho = %e, %e\n", alpha[k], rho[k]);
     // printf("vel = %e, %e, %e\n", vel[0], vel[1], vel[2]);
     // printf("p = %e\n", p);
-    s[energyIdx(nmat, k)] =
-      mat_blk[k].compute< EOS::totalenergy >(
-        alpha[k]*rho[k], vel[0], vel[1], vel[2],
-        alpha[k]*p, alpha[k], g);
+    s[energyIdx(nmat, k)] = mat_blk[k].compute< EOS::totalenergy >(
+      alpha[k]*rho[k], vel[0], vel[1], vel[2], alpha[k]*p, alpha[k], g);
   }
 
   return s;
