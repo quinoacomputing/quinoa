@@ -70,6 +70,7 @@ class EOS {
     struct cv {};
     struct cp {};
     struct viscCoeff {};
+    struct dcvdT {};
     //! Call EOS function
     //! \tparam Fn Function tag identifying the function to call
     //! \tparam Args Types of arguments to pass to function
@@ -126,6 +127,9 @@ class EOS {
 
           else if constexpr( std::is_same_v< Fn, viscCoeff > )
             return m.viscCoeff( std::forward< Args >( args )... );
+
+          else if constexpr( std::is_same_v< Fn, dcvdT > )
+            return m.dcvdT( std::forward< Args >( args )... );
         }, m_material );
     }
 

@@ -138,6 +138,9 @@ class NeoHookeanSolid {
     //! Return dynamic viscosity coefficient
     tk::real viscCoeff( tk::real ) const { return 0.0; }
 
+    //! Return specific heat derivative (no-op)
+    tk::real dcvdT( [[maybe_unused]] tk::real temp) const { return 0.0; }
+
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
     //! \brief Pack/Unpack serialize member function

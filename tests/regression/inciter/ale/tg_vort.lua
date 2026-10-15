@@ -14,6 +14,7 @@ inciter = {
     mesh_velocity = "fluid",
     smoother = "laplace",
     vortmult = 1.0,
+    vortscale = 1.0,
     maxit = 10,
     tolerance = 1.0,
     dirichlet = { 1, 2, 3, 4, 5, 6 }
