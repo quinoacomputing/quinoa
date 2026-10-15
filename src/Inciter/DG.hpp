@@ -42,6 +42,12 @@ namespace inciter {
 class DG : public CBase_DG {
 
   public:
+
+    //! Available IMEX Runge-Kutta schemes
+    enum class IMEXRKScheme {
+      CB3a,
+      CB3d
+    };
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -244,15 +250,23 @@ class DG : public CBase_DG {
       p | m_geoElemn;
       p | m_mtInv;
       p | m_rhs;
-      p | m_rhsprev;
       p | m_stiffrhs;
-      p | m_stiffrhsprev;
+      p | m_imex_x;
+      p | m_imex_y;
+      p | m_imex_zex;
+      p | m_imex_zim;
+      p | m_imex_maxiter;
+      p | m_imex_activeElem;
       p | m_stiffEqIdx;
       p | m_nonStiffEqIdx;
       p | m_nstiffeq;
       p | m_nnonstiffeq;
       p | m_npoin;
       p | m_diag;
+      int imexrk_scheme_int = static_cast< int >( m_imexrk_scheme );
+      p | imexrk_scheme_int;
+      if (p.isUnpacking())
+        m_imexrk_scheme = static_cast< IMEXRKScheme >( imexrk_scheme_int );
       p | m_nstage;
       p | m_stage;
       p | m_stiffSolverMode;
@@ -329,12 +343,20 @@ class DG : public CBase_DG {
     tk::Fields m_geoElemn;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of previous right-hand side values used in the IMEX-RK scheme
-    tk::Fields m_rhsprev;
-    //! Vector of right-hand side for stiff equations
+    //! Vector of stiff right-hand side
     tk::Fields m_stiffrhs;
-    //! Vector of previous right-hand side values for stiff equations
-    tk::Fields m_stiffrhsprev;
+    //! IMEX accumulated solution register
+    tk::Fields m_imex_x;
+    //! IMEX stage-state register
+    tk::Fields m_imex_y;
+    //! IMEX explicit RHS register
+    tk::Fields m_imex_zex;
+    //! IMEX implicit RHS register
+    tk::Fields m_imex_zim;
+    //! IMEX diagnostic for maximum number of iterations
+    std::size_t m_imex_maxiter;
+    //! IMEX diagnostic to flag active elements in IMEX
+    std::vector< std::size_t > m_imex_activeElem;
     //! Vectors that indicates which equations are stiff and non-stiff
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
     //! Which stiff-equation residual nonlinear_func() should assemble.
@@ -350,6 +372,8 @@ class DG : public CBase_DG {
     std::size_t m_npoin;
     //! Diagnostics object
     ElemDiagnostics m_diag;
+    //! Selected IMEX Runge-Kutta scheme
+    IMEXRKScheme m_imexrk_scheme;
     //! Total number of Runge-Kutta stages
     std::size_t m_nstage;
     //! Runge-Kutta stage counter
@@ -489,8 +513,20 @@ class DG : public CBase_DG {
     //! Start preparing fields for output to file
     void startFieldOutput( CkCallback c );
 
+    //! Parse selected IMEX Runge-Kutta scheme from input
+    IMEXRKScheme imex_scheme_from_input() const;
+
+    //! Return true if selected IMEX scheme is IMEXRKCB3d
+    bool use_imexrkcb3d() const;
+
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
+
+    //! Perform one IMEXRKCB3a stage update
+    void imex_integrate_cb3a();
+
+    //! Perform one IMEXRKCB3d stage update
+    void imex_integrate_cb3d();
 
     //! Perform the operator-split plasticity relaxation substep
     void plasticity_split_integrate();
@@ -498,22 +534,33 @@ class DG : public CBase_DG {
     //! Perform the BDF1 update
     void BDF1_integrate();
 
+    //! Local stiff RHS evaluated at a packed element-local stiff state
+    std::vector< tk::real >
+    compute_stiff_rhs_local( std::size_t e,
+                             const std::vector< tk::real >& x );
+
     //! Perform the point-implicit update
     void point_implicit_integrate();
 
-    //! Non-linear solver using Broyden's method
-    std::vector< tk::real > nonlinear_broyden(std::size_t e,
-                                              std::vector< tk::real > x,
-                                              bool solver_failed );
+    //! Nonlinear residual for one diagonal implicit RK stage
+    std::vector< tk::real >
+    nonlinear_func_stage( std::size_t e,
+                          const std::vector< tk::real >& x,
+                          const std::vector< tk::real >& stage_base,
+                          tk::real aii );
 
-    //! Non-linear solver using Newton's method
-    std::vector< tk::real > nonlinear_newton(std::size_t e,
-                                             std::vector< tk::real > x,
-                                             bool solver_failed );
+    //! Jacobian for one diagonal implicit RK stage residual
+    std::vector< double >
+    compute_jacobian_stage( std::size_t e,
+                            const std::vector< tk::real >& x,
+                            tk::real aii );
 
-    //! Non-linear function necessary to integrate with IMEX
-    std::vector< tk::real > nonlinear_func(std::size_t e,
-                                           std::vector< tk::real > x);
+    //! Newton solve for one diagonal implicit RK stage
+    std::vector< tk::real >
+    nonlinear_newton_stage( std::size_t e,
+                            std::vector< tk::real > x,
+                            const std::vector< tk::real >& stage_base,
+                            tk::real aii );
 
     //! Solve element-local implicit system using Newton's method
     bool element_implicit_step(std::size_t e,

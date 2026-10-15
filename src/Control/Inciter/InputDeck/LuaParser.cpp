@@ -151,12 +151,14 @@ LuaParser::storeInputDeck(
     lua_ideck, "rescomp", gideck.get< tag::rescomp >(), 1);
   storeIfSpecd< uint32_t >(
     lua_ideck, "imex_runge_kutta", gideck.get< tag::imex_runge_kutta >(), 0);
+  storeIfSpecd< std::string >(
+    lua_ideck, "imex_scheme", gideck.get< tag::imex_scheme >(), "IMEXRKCB3d");
   storeIfSpecd< uint32_t >(
-    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 50);
+    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 250);
   storeIfSpecd< tk::real >(
     lua_ideck, "imex_reltol", gideck.get< tag::imex_reltol >(), 1.0e-02);
   storeIfSpecd< tk::real >(
-    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-04);
+    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-08);
   storeIfSpecd< uint32_t >(
     lua_ideck, "operator_split_plasticity",
     gideck.get< tag::operator_split_plasticity >(), 0);
@@ -1481,6 +1483,13 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
 
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-08);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
       sol_mat[imat+1]["yield_stress"] =
@@ -1518,6 +1527,13 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
 
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-08);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
+
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
       sol_mat[imat+1]["yield_stress"] =
@@ -1538,6 +1554,13 @@ LuaParser::registerMaterials(
     // mu
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-08);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
@@ -1571,6 +1594,13 @@ LuaParser::registerMaterials(
     // K0
     checkStoreMatProp(sol_mat[imat+1], "K0", ntype,
       mati_deck.get< tag::K0 >());
+
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-08);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())

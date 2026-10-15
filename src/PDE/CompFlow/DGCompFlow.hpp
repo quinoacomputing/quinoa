@@ -166,6 +166,17 @@ class CompFlow {
       nonStiffEqIdx.resize(0);
     }
 
+    //! Enforces the bounds of the defined stiff variables
+    //! \param[in] e Element number
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in,out] x Stiff unknown array
+    void enforceStiffBounds( std::size_t /*e*/,
+                             const tk::Fields& /*U*/,
+                             std::vector< tk::real >& /*x*/ ) const
+    {
+      // Do not enforce any bounds.
+    }
+
     //! Initalize the compressible flow equations, prepare for time integration
     //! \param[in] geoElem Element geometry array
     //! \param[in] inpoel Element-node connectivity
@@ -861,6 +872,44 @@ class CompFlow {
                     const std::vector< std::size_t >& /*ndofel*/,
                     tk::Fields& /*R*/ ) const
     {}
+
+    //! Compute analytical jacobian for stiff rhs if available.
+    //! otherwise no-op.
+    // //! \param[in] e Element number
+    // //! \param[in] geoElem Element geometry array
+    // //! \param[in] U Solution vector at recent time step
+    // //! \param[in] ndofel Vector of local number of degrees of freedom
+    // //! \param[out] jacob Jacobian matrix in row major
+    // //! \param[out] jacobian_provided >0 if jacobian is present
+    void compute_jacobian( std::size_t /*e*/,
+                           const tk::Fields& /*geoElem*/,
+                           const tk::Fields& /*U*/,
+                           const std::vector< std::size_t >& /*ndofel*/,
+                           std::vector< double > /*jacob*/,
+                           std::size_t /*jacobian_provided*/ ) const {}
+
+    //! Extract the velocity field at cell nodes. Currently unused.
+    //! \param[in] U Solution vector at recent time step
+    //! \param[in] N Element node indices
+    //! \return Array of the four values of the velocity field
+    std::array< std::array< tk::real, 4 >, 3 >
+    velocity( const tk::Fields& U,
+              const std::array< std::vector< tk::real >, 3 >&,
+              const std::array< std::size_t, 4 >& N ) const
+    {
+      std::array< std::array< tk::real, 4 >, 3 > v;
+      v[0] = U.extract( 1, N );
+      v[1] = U.extract( 2, N );
+      v[2] = U.extract( 3, N );
+      auto r = U.extract( 0, N );
+      std::transform( r.begin(), r.end(), v[0].begin(), v[0].begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      std::transform( r.begin(), r.end(), v[1].begin(), v[1].begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      std::transform( r.begin(), r.end(), v[2].begin(), v[2].begin(),
+                      []( tk::real s, tk::real& d ){ return d /= s; } );
+      return v;
+    }
 
     //! Extract the velocity field at cell nodes. Not implemented for CompFlow
     void nodeVelocity(

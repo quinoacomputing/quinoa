@@ -166,6 +166,12 @@ class DGPDE {
     void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const
     { return self->setNonStiffEqIdx( nonStiffEqIdx ); }
 
+    //! Public function to enforce bounds in stiff solver
+    void enforceStiffBounds( std::size_t e,
+                             const tk::Fields& U,
+                             std::vector< tk::real >& x ) const
+    { return self->enforceStiffBounds( e, U, x); }
+
     //! Public interface to determine elements that lie inside the IC box
     void IcBoxElems( const tk::Fields& geoElem,
       std::size_t nielem,
@@ -390,6 +396,15 @@ class DGPDE {
                     tk::Fields& R ) const
     { return self->stiff_rhs( e, geoElem, U, ndofel, R); }
 
+    //! Public interface for computing stiff jacobian matrix
+    void compute_jacobian( std::size_t e,
+                           const tk::Fields& geoElem,
+                           const tk::Fields& U,
+                           const std::vector< std::size_t >& ndofel,
+                           std::vector< double > jacob,
+                           std::size_t jacobian_provided ) const
+    { return self->compute_jacobian( e, geoElem, U, ndofel, jacob, jacobian_provided); }
+
     //! Public interface for computing velocity at nodes of elements
     void nodeVelocity(
       const tk::Fields& geoElem,
@@ -477,6 +492,9 @@ class DGPDE {
       virtual std::size_t nnonstiffeq() const = 0;
       virtual void setStiffEqIdx( std::vector< std::size_t >& ) const = 0;
       virtual void setNonStiffEqIdx( std::vector< std::size_t >& ) const = 0;
+      virtual void enforceStiffBounds( std::size_t,
+                                       const tk::Fields&,
+                                       std::vector< tk::real >& ) const = 0;
       virtual void IcBoxElems( const tk::Fields&,
         std::size_t,
         std::vector< std::unordered_set< std::size_t > >& ) const = 0;
@@ -623,6 +641,12 @@ class DGPDE {
                               const tk::Fields&,
                               const std::vector< std::size_t >&,
                               tk::Fields& ) const = 0;
+      virtual void compute_jacobian( std::size_t,
+                                     const tk::Fields&,
+                                     const tk::Fields&,
+                                     const std::vector< std::size_t >&,
+                                     std::vector< double > jacob,
+                                     std::size_t jacobian_provided ) const = 0;
       virtual void nodeVelocity(
         const tk::Fields&,
         const std::map< std::size_t, std::vector< std::size_t > >&,
@@ -677,6 +701,10 @@ class DGPDE {
       { data.setStiffEqIdx(stiffEqIdx); }
       void setNonStiffEqIdx( std::vector< std::size_t >& nonStiffEqIdx ) const override
       { data.setNonStiffEqIdx(nonStiffEqIdx); }
+      void enforceStiffBounds( std::size_t e,
+                               const tk::Fields& U,
+                               std::vector< tk::real >& x ) const override
+      { data.enforceStiffBounds( e, U, x); }
       void IcBoxElems( const tk::Fields& geoElem,
         std::size_t nielem,
         std::vector< std::unordered_set< std::size_t > >& inbox )
@@ -867,6 +895,13 @@ class DGPDE {
                       const std::vector< std::size_t >& ndofel,
                       tk::Fields& R ) const override
       { return data.stiff_rhs( e, geoElem, U, ndofel, R ); }
+      void compute_jacobian( std::size_t e,
+                             const tk::Fields& geoElem,
+                             const tk::Fields& U,
+                             const std::vector< std::size_t >& ndofel,
+                             std::vector< double > jacob,
+                             std::size_t jacobian_provided ) const override
+      { return data.compute_jacobian( e, geoElem, U, ndofel, jacob, jacobian_provided ); }
       void nodeVelocity(
         const tk::Fields& geoElem,
         const std::map< std::size_t, std::vector< std::size_t > >& esup,
