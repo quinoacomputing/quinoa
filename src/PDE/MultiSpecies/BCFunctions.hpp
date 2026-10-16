@@ -390,17 +390,15 @@ namespace inciter {
   }
 
   //! \brief Construct ghost conserved gradients at an adiabatic no-slip wall
-  //! \details Density and momentum gradients are copied to the ghost side.
-  //!   The normal component of the specific-internal-energy gradient is
-  //!   reflected, then the ghost total-energy gradient is reconstructed from
-  //!   the ghost state and primitive gradients.
-  //! \note This DDG boundary treatment currently supports the five-equation,
-  //!   single-species system only. The function signature must follow
-  //!   tk::BoundaryGradientFn.
+  //! \details Reflect normal temperature and mass-fraction gradients. Copy
+  //!   total-density and momentum gradients, then reconstruct species-density
+  //!   and energy gradients for a single-temperature, noncatalytic mixture.
+  //!   This sets ghost gradients, not the final numerical wall flux.
+  //! \note The function signature must follow tk::BoundaryGradientFn.
   static tk::BoundaryGradientFn::result_type
   adiabaticWallGrad(
     ncomp_t ncomp,
-    const std::vector< EOS >&,
+    const std::vector< EOS >& mat_blk,
     const std::array< std::vector< tk::real >, 2 >& state,
     const tk::BoundaryGradient& gradMinus,
     tk::real, tk::real, tk::real, tk::real,
@@ -409,10 +407,9 @@ namespace inciter {
     const auto nspec =
       g_inputdeck.get< tag::multispecies, tag::nspec >();
 
-    Assert( nspec == 1,
-            "DDG adiabatic-wall gradients require one species" );
-    Assert( ncomp == 5,
-            "DDG adiabatic-wall gradients require five equations" );
+    Assert( ncomp == nspec + 4,
+            "Adiabatic-wall gradients require one mixture energy equation" );
+    Assert( mat_blk.size() >= nspec, "Missing species EOS at adiabatic wall" );
     Assert( state[0].size() >= ncomp && state[1].size() >= ncomp,
             "Incorrect boundary state size" );
     Assert( gradMinus.size() == ncomp,
@@ -420,13 +417,19 @@ namespace inciter {
 
     const auto& qMinus = state[0];
     const auto& qPlus = state[1];
-    const auto density = multispecies::densityIdx(nspec, 0);
     const auto energy = multispecies::energyIdx(nspec, 0);
 
-    const auto rhoMinus = qMinus[density];
-    const auto rhoPlus = qPlus[density];
-    Assert( rhoMinus > 0.0 && rhoPlus > 0.0,
-            "Non-positive density at adiabatic wall" );
+    tk::real rhoMinus = 0.0, rhoPlus = 0.0;
+    std::array<tk::real, 3> gradRhoMinus{};
+    for (std::size_t s=0; s<nspec; ++s) {
+      const auto density = multispecies::densityIdx(nspec, s);
+      rhoMinus += qMinus[density];
+      rhoPlus += qPlus[density];
+      for (std::size_t d=0; d<3; ++d)
+        gradRhoMinus[d] += gradMinus[density][d];
+    }
+    if (rhoMinus <= 0.0 || rhoPlus <= 0.0)
+      Throw("Non-positive density at adiabatic wall");
 
     std::array< tk::real, 3 > velocityMinus{{ 0.0, 0.0, 0.0 }};
     std::array< tk::real, 3 > velocityPlus{{ 0.0, 0.0, 0.0 }};
@@ -440,7 +443,7 @@ namespace inciter {
       for (std::size_t d=0; d<3; ++d) {
         gradVelocityMinus[i][d] =
           (gradMinus[momentum][d] -
-           velocityMinus[i]*gradMinus[density][d]) / rhoMinus;
+           velocityMinus[i]*gradRhoMinus[d]) / rhoMinus;
       }
     }
 
@@ -448,31 +451,95 @@ namespace inciter {
     for (std::size_t d=0; d<3; ++d) {
       gradInternalEnergy[d] =
         (gradMinus[energy][d] -
-         qMinus[energy]/rhoMinus*gradMinus[density][d]) / rhoMinus;
+         qMinus[energy]/rhoMinus*gradRhoMinus[d]) / rhoMinus;
       for (std::size_t i=0; i<3; ++i)
         gradInternalEnergy[d] -=
           velocityMinus[i]*gradVelocityMinus[i][d];
     }
 
-    const auto normalInternalEnergyGradient =
-      gradInternalEnergy[0]*fn[0] + gradInternalEnergy[1]*fn[1] +
-      gradInternalEnergy[2]*fn[2];
-    for (std::size_t d=0; d<3; ++d)
-      gradInternalEnergy[d] -= 2*normalInternalEnergyGradient*fn[d];
+    // Recover EOS-consistent temperatures; appended primitives are guesses.
+    const auto index = ncomp + multispecies::temperatureIdx(nspec, 0);
+    // Use primitive temp in q as guess if available, otherwise use 1500 K
+    const auto guessMinus = qMinus.size() > index ? qMinus[index] : 1500.0;
+    const auto guessPlus = qPlus.size() > index ? qPlus[index] : 1500.0;
+    Mixture mixMinus(nspec, qMinus, mat_blk);
+    Mixture mixPlus(nspec, qPlus, mat_blk);
+    int convergedMinus = 0, convergedPlus = 0;
+    const auto TMinus = mixMinus.temperature(
+      rhoMinus, velocityMinus[0], velocityMinus[1], velocityMinus[2],
+      qMinus[energy], mat_blk, convergedMinus, guessMinus);
+    if (convergedMinus != 1)
+      Throw("Interior temperature solve failed at adiabatic wall");
+    const auto TPlus = mixPlus.temperature(
+      rhoPlus, velocityPlus[0], velocityPlus[1], velocityPlus[2],
+      qPlus[energy], mat_blk, convergedPlus, guessPlus);
+    if (convergedPlus != 1)
+      Throw("Ghost temperature solve failed at adiabatic wall");
+    std::vector<tk::real> eMinus(nspec), ePlus(nspec);
+    tk::real cvMinus = 0.0, cvPlus = 0.0;
+    tk::BoundaryGradient gradYMinus(nspec), gradYPlus(nspec);
+    for (std::size_t s=0; s<nspec; ++s) {
+      const auto density = multispecies::densityIdx(nspec, s);
+      const auto YMinus = qMinus[density] / rhoMinus;
+      const auto YPlus = qPlus[density] / rhoPlus;
+      eMinus[s] = mat_blk[s].compute<EOS::internalenergy>(TMinus);
+      ePlus[s] = mat_blk[s].compute<EOS::internalenergy>(TPlus);
+      cvMinus += YMinus * mat_blk[s].compute<EOS::cv>(TMinus);
+      cvPlus += YPlus * mat_blk[s].compute<EOS::cv>(TPlus);
+      for (std::size_t d=0; d<3; ++d)
+        gradYMinus[s][d] =
+          (gradMinus[density][d] - YMinus * gradRhoMinus[d]) / rhoMinus;
+    }
+    if (cvMinus <= 0.0 || cvPlus <= 0.0)
+      Throw("Non-positive heat capacity at adiabatic wall");
+
+    std::array<tk::real, 3> gradTMinus{};
+    for (std::size_t d=0; d<3; ++d) {
+      gradTMinus[d] = gradInternalEnergy[d];
+      for (std::size_t s=0; s<nspec; ++s)
+        gradTMinus[d] -= eMinus[s] * gradYMinus[s][d];
+      gradTMinus[d] /= cvMinus;
+    }
+    // fn is the unit outward face normal.
+    auto reflectNormal = [&fn](const std::array<tk::real, 3>& g) {
+      auto reflected = g;
+      const auto gn = g[0]*fn[0] + g[1]*fn[1] + g[2]*fn[2];
+      for (std::size_t d=0; d<3; ++d)
+        reflected[d] -= 2.0 * gn * fn[d];
+      return reflected;
+    };
+    const auto gradTPlus = reflectNormal(gradTMinus);
+    for (std::size_t s=0; s<nspec; ++s)
+      gradYPlus[s] = reflectNormal(gradYMinus[s]);
 
     auto gradPlus = gradMinus;
+    const auto gradRhoPlus = gradRhoMinus;
+    for (std::size_t s=0; s<nspec; ++s) {
+      const auto density = multispecies::densityIdx(nspec, s);
+      const auto YPlus = qPlus[density] / rhoPlus;
+      for (std::size_t d=0; d<3; ++d)
+        gradPlus[density][d] =
+          YPlus * gradRhoPlus[d] + rhoPlus * gradYPlus[s][d];
+    }
+    // Supply the reflected primitive gradients to the existing energy
+    // reconstruction, including the mixture composition contribution.
+    for (std::size_t d=0; d<3; ++d) {
+      gradInternalEnergy[d] = cvPlus * gradTPlus[d];
+      for (std::size_t s=0; s<nspec; ++s)
+        gradInternalEnergy[d] += ePlus[s] * gradYPlus[s][d];
+    }
     for (std::size_t i=0; i<3; ++i) {
       const auto momentum = multispecies::momentumIdx(nspec, i);
       for (std::size_t d=0; d<3; ++d) {
         gradVelocityPlus[i][d] =
           (gradPlus[momentum][d] -
-           velocityPlus[i]*gradPlus[density][d]) / rhoPlus;
+           velocityPlus[i]*gradRhoPlus[d]) / rhoPlus;
       }
     }
 
     for (std::size_t d=0; d<3; ++d) {
       gradPlus[energy][d] =
-        qPlus[energy]/rhoPlus*gradPlus[density][d] +
+        qPlus[energy]/rhoPlus*gradRhoPlus[d] +
         rhoPlus*gradInternalEnergy[d];
       for (std::size_t i=0; i<3; ++i)
         gradPlus[energy][d] +=

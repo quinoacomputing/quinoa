@@ -115,9 +115,9 @@ class MultiSpeciesViscousTermsDGP1 {
       std::size_t elem,
       const std::array< std::vector< tk::real >, 3 >& dBdx,
       const std::array< std::vector< tk::real >, 6 >& d2Bdx2,
-      std::array< std::array< tk::real, 3 >, 5>& grad,
+      std::vector< std::array< tk::real, 3 >>& grad,
       std::array< std::array< tk::real, 3 >, 4>& vgrad,
-      std::array< std::array< tk::real, 6 >, 5>& hess ) const;
+      std::vector< std::array< tk::real, 6 >>& hess ) const;
 
     //! Compute the multispecies viscous flux at an interior face
     std::vector<std::array<tk::real, 3>>
@@ -127,9 +127,10 @@ class MultiSpeciesViscousTermsDGP1 {
       const std::array< std::vector< tk::real >, 2 >& state,
       const std::array< tk::real, 3 >& fn,
       const tk::real he,
-      const std::array<std::array< std::array< tk::real, 3 >, 5 >, 2>& grad,
-      const std::array<std::array< std::array< tk::real, 6 >, 5 >, 2>& hess,
-      std::array< std::array<std::array<std::array<tk::real, 3>, 3>, 5>, 5>& A,
+      const std::array< std::vector< std::array< tk::real, 3 >>, 2>& grad,
+      const std::array< std::vector< std::array< tk::real, 6 >>, 2>& hess,
+      std::vector< std::vector< std::array<std::array< tk::real, 3>, 3> > >& A,
+      //std::array< std::array<std::array<std::array<tk::real, 3>, 3>, 5>, 5>& A,
       std::vector< tk::real >& fl ) const;
 
     //! Compute the interface correction term for the multispecies viscous flux at an interior face

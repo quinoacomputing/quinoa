@@ -253,20 +253,29 @@ viscousBoundaryFaceIntDG(
   const auto& cz = coord[2];
 
   const auto ncomp = static_cast< ncomp_t >( R.nprop()/ndof );
-  Assert(ncomp == 5, "DGP1 viscous diffusion matrices currently assume five equations");
+  Assert(ncomp == nspec + 4, 
+    "Expected species densities, three momentum equations, one energy equation");
 
 
   std::vector< tk::real > B_l;
   std::array < std::vector< tk::real >, 3 > dBdx_l;
   std::array< std::array< std::vector< tk::real >, 6 >, 2 > d2Bdx2;
-  std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess{};
-  std::array < std::array< std::array< tk::real, 3 >, 5>, 2 > grad{};
+  std::array< std::vector< std::array< tk::real, 6 >>, 2 > hess{};
+  std::array < std::vector< std::array< tk::real, 3 >>, 2 > grad{};
   std::array < std::array< std::array< tk::real, 3 >, 4>, 2 > vgrad{};
   std::vector< tk::real > fl( ncomp, 0.0);
   std::vector<std::array< tk::real, 3>> ic(ncomp);
 
+  // resize gradient and hessian objects to match number of equations
+  for (std::size_t side = 0; side < 2; ++side) {
+    grad[side].resize(ncomp);
+    hess[side].resize(ncomp);
+  }
+
   // Diffusion matrices (allocated outside loops to avoid repeated allocation)
-  std::array< std::array < std::array < std::array<tk::real,3>,3>,5>,5> A{};
+  //std::array< std::array < std::array < std::array<tk::real,3>,3>,5>,5> A{};
+  std::vector<std::vector<std::array<std::array<tk::real, 3>, 3>>> 
+    A(ncomp, std::vector<std::array<std::array<tk::real, 3>, 3>>(ncomp));
 
   for (const auto& s : bcconfig) {       // for all bc sidesets
     auto bc = bface.find(static_cast<int>(s));// faces for side set

@@ -227,14 +227,27 @@ viscousInternalFaceIntDG(
   std::array< std::vector< tk::real >, 2 > state;
   std::array< std::array< std::vector< tk::real >, 3 >, 2 > dBdx;
   std::array< std::array< std::vector< tk::real >, 6 >, 2 > d2Bdx2;
-  std::array< std::array< std::array< tk::real, 3 >, 5>, 2 > grad{};
+  std::array< std::vector< std::array< tk::real, 3 >>, 2 > grad{};
   std::array< std::array< std::array< tk::real, 3 >, 4>, 2 > vgrad{};
-  std::array< std::array< std::array< tk::real, 6 >, 5>, 2 > hess{};
+  std::array< std::vector< std::array< tk::real, 6 >>, 2 > hess{};
   std::vector< tk::real > fl( ncomp, 0.0 );
   std::vector<std::array< tk::real, 3>> ic(ncomp); 
 
+  // resize gradient and hessian objects to match number of equations
+  for (std::size_t side = 0; side < 2; ++side) {
+    grad[side].resize(ncomp);
+    hess[side].resize(ncomp);
+  }
+
   // Diffusion matrices (allocated outside loops to avoid repeated allocation)
-  std::array< std::array< std::array< std::array< tk::real,3 >,3>,5>,5> A{};
+  // For multispecies, we have multiple continuity equations, so there are now more than 5
+  // diffusion matrices per equation and there are more than 5 equations. 
+  // The array "A" is now (ncomp x ncomp) whose elements are 3x3 matrices.
+  // In the multispeces case, ncomp = nspec + 4
+
+  //std::array< std::array< std::array< std::array< tk::real,3 >,3>,ncomp>,ncomp> A{};
+  std::vector<std::vector<std::array<std::array<tk::real, 3>, 3>>> 
+    A(ncomp, std::vector<std::array<std::array<tk::real, 3>, 3>>(ncomp));
 
   // compute internal surface flux integrals
   for (auto f=fd.Nbfac(); f<esuf.size()/2; ++f)

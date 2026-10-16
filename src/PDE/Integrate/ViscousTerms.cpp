@@ -20,6 +20,21 @@
 #include "MultiSpecies/MultiSpeciesIndexing.hpp"
 #include "MultiSpecies/Mixture/Mixture.hpp"
 
+namespace {
+
+std::vector<tk::real>
+speciesDiffusivities(
+  std::size_t nspec,
+  tk::real /*rho*/,
+  tk::real /*temperature*/,
+  const std::vector<tk::real>& /*massFractions*/ )
+{
+  // TODO: Compute species diffusivities using Mutation++.
+  return std::vector<tk::real>(nspec, 0.0);
+}
+
+} // anonymous namespace
+
 namespace tk {
 
 MultiSpeciesViscousTermsP0P1::MultiSpeciesViscousTermsP0P1(
@@ -324,9 +339,9 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   std::size_t elem,
   const std::array< std::vector< tk::real >, 3 >& dBdx,
   const std::array< std::vector< tk::real >, 6 >& d2Bdx2,
-  std::array< std::array< tk::real, 3 >, 5>& grad,
+  std::vector< std::array< tk::real, 3 >>& grad,
   std::array< std::array< tk::real, 3 >, 4>& vgrad,
-  std::array< std::array< tk::real, 6 >, 5>& hess ) const
+  std::vector< std::array< tk::real, 6 >>& hess ) const
 // *****************************************************************************
 //! Compute gradients of conserved quantities for an interior element
 //! \param[in] U Solution vector at recent time step
@@ -340,12 +355,80 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
 //! \details Hessian matrix contains (d2u_i/dx_i^2, du_i/dx_jdx_i, etc. terms)
 // *****************************************************************************
 {
+  using inciter::multispecies::densityIdx;
+  using inciter::multispecies::momentumIdx;
+  using inciter::multispecies::temperatureDofIdx;
+
+  const std::size_t ncomp = m_nspec + 4;
+  const auto localDof = dBdx[0].size();
+
+  Assert(U.nprop() == ncomp * m_rdof,
+         "Unexpected conserved-variable storage size");
+  Assert(grad.size() == ncomp && hess.size() == ncomp,
+         "Incorrect gradient/Hessian component count");
+  Assert(localDof >= 1 && localDof <= m_rdof,
+         "Incorrect local basis size");
+
+  for (const auto& derivative : dBdx)
+    Assert(derivative.size() == localDof,
+           "Inconsistent first-derivative basis sizes");
+  for (const auto& derivative : d2Bdx2)
+    Assert(derivative.size() == localDof,
+           "Inconsistent second-derivative basis sizes");
+
+  for (auto& component : grad) component.fill(0.0);
+  for (auto& component : hess) component.fill(0.0);
+  for (auto& component : vgrad) component.fill(0.0);
+
+  // Preserve a separate gradient and Hessian for every conserved component.
+  // Basis mode zero is constant and has zero derivatives.
+  for (std::size_t c = 0; c < ncomp; ++c) {
+    for (std::size_t b = 1; b < localDof; ++b) {
+      const auto coefficient = U(elem, c * m_rdof + b);
+      for (std::size_t j = 0; j < 3; ++j)
+        grad[c][j] += dBdx[j][b] * coefficient;
+      for (std::size_t j = 0; j < 6; ++j)
+        hess[c][j] += d2Bdx2[j][b] * coefficient;
+    }
+  }
+
+  tk::real cellAvgRho = 0.0;
+  std::array<tk::real, 3> gradRho{};
+  for (std::size_t s = 0; s < m_nspec; ++s) {
+    const auto density = densityIdx(m_nspec, s);
+    cellAvgRho += U(elem, density * m_rdof);
+    for (std::size_t j = 0; j < 3; ++j)
+      gradRho[j] += grad[density][j];
+  }
+  if (cellAvgRho <= 0.0)
+    Throw("Non-positive cell-average mixture density");
+
+  // Preserve the existing cell-average velocity linearization.
+  for (std::size_t a = 0; a < 3; ++a) {
+    const auto momentum = momentumIdx(m_nspec, a);
+    const auto cellAvgVelocity =
+      U(elem, momentum * m_rdof) / cellAvgRho;
+    for (std::size_t j = 0; j < 3; ++j)
+      vgrad[a][j] =
+        (grad[momentum][j] - cellAvgVelocity * gradRho[j]) / cellAvgRho;
+  }
+
+  // Preserve the separately reconstructed primitive-temperature gradient.
+  for (std::size_t b = 1; b < localDof; ++b) {
+    const auto coefficient =
+      P(elem, temperatureDofIdx(m_nspec, 0, m_rdof, b));
+    for (std::size_t j = 0; j < 3; ++j)
+      vgrad[3][j] += dBdx[j][b] * coefficient;
+  }
+
+  /* Previous implementation retained for reference.
+
   using inciter::multispecies::momentumDofIdx;
   using inciter::multispecies::densityDofIdx;
   using inciter::multispecies::energyDofIdx;
   using inciter::multispecies::temperatureDofIdx;
 
-  Assert(m_nspec == 1, "DGP1 viscous gradient storage currently assumes one species");
+  //Assert(m_nspec == 1, "DGP1 viscous gradient storage currently assumes one species");
   
   // Set grad evals to zero for every gp to avoid runaway rhs
   for (auto& component : grad)
@@ -445,6 +528,7 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
                + d2Bdx2[j][3] * U(elem, energyDofIdx(m_nspec,0,m_rdof,3));
   }
 
+  */
 }
 
 
@@ -455,9 +539,10 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   const std::array< std::vector< tk::real >, 2 >& state,
   const std::array< tk::real, 3 >& fn,
   const tk::real he,
-  const std::array< std::array< std::array< tk::real, 3 >, 5 >, 2 >& grad,
-  const std::array< std::array< std::array< tk::real, 6 >, 5 >, 2 >& hess,
-  std::array< std::array< std::array< std::array< tk::real,3>,3>,5>,5>& A,
+  const std::array< std::vector< std::array< tk::real, 3 > >, 2 >& grad,
+  const std::array< std::vector< std::array< tk::real, 6 >>, 2 >& hess,
+  std::vector< std::vector< std::array<std::array< tk::real, 3>, 3> > >& A,
+  //std::array< std::array< std::array< std::array< tk::real,3>,3>,5>,5>& A,
   std::vector< tk::real >& fl ) const
 // *****************************************************************************
 //! \brief Compute the multispecies viscous flux at an interior face
@@ -488,7 +573,9 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 
   Assert ( fl.size() == ncomp, "incorrect viscous flux vector size" );
   // Reset all diffusion matrices to zero (removes any previous values from prior loop index)
-  A = {};
+  for (auto& row : A)
+    for (auto& block : row)
+      block = {};
 
   // 1. Compute diffusion matrices for average of left and right states
   // There are ncomp by ncomp diffusion matrices A^(lm) for l,m = 1,...,ncomp
@@ -540,92 +627,215 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
     Throw("Mean interface temperature solve failed");
   }
   
-  const auto R = mat_blk[0].compute<inciter::EOS::gas_constant>();
+  //const auto R = mat_blk[0].compute<inciter::EOS::gas_constant>();
   const auto cp_m = mix_m.Cp(T_m, mat_blk);
-  const auto gamma_m = cp_m / (cp_m - R);
+  //const auto gamma_m = cp_m / (cp_m - R);
   const auto mu_m = mix_m.viscCoeff(T_m, mat_blk);
   const auto nu_m = mu_m / rho_m;
   const auto Pr = 0.71; // TO-DO: make user-configurable
+  const auto kappa_m = mu_m * cp_m / Pr;
 
   // Build diffusion matrices A^(lm) for l = 1,...,ncomp, m = 0, 1, ..., ncomp
   // All matrices A^(1m) are zero matrices because continuity contains no viscous terms
   // Since all A are initialized to zero, we don't compute anything for A^(0m).
-  // Explicitly set continuity terms equal to zero for clarity
+  const auto dens = densityIdx(m_nspec,0);
+  const auto xmom = momentumIdx(m_nspec,0);
+  const auto ymom = momentumIdx(m_nspec,1);
+  const auto zmom = momentumIdx(m_nspec,2);
+  const auto energy = energyIdx(m_nspec,0);
+  
+  // Species diffusivities evaluated at the mean interface state.
+  // Supply these from your transport model; units: length^2 / time.
+  // D.size() must equal m_nspec.
+  
+
+  // Mass fractions at the mean conserved interface state.
+  std::vector<tk::real> Ys(m_nspec, 0.0);
+  tk::real Dbar = 0.0;
+
+  for (std::size_t s = 0; s < m_nspec; ++s) {
+    Ys[s] = qmean[densityIdx(m_nspec, s)] / rho_m;
+  }
+
+  const auto D = speciesDiffusivities(m_nspec, rho_m, T_m, Ys);
+  
+  Assert(D.size() == m_nspec,
+        "Incorrect number of species diffusion coefficients");
+
+  for (std::size_t s = 0; s < m_nspec; ++s)
+    Dbar += Ys[s] * D[s];
+
+  // Species viscous flux is -J_s.
+  // Each species-density block is B_sr times the spatial identity.
+  for (std::size_t s = 0; s < m_nspec; ++s) {
+    const auto row = densityIdx(m_nspec, s);
+
+    for (std::size_t r = 0; r < m_nspec; ++r) {
+      const auto col = densityIdx(m_nspec, r);
+
+      const tk::real Bsr =
+          (s == r ? D[s] : 0.0)
+        - Ys[s] * (D[s] + D[r] - Dbar);
+
+      for (std::size_t j = 0; j < 3; ++j)
+        A[row][col][j][j] = Bsr;
+    }
+  }
+
+  // Species-row momentum and energy blocks remain zero.
+  
+  /*// Explicitly set continuity terms equal to zero for clarity
   for (auto& matrix : A[0]) {
     matrix = {};
   }
+  */
 
   // x-momentum (mathematically, l=2 but l = 1 in zero-based indexing)
-  A[1][0] = { { 
-    { -nu_m*(4.0/3.0)*u_m, nu_m*(2.0/3.0)*v_m, nu_m*(2.0/3.0)*w_m }, 
-    { -nu_m*v_m,           -nu_m*u_m,                    0.0        }, 
-    { -nu_m*w_m,               0.0,                  -nu_m*u_m      } } };
+  for (std::size_t k=0; k<m_nspec; ++k) {
+    A[xmom][k] = { { 
+      { -nu_m*(4.0/3.0)*u_m, nu_m*(2.0/3.0)*v_m, nu_m*(2.0/3.0)*w_m }, 
+      { -nu_m*v_m,           -nu_m*u_m,                    0.0        }, 
+      { -nu_m*w_m,               0.0,                  -nu_m*u_m      } } };
+  }
 
-  A[1][1] = { { 
+  A[xmom][xmom] = { { 
     { nu_m*(4.0/3.0), 0.0,  0.0 }, 
     { 0.0,            nu_m, 0.0 }, 
     { 0.0,            0.0,  nu_m} } };
 
-  A[1][2] = { { 
+  A[xmom][ymom] = { { 
     { 0.0,  -nu_m*(2.0/3.0), 0.0 }, 
     { nu_m,        0.0,      0.0 }, 
     { 0.0,         0.0,      0.0 } } };
 
-  A[1][3] = { { 
+  A[xmom][zmom] = { { 
     { 0.0,  0.0, -nu_m*(2.0/3.0) }, 
     { 0.0,  0.0,        0.0      }, 
     { nu_m, 0.0,        0.0      } } };
 
-  A[1][4] = {};
+  A[xmom][energy] = {};
   
   // y-momentum (mathematically, l=3, but l=2 in zero-based indexing)
-  A[2][0] = { { 
-    { -nu_m*v_m,             -nu_m*u_m,                0.0        }, 
-    { nu_m*(2.0/3.0)*u_m, -nu_m*(4.0/3.0)*v_m, nu_m*(2.0/3.0)*w_m }, 
-    { 0.0,                   -nu_m*w_m,            -nu_m*v_m      } } };
-
-  A[2][1] = { { 
+  for (std::size_t k=0; k<m_nspec; ++k) {
+    A[ymom][k] = { { 
+      { -nu_m*v_m,             -nu_m*u_m,                0.0        }, 
+      { nu_m*(2.0/3.0)*u_m, -nu_m*(4.0/3.0)*v_m, nu_m*(2.0/3.0)*w_m }, 
+      { 0.0,                   -nu_m*w_m,            -nu_m*v_m      } } };
+  }
+  A[ymom][xmom] = { { 
     { 0.0,             nu_m,  0.0 }, 
     { -nu_m*(2.0/3.0), 0.0,   0.0 }, 
-    { 0.0,             0.0,  nu_m } } };
+    { 0.0,             0.0,   0.0 } } };
 
-  A[2][2] = { { 
+  A[ymom][ymom] = { { 
     { nu_m,      0.0,      0.0 }, 
     { 0.0, nu_m*(4.0/3.0), 0.0 }, 
     { 0.0,       0.0,     nu_m } } };
 
-  A[2][3] = { { 
+  A[ymom][zmom] = { { 
     { 0.0, 0.0,        0.0      }, 
     { 0.0, 0.0, -nu_m*(2.0/3.0) }, 
     { 0.0, nu_m,       0.0      } } };
 
-  A[2][4] = {};
+  A[ymom][energy] = {};
 
   // z-momentum (mathematically, l=4, but l=3 in zero-based indexing)
-  A[3][0] = { { 
-    { -nu_m*w_m,               0.0,                  -nu_m*u_m }, 
-    { 0.0,                 -nu_m*w_m,                -nu_m*v_m }, 
-    { nu_m*(2.0/3.0)*u_m, nu_m*(2.0/3.0)*v_m, -nu_m*(4.0/3.0)*w_m } } };
+  for (std::size_t k=0; k<m_nspec; ++k) {
+    A[zmom][k] = { { 
+      { -nu_m*w_m,               0.0,                  -nu_m*u_m }, 
+      { 0.0,                 -nu_m*w_m,                -nu_m*v_m }, 
+      { nu_m*(2.0/3.0)*u_m, nu_m*(2.0/3.0)*v_m, -nu_m*(4.0/3.0)*w_m } } };
+  }
 
-  A[3][1] = { { 
+  A[zmom][xmom] = { { 
     { 0.0,             0.0, nu_m }, 
     { 0.0,             0.0, 0.0  }, 
     { -nu_m*(2.0/3.0), 0.0, 0.0  } } };
 
-  A[3][2] = { { 
+  A[zmom][ymom] = { { 
     { 0.0,        0.0,      0.0 }, 
     { 0.0,        0.0,     nu_m }, 
     { 0.0, -nu_m*(2.0/3.0), 0.0 } } };
 
-  A[3][3] = { { 
+  A[zmom][zmom] = { { 
     { nu_m, 0.0,      0.0      }, 
     { 0.0, nu_m,      0.0      }, 
     { 0.0, 0.0, nu_m*(4.0/3.0) } } };
 
-  A[3][4] = {};
+  A[zmom][energy] = {};
+  
+  const auto kinetic = 0.5 * (u_m*u_m + v_m*v_m + w_m*w_m);
 
+  // Species thermodynamics at the mean conserved face state
+  std::vector<tk::real> species_e(m_nspec, 0.0);
+  std::vector<tk::real> species_h(m_nspec, 0.0);
+  tk::real cv_m = 0.0;
+
+  for (std::size_t s=0; s<m_nspec; ++s) {
+    const auto density = densityIdx(m_nspec, s);
+    const auto Ys = qmean[density] / rho_m;
+
+    species_e[s] =
+      mat_blk[s].compute<inciter::EOS::internalenergy>(T_m);
+
+    const auto cvs =
+      mat_blk[s].compute<inciter::EOS::cv>(T_m);
+
+    const auto Rs =
+      mat_blk[s].compute<inciter::EOS::gas_constant>();
+
+    // Ideal-gas species: h_s = e_s + R_s T.
+    species_h[s] = species_e[s] + Rs * T_m;
+
+    cv_m += Ys * cvs;
+  }
+
+  if (cv_m <= 0.0)
+  Throw("Non-positive mean mixture heat capacity");
+
+// Temperature derivatives with respect to conserved variables.
+const auto inv_rho_cv = 1.0 / (rho_m * cv_m);
+std::vector<tk::real> dTdU(ncomp, 0.0);
+
+for (std::size_t s = 0; s < m_nspec; ++s) {
+  dTdU[densityIdx(m_nspec, s)] =
+    (kinetic - species_e[s]) * inv_rho_cv;
+}
+
+dTdU[xmom]  = -u_m * inv_rho_cv;
+dTdU[ymom]  = -v_m * inv_rho_cv;
+dTdU[zmom]  = -w_m * inv_rho_cv;
+dTdU[energy] = inv_rho_cv;
+
+// Assemble every 3x3 block in the energy row.
+for (std::size_t m = 0; m < ncomp; ++m) {
+  for (std::size_t i = 0; i < 3; ++i) {
+    for (std::size_t j = 0; j < 3; ++j) {
+
+      // Viscous work: u_a * tau_aj.
+      tk::real value =
+          u_m * A[xmom][m][i][j]
+        + v_m * A[ymom][m][i][j]
+        + w_m * A[zmom][m][i][j];
+
+      // Heat conduction: kappa * grad(T).
+      if (i == j)
+        value += kappa_m * dTdU[m];
+
+      // Species enthalpy transport: -sum_s h_s J_s.
+      // Species rows contain -J_s, hence the positive sign.
+      for (std::size_t s = 0; s < m_nspec; ++s) {
+        value += species_h[s]
+               * A[densityIdx(m_nspec, s)][m][i][j];
+      }
+
+      A[energy][m][i][j] = value;
+    }
+  }
+}
   // energy (mathematically, l=5, but l=4 in zero-based indexing)
-  A[4][0] = { { 
+  /*
+  A[nspec+4][0] = { { 
     { nu_m*((gamma_m/Pr - 4.0/3.0)*u_m*u_m + (gamma_m/Pr - 1)*(v_m*v_m + w_m*w_m) - e_m*gamma_m/Pr),
       -nu_m*(1.0/3.0)*u_m*v_m,
       -nu_m*(1.0/3.0)*u_m*w_m }, 
@@ -638,26 +848,26 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
       + (gamma_m/Pr - 1)*(u_m*u_m + v_m*v_m)
       - e_m*gamma_m/Pr) } } };
 
-  A[4][1] = { {
+  A[nspec+4][1] = { {
     { nu_m*(4.0/3.0 - gamma_m/Pr)*u_m,           nu_m*v_m,                   nu_m*w_m },
     { -nu_m*(2.0/3.0)*v_m,               -nu_m*(gamma_m/Pr - 1)*u_m,              0   },
     { -nu_m*(2.0/3.0)*w_m,                           0,        -nu_m*(gamma_m/Pr - 1)*u_m     } } };
 
-  A[4][2] = { { 
+  A[nspec+4][2] = { { 
     { -nu_m*(gamma_m/Pr - 1)*v_m,       -nu_m*(2.0/3.0)*u_m,                    0.0           }, 
     { nu_m*u_m,                    nu_m*(4.0/3.0 - gamma_m/Pr)*v_m,          nu_m*w_m         }, 
     { 0.0,                              -nu_m*(2.0/3.0)*w_m,       -nu_m*(gamma_m/Pr - 1)*v_m } } };
 
-  A[4][3] = { { 
+  A[nspec+4][3] = { { 
     { -nu_m*(gamma_m/Pr - 1)*w_m,                0.0,                -nu_m*(2.0/3.0)*u_m      }, 
     { 0.0,                           -nu_m*(gamma_m/Pr - 1)*w_m,     -nu_m*(2.0/3.0)*v_m      }, 
     { nu_m*u_m,                               nu_m*v_m,       nu_m*(4.0/3.0 - gamma_m/Pr)*w_m } } };
 
-  A[4][4] = { { 
+  A[nspec+4][4] = { { 
     { nu_m*gamma_m/Pr,      0.0,              0.0      }, 
     { 0.0,             nu_m*gamma_m/Pr,       0.0      }, 
     { 0.0,                  0.0,       nu_m*gamma_m/Pr } } };  
-
+  */
   // 2. Compute new direction vectors using diffusion matrices and face normal
   // Take the transpose of the diffusion matrices to get A^T, then dot with face normal to get new direction vectors; /xi = A^T * n
   for (std::size_t l = 0; l < ncomp; ++l) {
@@ -710,7 +920,7 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
 
 
 
-  for (std::size_t l=1; l<ncomp; ++l) { // first row is zero because continuity contains no viscous terms. start at 2nd row 
+  for (std::size_t l=0; l<ncomp; ++l) { // first row is zero because continuity contains no viscous terms. start at 2nd row 
     fl[l] = 0.0;
     for (std::size_t m=0; m<ncomp; ++m) { // equation index
       const auto k = l*ncomp + m;         // direction vector index 

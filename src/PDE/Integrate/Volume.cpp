@@ -65,10 +65,10 @@ tk::volIntViscous(
   Assert( ndof*ncomp == R.nprop(),
           "Mismatch in viscous RHS polynomial and component sizes" );
 
-  std::array< std::array< tk::real, 3 >, 5> grad;
+  std::vector< std::array< tk::real, 3 >> grad(ncomp);
   std::array< std::array< tk::real, 3 >, 4> vgrad;
   std::array< std::vector< tk::real >, 6 > d2Bdx2;
-  std::array< std::array< tk::real, 6 >, 5> hess;
+  std::vector< std::array< tk::real, 6 >> hess(ncomp);
   std::vector<std::array<tk::real, 3>> visc_fl(ncomp);
   // compute volume integrals
   for (std::size_t e=0; e<nelem; ++e)
@@ -127,9 +127,9 @@ tk::volIntViscous(
       {
         state = viscousRhs.stateAt(mat_blk, U, P, e, dof_el, B );
         
-        grad = {};
+        //grad = {};
         vgrad = {};
-        hess = {};
+        //hess = {};
 
         viscousRhs.gradientIntElem(U, P, e, dBdx, d2Bdx2, grad, vgrad, hess);
         for (std::size_t l=0; l<ncomp; l++)
