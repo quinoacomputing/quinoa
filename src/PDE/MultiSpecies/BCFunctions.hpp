@@ -164,7 +164,7 @@ namespace inciter {
       Mixture mixr(nspec, massfrac_l, fp, Tl, mat_blk);
 
       ur[multispecies::energyIdx(nspec,0)] = mixr.totalenergy(rhol, v1l,
-        v2l, v3l, fp, mat_blk); // bug: should be Tl instead of fp
+        v2l, v3l, ft, mat_blk); 
     }
     // Otherwise, for supersonic outflow, all the characteristics are from
     // internal cell. Therefore, we calculate the ghost cell state using the

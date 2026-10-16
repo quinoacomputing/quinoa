@@ -24,6 +24,8 @@ extern ctr::InputDeck g_inputdeck;
 using inciter::MultiSpeciesProblemCouetteFlow;
 
 namespace {
+// T = 400 K is temp of Couette flow used in all following methods.
+constexpr tk::real T = 400.0;
 
 tk::InitializeFn::result_type
 couetteState( tk::ncomp_t ncomp, const std::vector< inciter::EOS >& mat_blk,
@@ -38,11 +40,10 @@ couetteState( tk::ncomp_t ncomp, const std::vector< inciter::EOS >& mat_blk,
     tag::multispecies, tag::nspec >();
 
   constexpr tk::real p = 100000.0;
-  constexpr tk::real T = 400.0;
   constexpr tk::real v = 0.0;
   constexpr tk::real w = 0.0;
 
-  std::vector< tk::real > s( ncomp+1, 0.0 );
+  std::vector< tk::real > s( ncomp, 0.0 );
   
   // Assume single-species for this problem class
   const std::vector< tk::real > Ys{ 1.0 };
@@ -50,19 +51,10 @@ couetteState( tk::ncomp_t ncomp, const std::vector< inciter::EOS >& mat_blk,
   tk::real rhob = mix.get_mix_density();
 
   for (std::size_t k=0; k<nspec; ++k) {
-    //const auto rho =
-    //  mat_blk[k].compute< inciter::EOS::density >( p, T );
-    //rhob += rho;
-    //s[inciter::multispecies::densityIdx(nspec,k)] = rho;
-    //s[inciter::multispecies::energyIdx(nspec,k)] =
-    //  mat_blk[k].compute< inciter::EOS::totalenergy >(
-    //    rho, u, v, w, p, 1.0 );
-    //s[ncomp + inciter::multispecies::temperatureIdx(nspec,k)] = T;
     s[inciter::multispecies::densityIdx(nspec,k)] = Ys[k] * rhob;
   }
   s[inciter::multispecies::energyIdx(nspec,0)] =
     mix.totalenergy( rhob, u, v, w, T, mat_blk );
-  s[ncomp + inciter::multispecies::temperatureIdx(nspec,0)] = T;
   s[inciter::multispecies::momentumIdx(nspec,0)] = rhob*u;
   s[inciter::multispecies::momentumIdx(nspec,1)] = rhob*v;
   s[inciter::multispecies::momentumIdx(nspec,2)] = rhob*w;
@@ -109,9 +101,16 @@ MultiSpeciesProblemCouetteFlow::analyticSolution(
   constexpr tk::real ymax = 0.1;
   constexpr tk::real umax = 10.0;
 
+  const auto nspec = inciter::g_inputdeck.get<
+    tag::multispecies, tag::nspec >();
+
   const auto vertical_fraction =
     std::clamp( (y-ymin)/(ymax-ymin), 0.0, 1.0 );
   const auto u = umax * vertical_fraction;
 
-  return couetteState( ncomp, mat_blk, u );
+  auto s = couetteState( ncomp, mat_blk, u );
+  s.resize(ncomp + 1);
+  s[ncomp + inciter::multispecies::temperatureIdx(nspec,0)] = T;
+
+  return s;
 }

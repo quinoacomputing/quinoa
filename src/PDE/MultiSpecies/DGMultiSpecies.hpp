@@ -1155,7 +1155,6 @@ class MultiSpecies {
                const std::vector< EOS >& mat_blk,
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& ) 
-               //const std::array< tk::real, 3 >& fn )
     {
 
       auto ur = Problem::analyticSolution( ncomp, mat_blk, x, y, z, t );

@@ -28,6 +28,9 @@ using inciter::MultiSpeciesProblemMixingLayer;
 
 namespace {
 
+// T = 400 K is temp of Mixing Layer used in all following methods.
+constexpr tk::real T = 400.0;
+
 tk::real mixingLayerVelocityProfile( tk::real eta )
 // ****************************************************************************
 //! Evaluate u/U1 using the tabulated similarity-solution cubic spline
@@ -82,14 +85,13 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
   auto nspec = g_inputdeck.get< eq, tag::nspec >();
   Assert( nspec == 1, "Mixing layer currently supports one species" );
 
-  std::vector< tk::real > s( ncomp+1, 0.0 );
+  std::vector< tk::real > s( ncomp, 0.0 );
   tk::real u, v, w;
 
   // impose analytical solution instead of initial condition
 
   // Tabulated cubic-spline interpolation of the similarity solution
   const auto p = 100000.0;
-  const auto T = 400.0;
   const auto U1 = 10.0;
   const auto mu = 1.47e-5;
 
@@ -110,10 +112,9 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
     s[multispecies::densityIdx(nspec,k)] = Ys[k] * rhob;
   }
 
-  // Mixture total energy and temperature
+  // Mixture total energy
   s[multispecies::energyIdx(nspec,0)] =
     mix.totalenergy( rhob, u, v, w, T, mat_blk );
-  s[ncomp + multispecies::temperatureIdx(nspec,0)] = T;
 
   // momentum
   s[multispecies::momentumIdx(nspec, 0)] = rhob*u;
@@ -122,4 +123,26 @@ MultiSpeciesProblemMixingLayer::initialize( ncomp_t ncomp,
 
  
   return s;
+}
+
+
+std::vector< tk::real >
+MultiSpeciesProblemMixingLayer::analyticSolution(
+  ncomp_t ncomp, const std::vector< EOS >& mat_blk,
+  tk::real x, tk::real y, tk::real z, tk::real t)
+// *****************************************************************************
+//! Evaluate the mixing layer boundary solution at (x,y,z,t)
+//! \param[in] ncomp Number of scalar components in this PDE system
+//! \param[in] mat_blk Equations of state for all species
+//! \param[in] y Vertical coordinate where to evaluate the solution
+//! \return Values of all components evaluated at (x,y,z,t)
+// *****************************************************************************
+{ 
+  const auto nspec = g_inputdeck.get< eq, tag::nspec >();
+
+  auto s = initialize(ncomp, mat_blk, x, y, z, t);
+  s.resize(ncomp + 1);
+  s[ncomp + multispecies::temperatureIdx(nspec,0)] = T;
+
+  return s; 
 }

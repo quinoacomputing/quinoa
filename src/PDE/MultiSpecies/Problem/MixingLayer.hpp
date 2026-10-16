@@ -46,9 +46,8 @@ class MultiSpeciesProblemMixingLayer {
     static std::vector< tk::real >
     analyticSolution( ncomp_t ncomp,
                       const std::vector< EOS >& mat_blk, tk::real x,
-                      tk::real y, tk::real z, tk::real t )
-    { return initialize( ncomp, mat_blk, x, y, z, t); }
-
+                      tk::real y, tk::real z, tk::real t );
+    
     //! Compute and return source term for this problem
     static tk::SrcFn::result_type
     src( ncomp_t, const std::vector< EOS >&,
