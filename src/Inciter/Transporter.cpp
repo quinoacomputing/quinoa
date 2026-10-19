@@ -664,7 +664,6 @@ Transporter::load( std::size_t meshid, std::size_t nelem )
   meshid /= static_cast< std::size_t >( CkNumNodes() );
   Assert( meshid < m_nelem.size(), "MeshId indexing out" );
   m_nelem[meshid] = nelem;
-  printf("meshid, nelem = %lu, %e\n", m_nelem[meshid]);
 
   // Compute load distribution given total work (nelem) and user-specified
   // virtualization
@@ -1628,9 +1627,6 @@ Transporter::diagnostics( CkReductionMsg* msg )
 
   // Append IMEX diagnostics
   if (g_inputdeck.get< tag::imex_runge_kutta >()) {
-    // printf("Active = %e\n", d[IMEXACTIVE][0]);
-    // printf("Total = %lu\n", m_nelem[0]);
-    // printf("DEBUG = %e, %lu\n", d[IMEXACTIVE][0]*100.0/m_nelem[0], static_cast<uint64_t>(d[IMEXMAXITER][0]));
     diag.push_back( d[IMEXACTIVE][0]*100.0/m_nelem[0] );
     diag.push_back( static_cast<uint64_t>(d[IMEXMAXITER][0]) );
   }

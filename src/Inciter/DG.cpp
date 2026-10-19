@@ -177,7 +177,6 @@ DG::DG( const CProxy_Discretization& disc,
               g_dgpde[Disc()->MeshId()].nstiffeq() ),
   m_imex_x( m_u.nunk(), m_u.nprop() ),
   m_imex_y( m_u.nunk(), m_u.nprop() ),
-  m_imex_zex( m_u.nunk(), m_rhs.nprop() ),
   m_imex_zim( m_u.nunk(), m_stiffrhs.nprop() ),
   m_imex_maxiter( 0 ),
   m_imex_activeElem( 4 ),
@@ -329,7 +328,6 @@ DG::resizeSolVectors()
   m_stiffrhs.resize( myGhosts()->m_nunk );
   m_imex_x.resize( myGhosts()->m_nunk );
   m_imex_y.resize( myGhosts()->m_nunk );
-  m_imex_zex.resize( myGhosts()->m_nunk );
   m_imex_zim.resize( myGhosts()->m_nunk );
   m_srcFlag.resize( myGhosts()->m_nunk );
   for (std::size_t i=0; i<3; ++i)
@@ -1596,21 +1594,13 @@ DG::solve( tk::real newdt )
     else if (m_stage == 2) physT += 0.5*d->Dt();
   }
 
-  if (imex_runge_kutta) {
-    // For IMEXRKCB3d the explicit RHS is evaluated on the already-accepted
-    // stage state after ghost communication. The IMEX stage routine consumes
-    // m_imex_zex and produces the next stage state in m_u.
-    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
-      d->Dt(), m_imex_zex, m_srcFlag );
-  }
-  else {
-    g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
-      myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
-      myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
-      d->Dt(), m_rhs, m_srcFlag );
-  }
+  // For IMEXRKCB3d the explicit RHS is evaluated on the already-accepted
+  // stage state after ghost communication. The IMEX stage routine consumes
+  // m_rhs and produces the next stage state in m_u.
+  g_dgpde[d->MeshId()].rhs( physT, pref, myGhosts()->m_geoFace,
+    myGhosts()->m_geoElem, myGhosts()->m_fd, myGhosts()->m_inpoel, m_boxelems,
+    myGhosts()->m_coord, d->ElemBlockId(), m_u, m_p, d->meshvel(), m_ndof,
+    d->Dt(), m_rhs, m_srcFlag );
 
   if (imex_runge_kutta) {
     // Implicit-Explicit time-stepping.
@@ -1712,7 +1702,6 @@ DG::solve( tk::real newdt )
     d->next();
 
     // Compute diagnostics, e.g., residuals
-    // printf("DEBUG(2) = %lu, %lu, %lu\n", m_stage, m_imex_activeElem, m_imex_maxiter);
     std::size_t activeElem = m_imex_activeElem[0];
     for (std::size_t istage=1; istage<m_nstage; ++istage)
       if (m_imex_activeElem[istage] > activeElem)
@@ -1824,7 +1813,6 @@ DG::resizePostAMR(
   m_stiffrhs.resize( nelem );
   m_imex_x.resize( nelem );
   m_imex_y.resize( nelem );
-  m_imex_zex.resize( nelem );
   m_imex_zim.resize( nelem );
   m_srcFlag.resize( nelem );
   for (std::size_t i=0; i<3; ++i) m_nodevel[i].resize( coord[0].size() );
@@ -2413,7 +2401,7 @@ DG::imex_integrate_cb3a()
 
   auto accumulate_x = [&]( tk::real bcoeff )
   {
-    add_explicit( m_imex_x, m_imex_zex, bcoeff );
+    add_explicit( m_imex_x, m_rhs, bcoeff );
     add_implicit( m_imex_x, m_imex_zim, bcoeff );
   };
 
@@ -2422,7 +2410,7 @@ DG::imex_integrate_cb3a()
     m_imex_y = m_un;
 
     m_u = m_imex_y;
-    add_explicit( m_u, m_imex_zex, a21_expl_imex3a );
+    add_explicit( m_u, m_rhs, a21_expl_imex3a );
     solve_stage( m_u, a22_impl_imex3a );
   }
   else if (m_stage == 1) {
@@ -2430,7 +2418,7 @@ DG::imex_integrate_cb3a()
     accumulate_x( b2_imex3a );
 
     m_imex_y = m_imex_x;
-    add_explicit( m_imex_y, m_imex_zex, a32_expl_imex3a - b2_imex3a );
+    add_explicit( m_imex_y, m_rhs, a32_expl_imex3a - b2_imex3a );
     add_implicit( m_imex_y, m_imex_zim, a32_impl_imex3a - b2_imex3a );
 
     m_u = m_imex_y;
@@ -2537,46 +2525,46 @@ DG::imex_integrate_cb3d()
 
   auto accumulate_x = [&]( tk::real bcoeff )
   {
-    add_explicit( m_imex_x, m_imex_zex, bcoeff );
+    add_explicit( m_imex_x, m_rhs, bcoeff );
     add_implicit( m_imex_x, m_imex_zim, bcoeff );
   };
 
   if (m_stage == 0) {
-    // G1 has already been evaluated into m_imex_zex before this call.
+    // G1 has already been evaluated into m_rhs before this call.
     // CB3d has b1=a21^IM=0, so no F1 evaluation or accumulation is needed.
     m_imex_x = m_un;
     m_imex_y = m_un;
 
     m_u = m_imex_y;
-    add_explicit( m_u, m_imex_zex, a21_expl_imex3d );
+    add_explicit( m_u, m_rhs, a21_expl_imex3d );
     solve_stage( m_u, a22_impl_imex3d );
   }
   else if (m_stage == 1) {
-    // Current state is Y2, and m_imex_zex holds G2.
+    // Current state is Y2, and m_rhs holds G2.
     eval_implicit_rhs( m_u, m_imex_zim );
     accumulate_x( b2_imex3d );
 
     m_imex_y = m_imex_x;
-    add_explicit( m_imex_y, m_imex_zex, a32_expl_imex3d - b2_imex3d );
+    add_explicit( m_imex_y, m_rhs, a32_expl_imex3d - b2_imex3d );
     add_implicit( m_imex_y, m_imex_zim, a32_impl_imex3d - b2_imex3d );
 
     m_u = m_imex_y;
     solve_stage( m_u, a33_impl_imex3d );
   }
   else if (m_stage == 2) {
-    // Current state is Y3, and m_imex_zex holds G3.
+    // Current state is Y3, and m_rhs holds G3.
     eval_implicit_rhs( m_u, m_imex_zim );
     accumulate_x( b3_imex3d );
 
     m_imex_y = m_imex_x;
-    add_explicit( m_imex_y, m_imex_zex, a43_expl_imex3d - b3_imex3d );
+    add_explicit( m_imex_y, m_rhs, a43_expl_imex3d - b3_imex3d );
     // The implicit fourth row is stiffly accurate, so a43^IM-b3 = 0.
 
     m_u = m_imex_y;
     solve_stage( m_u, b4_imex3d );
   }
   else if (m_stage == 3) {
-    // Current state is Y4, and m_imex_zex holds G4.
+    // Current state is Y4, and m_rhs holds G4.
     eval_implicit_rhs( m_u, m_imex_zim );
     accumulate_x( b4_imex3d );
 

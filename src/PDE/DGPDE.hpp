@@ -645,8 +645,8 @@ class DGPDE {
                                      const tk::Fields&,
                                      const tk::Fields&,
                                      const std::vector< std::size_t >&,
-                                     std::vector< double > jacob,
-                                     std::size_t jacobian_provided ) const = 0;
+                                     std::vector< double >,
+                                     std::size_t ) const = 0;
       virtual void nodeVelocity(
         const tk::Fields&,
         const std::map< std::size_t, std::vector< std::size_t > >&,

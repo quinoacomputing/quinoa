@@ -253,7 +253,6 @@ class DG : public CBase_DG {
       p | m_stiffrhs;
       p | m_imex_x;
       p | m_imex_y;
-      p | m_imex_zex;
       p | m_imex_zim;
       p | m_imex_maxiter;
       p | m_imex_activeElem;
@@ -263,10 +262,7 @@ class DG : public CBase_DG {
       p | m_nnonstiffeq;
       p | m_npoin;
       p | m_diag;
-      int imexrk_scheme_int = static_cast< int >( m_imexrk_scheme );
-      p | imexrk_scheme_int;
-      if (p.isUnpacking())
-        m_imexrk_scheme = static_cast< IMEXRKScheme >( imexrk_scheme_int );
+      p | m_imexrk_scheme;
       p | m_nstage;
       p | m_stage;
       p | m_stiffSolverMode;
@@ -349,8 +345,6 @@ class DG : public CBase_DG {
     tk::Fields m_imex_x;
     //! IMEX stage-state register
     tk::Fields m_imex_y;
-    //! IMEX explicit RHS register
-    tk::Fields m_imex_zex;
     //! IMEX implicit RHS register
     tk::Fields m_imex_zim;
     //! IMEX diagnostic for maximum number of iterations

@@ -67,6 +67,8 @@ ElemDiagnostics::compute( Discretization& d,
 //! \param[in] ndofel Vector of local number of degrees of freedom
 //! \param[in] u Current solution vector
 //! \param[in] un Previous time-step solution vector
+//! \param[in] imex_maxiter Max number of iterations performed for IMEX Newton
+//! \param[in] imex_activeElem Number of elements with >1 Newton iterations
 //! \return True if diagnostics have been computed
 //! \details Diagnostics are defined as some norm, e.g., L2 norm, of a quantity,
 //!    computed in mesh elements, A, as ||A||_2 = sqrt[ sum_i(A_i)^2 V_i ],
