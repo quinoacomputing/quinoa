@@ -1697,8 +1697,8 @@ DG::solve( tk::real newdt )
   g_dgpde[d->MeshId()].updatePrimitives( m_u, myGhosts()->m_geoElem, m_p,
     myGhosts()->m_fd.Esuel().size()/4, m_ndof );
   if (!g_inputdeck.get< tag::accuracy_test >()) {
-    g_dgpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem, m_u,
-      m_p, myGhosts()->m_fd.Esuel().size()/4 );
+    g_dgpde[d->MeshId()].cleanTraceMaterial( physT, myGhosts()->m_geoElem,
+      m_un, m_u, m_p, myGhosts()->m_fd.Esuel().size()/4 );
   }
 
   if (m_stage < m_nstage-1) {

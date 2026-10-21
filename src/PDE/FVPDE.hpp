@@ -123,10 +123,11 @@ class FVPDE {
     //! Public interface to cleaning up trace materials for the diff eq
     void cleanTraceMaterial( tk::real t,
                              const tk::Fields& geoElem,
+                             const tk::Fields& unk_un,
                              tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem ) const
-    { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
+    { self->cleanTraceMaterial( t, geoElem, unk_un, unk, prim, nielem ); }
 
     //! Public interface to reconstructing the second-order solution
     void reconstruct( const tk::Fields& geoElem,
@@ -280,6 +281,7 @@ class FVPDE {
                                      std::size_t ) const = 0;
       virtual void cleanTraceMaterial( tk::real,
                                        const tk::Fields&,
+                                       const tk::Fields&,
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
@@ -381,10 +383,12 @@ class FVPDE {
       const override { data.updatePrimitives( unk, prim, nielem ); }
       void cleanTraceMaterial( tk::real t,
                                const tk::Fields& geoElem,
+                               const tk::Fields& unk_un,
                                tk::Fields& unk,
                                tk::Fields& prim,
                                std::size_t nielem )
-      const override { data.cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
+      const override { data.cleanTraceMaterial( t, geoElem, unk_un, unk, prim,
+        nielem ); }
       void reconstruct( const tk::Fields& geoElem,
                         const inciter::FaceData& fd,
                         const std::map< std::size_t,

@@ -658,6 +658,7 @@ class MultiMat {
     //!   a "reset".
     void cleanTraceMaterial( tk::real t,
                              const tk::Fields& geoElem,
+                             const tk::Fields& unk_un,
                              tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem ) const
@@ -672,8 +673,8 @@ class MultiMat {
       Assert( prim.nprop() == rdof*m_nprim, "Number of components in vector of "
               "primitive quantities must equal "+ std::to_string(rdof*m_nprim) );
 
-      auto neg_density = cleanTraceMultiMat(t, nielem, m_mat_blk, geoElem, nmat,
-        unk, prim);
+      auto neg_density = cleanTraceMultiMat(t, nielem, m_mat_blk, geoElem,
+        unk_un, nmat, unk, prim);
 
       if (neg_density) Throw("Negative partial density.");
     }

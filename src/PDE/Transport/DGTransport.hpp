@@ -232,6 +232,7 @@ class Transport {
     //!   quantities in each cell. This is currently unused for transport.
     void cleanTraceMaterial( tk::real,
                              const tk::Fields&,
+                             const tk::Fields&,
                              tk::Fields&,
                              tk::Fields&,
                              std::size_t ) const {}

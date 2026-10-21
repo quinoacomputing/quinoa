@@ -28,6 +28,7 @@ cleanTraceMultiMat(
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
+  const tk::Fields& Un,
   std::size_t nmat,
   tk::Fields& U,
   tk::Fields& P );

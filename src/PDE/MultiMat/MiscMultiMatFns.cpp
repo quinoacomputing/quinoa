@@ -107,6 +107,7 @@ cleanTraceMultiMat(
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
+  const tk::Fields& Un,
   std::size_t nmat,
   tk::Fields& U,
   tk::Fields& P )
@@ -116,6 +117,9 @@ cleanTraceMultiMat(
 //! \param[in] nelem Number of elements
 //! \param[in] mat_blk EOS material block
 //! \param[in] geoElem Element geometry array
+//! \param[in] Un Solution vector at the start of the current time step (used
+//!   to detect a solid's volume fraction jumping from the trace regime to
+//!   bulk within a single step, see the alpha-crossing reset below)
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in/out] U High-order solution vector which gets modified
 //! \param[in/out] P High-order vector of primitives which gets modified
@@ -185,6 +189,14 @@ cleanTraceMultiMat(
       auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
       auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
 
+      // Volume fraction this solid had at the start of the current time
+      // step, before THINC interface sharpening/advection updated it. Used
+      // below to catch a trace solid whose alpha jumps straight past
+      // volfracSolidResetLim() within a single step -- see the alpha-
+      // crossing reset.
+      auto alk_un = (solidx[k] > 0) ?
+        Un(e, volfracDofIdx(nmat, k, rdof, 0)) : 0.0;
+
       // Determine if element-e needs trace-material cleanup. This decision is
       // based on specific scenarios.
       // WARNING: Changing this decision-making logic can adversely affect
@@ -209,7 +221,25 @@ cleanTraceMultiMat(
         //    tensor to actually be bad makes this a rare, targeted repair
         //    instead of a per-stage stomp.
         (solidx[k] > 0 && alk < volfracSolidResetLim() &&
-        solidTensorUnphysical(nmat, k, e, U))
+        solidTensorUnphysical(nmat, k, e, U)) ||
+        // 4. if current material is solid AND its volume fraction just
+        //    crossed from the trace regime (where its g-tensor is only
+        //    reactively cleaned, condition 3 above) to bulk within this
+        //    single step. THINC interface sharpening can snap alpha from
+        //    ~1e-5 to O(1) in one step as a front reaches a cell; the g this
+        //    cell is carrying was last sanitized for a near-void trace
+        //    state and is not guaranteed physical merely because
+        //    degenerateDeformGrad() (a wide [1e-3,1e3] det(g) sanity band)
+        //    doesn't flag it -- e.g. a highly anisotropic g with det(g)
+        //    just inside that band but components O(1), fed wholesale into
+        //    CauchyStress/Lp once full elastic/plastic physics kicks in,
+        //    can source a stiff plasticity RHS large enough to blow up the
+        //    very next Newton solve. Force the reset unconditionally here
+        //    (not gated on solidTensorUnphysical()) since the point is
+        //    exactly to discard a stale trace-regime g before physics that
+        //    trusts it runs, not to wait for it to visibly degrade first.
+        (solidx[k] > 0 && alk_un < volfracSolidResetLim() &&
+        alk >= volfracSolidResetLim())
       )
         ctm_element = true;
 
@@ -217,16 +247,21 @@ cleanTraceMultiMat(
         tk::real prelax(0.0);
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
-          // Reset deformation gradient and stress ONLY if the g-tensor is
-          // actually degenerate. ctm_element can also be true here purely
-          // because alk < volfracPRelaxLim() (condition 1, which is not
+          // Reset deformation gradient and stress if the g-tensor has
+          // actually degraded (condition 3), or unconditionally if this
+          // solid's alpha just crossed from trace to bulk (condition 4) --
+          // ctm_element can also be true here purely because
+          // alk < volfracPRelaxLim() (condition 1, which is not
           // solid-specific), so this check is still needed even though
-          // condition 3 above already screens for it -- otherwise every
+          // conditions 3/4 above already screen for it -- otherwise every
           // solid cell below that fluid-oriented 1% cutoff gets its
           // (possibly perfectly fine) tensor state stomped every stage.
-          if (solidTensorUnphysical(nmat, k, e, U)) {
-            printf("cleanTraceMaterial: resetting unphysical g-tensor: "
+          bool alpha_crossing =
+            alk_un < volfracSolidResetLim() && alk >= volfracSolidResetLim();
+          if (solidTensorUnphysical(nmat, k, e, U) || alpha_crossing) {
+            printf("cleanTraceMaterial: resetting %s g-tensor: "
                    "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
+                   alpha_crossing ? "trace-crossing" : "unphysical",
                    t, e, k, solidx[k], alk);
             resetSolidTensors(nmat, k, e, U, P);
           }

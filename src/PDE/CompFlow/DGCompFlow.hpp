@@ -288,6 +288,7 @@ class CompFlow {
     //!   quantities in each cell. This is unused for compflow.
     void cleanTraceMaterial( tk::real,
                              const tk::Fields&,
+                             const tk::Fields&,
                              tk::Fields&,
                              tk::Fields&,
                              std::size_t ) const {}

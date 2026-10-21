@@ -431,6 +431,7 @@ class MultiSpecies {
     // //! \param[in] nielem Number of internal elements
     void cleanTraceMaterial( tk::real /*t*/,
                              const tk::Fields& /*geoElem*/,
+                             const tk::Fields& /*unk_un*/,
                              tk::Fields& /*unk*/,
                              tk::Fields& /*prim*/,
                              std::size_t /*nielem*/ ) const {}
