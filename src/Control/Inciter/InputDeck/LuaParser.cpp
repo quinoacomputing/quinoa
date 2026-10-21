@@ -141,6 +141,8 @@ LuaParser::storeInputDeck(
     lua_ideck, "ttyi", gideck.get< tag::ttyi >(), 1);
   storeIfSpecd< bool >(lua_ideck, "implicit_timestepping",
     gideck.get< tag::implicit_timestepping >(), false);
+  storeIfSpecd< bool >(lua_ideck, "point_implicit",
+    gideck.get< tag::point_implicit >(), false);
   storeIfSpecd< bool >(
     lua_ideck, "steady_state", gideck.get< tag::steady_state >(), false);
   storeIfSpecd< tk::real >(
@@ -941,7 +943,11 @@ LuaParser::storeInputDeck(
 
     // Vorticity multiplier
     storeIfSpecd< tk::real >(lua_ideck["ale"], "vortmult",
-      ale_deck.get< tag::vortmult >(), 0.0);
+      ale_deck.get< tag::vortmult >(), 1.0);
+
+    // Vorticity scale
+    storeIfSpecd< tk::real >(lua_ideck["ale"], "vortscale",
+      ale_deck.get< tag::vortscale >(), 0.25);
 
     // Mesh velocity max iterations
     storeIfSpecd< std::size_t >(lua_ideck["ale"], "maxit",
@@ -1488,13 +1494,6 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
 
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-08);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
-
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
       sol_mat[imat+1]["yield_stress"] =
@@ -1544,13 +1543,6 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
 
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-08);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
-
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
       sol_mat[imat+1]["yield_stress"] =
@@ -1583,13 +1575,6 @@ LuaParser::registerMaterials(
     // mu
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
-
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-08);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
@@ -1635,13 +1620,6 @@ LuaParser::registerMaterials(
     // K0
     checkStoreMatProp(sol_mat[imat+1], "K0", ntype,
       mati_deck.get< tag::K0 >());
-
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-08);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
@@ -1712,6 +1690,15 @@ LuaParser::registerMaterials(
     else
       Throw("Either reference density or reference temperature must be "
         "specified for JWL equation of state (EOS).");
+  }
+
+  if (is_solid) {
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-08);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
   }
 }
 

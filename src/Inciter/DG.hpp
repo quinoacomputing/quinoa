@@ -539,6 +539,9 @@ class DG : public CBase_DG {
     compute_stiff_rhs_local( std::size_t e,
                              const std::vector< tk::real >& x );
 
+    //! Perform the point-implicit update
+    void point_implicit_integrate();
+
     //! Nonlinear residual for one diagonal implicit RK stage
     std::vector< tk::real >
     nonlinear_func_stage( std::size_t e,
@@ -558,6 +561,38 @@ class DG : public CBase_DG {
                             std::vector< tk::real > x,
                             const std::vector< tk::real >& stage_base,
                             tk::real aii );
+
+    //! Solve element-local implicit system using Newton's method
+    bool element_implicit_step(std::size_t e,
+                                const std::vector< tk::real >& u_old,
+                                std::vector< tk::real >& u_new,
+                                tk::real dte,
+                                tk::real vole,
+                                const std::vector< std::vector< tk::real > >&
+                                  dRdu );
+
+    //! Calculate element-local RHS for point-implicit solve
+    std::vector< tk::real > point_implicit_rhs(std::size_t e,
+                                              const std::vector< tk::real >& ue,
+                                              const tk::Fields& Ubase,
+                                              const tk::Fields& Pbase ) const;
+
+    //! Calculate element-local Jacobian for point-implicit solve
+    std::vector< std::vector< std::vector< tk::real > > >
+      point_implicit_jacobian(
+        const tk::Fields& Ubase,
+        const tk::Fields& Pbase,
+        const tk::Fields& Rbase ) const;
+
+    //! Calculate element-local Jacobian for point-implicit solve using
+    //! analytic solution
+    std::vector< std::vector< std::vector< tk::real > > >
+      point_implicit_jacobian_analytic(
+        const tk::Fields& Ubase,
+        const tk::Fields& Pbase ) const;
+
+    //! Coloring algorithm to separate elements that share a face
+    std::vector< int > point_implicit_elem_coloring() const;
 };
 
 } // inciter::

@@ -328,6 +328,7 @@ using ConfigMembers = brigand::list<
 
   // steady-state solver options
   tag::implicit_timestepping, bool,
+  tag::point_implicit,        bool,
   tag::steady_state,          bool,
   tag::residual,              tk::real,
   tag::rescomp,               uint32_t,
@@ -397,6 +398,7 @@ using ConfigMembers = brigand::list<
     tag::meshforce,                std::vector< tk::real >,
     tag::dvcfl,                    tk::real,
     tag::vortmult,                 tk::real,
+    tag::vortscale,                tk::real,
     tag::maxit,                    std::size_t,
     tag::tolerance,                tk::real,
     tag::dirichlet,                std::vector< std::size_t >,
@@ -558,6 +560,16 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         that is usually used. This requires PDE-specific implementation of the
         Jacobian matrix. Jacobian implementation is complete only for
         PDEType::MULTISPECIES, i.e. implicit_timestepping can only be used for
+        multispecies currently.)", "bool"});
+
+      keywords.insert({"point_implicit",
+        "Toggle use of a point-implicit time-stepping scheme",
+        R"(This keywords is used to trigger point-implicit time integration for
+        the DG/DGP1/DGP2/PDG spatial discretizations. This will activate the
+        point-implicit, element-local scheme which replaces the explicit RK3
+        that is usually used. This requires PDE-specific implementation of the
+        Jacobian matrix. Jacobian implementation is complete only for
+        PDEType::MULTISPECIES, i.e. point_implicit can only be used for 
         multispecies currently.)", "bool"});
 
       keywords.insert({"imex_runge_kutta",
@@ -1558,6 +1570,12 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         is coefficient a1 in Eq.(23) of Bakosi, Waltz, Morgan, Improved ALE mesh
         velocities for complex flows, International Journal for Numerical Methods
         in Fluids, 2017. )", "real"});
+
+      keywords.insert({"vortscale",
+        "Configure vorticity scale for ALE mesh velocity",
+        R"(This keyword is used to configure the scale factor for the vorticity
+        correction term in the mesh velocity smoother (mesh_velocity=fluid) for
+        ALE mesh motion.)", "real"});
 
       keywords.insert({"maxit",
         "Set the max number of iterations for the ALE mesh velocity linear solve",
