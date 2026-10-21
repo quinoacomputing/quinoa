@@ -1483,13 +1483,6 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
 
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-08);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
-
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
       sol_mat[imat+1]["yield_stress"] =
@@ -1527,13 +1520,6 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
 
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-08);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
-
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
       sol_mat[imat+1]["yield_stress"] =
@@ -1554,13 +1540,6 @@ LuaParser::registerMaterials(
     // mu
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
-
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-08);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
@@ -1594,13 +1573,6 @@ LuaParser::registerMaterials(
     // K0
     checkStoreMatProp(sol_mat[imat+1], "K0", ntype,
       mati_deck.get< tag::K0 >());
-
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-08);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
