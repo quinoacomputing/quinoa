@@ -17,25 +17,27 @@
 namespace inciter {
 
 //! Number of entries in diagnostics vector (of vectors)
-const std::size_t NUMDIAG = 12;
+const std::size_t NUMDIAG = 14;
 
 //! Diagnostics labels
-enum Diag { L2SOL=0,    //!< L2 norm of numerical solution
-            L2ERR,      //!< L2 norm of numerical-analytic solution
-            L2RES,      //!< L2 norm of the residual
-            LINFERR,    //!< L_inf norm of numerical-analytic solution
-            TOTALSOL,   //!< Aggregate scalars over the entire domain:
-                        //!  index 0 : sum of conserved (total) energy,
-                        //!  index 1 : sum of internal energy,
-                        //!  index 2 : minimum inner radius.
-                        //!  Indices 1 and 2 are only meaningful for MultiMat
-            RESFORCE,   //!< Resultant force vector on mesh boundaries
-            RESTORQUE,  //!< Resultant torque vector on mesh boundaries
-            DISPLACEMNT,//!< Total displacement of rigid body center-of-mass
-            ROTATION,   //!< Total rotation of rigid body
-            ITER,       //!< Iteration count
-            TIME,       //!< Physical time
-            DT };       //!< Time step size
+enum Diag { L2SOL=0,       //!< L2 norm of numerical solution
+            L2ERR,         //!< L2 norm of numerical-analytic solution
+            L2RES,         //!< L2 norm of the residual
+            LINFERR,       //!< L_inf norm of numerical-analytic solution
+            TOTALSOL,      //!< Aggregate scalars over the entire domain:
+                           //!  index 0 : sum of conserved (total) energy,
+                           //!  index 1 : sum of internal energy,
+                           //!  index 2 : minimum inner radius.
+                           //!  Indices 1 and 2 are only meaningful for MultiMat
+            RESFORCE,      //!< Resultant force vector on mesh boundaries
+            RESTORQUE,     //!< Resultant torque vector on mesh boundaries
+            DISPLACEMNT,   //!< Total displacement of rigid body center-of-mass
+            ROTATION,      //!< Total rotation of rigid body
+            ITER,          //!< Iteration count
+            TIME,          //!< Physical time
+            DT,            //!< Time step size
+            IMEXACTIVE,    //!< Percentage of total elements with nonzero implicit iterations
+            IMEXMAXITER }; //!< Maximum number of implicit iterations in a single element };
 
 } // inciter::
 

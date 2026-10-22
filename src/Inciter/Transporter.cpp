@@ -1185,6 +1185,11 @@ Transporter::diagHeader()
       for (std::size_t i=0; i<3; ++i) d.push_back( "R" + std::to_string(i+1) );
     }
 
+    if (g_inputdeck.get< tag::imex_runge_kutta >()) {
+      d.push_back( "IMEX_ACTIVE" );
+      d.push_back( "IMEX_MAXITER" );
+    }
+
     // Write diagnostics header
     dw.header( d );
 
@@ -1624,6 +1629,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
       diag.push_back( d[DISPLACEMNT][i] );
     for (std::size_t i=0; i<3; ++i)
       diag.push_back( d[ROTATION][i] );
+  }
+
+  // Append IMEX diagnostics
+  if (g_inputdeck.get< tag::imex_runge_kutta >()) {
+    diag.push_back( d[IMEXACTIVE][0]*100.0/m_nelem[0] );
+    diag.push_back( static_cast<uint64_t>(d[IMEXMAXITER][0]) );
   }
 
   // Append diagnostics file at selected times

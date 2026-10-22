@@ -163,6 +163,7 @@ DEFTAG(limsol_projection);
 DEFTAG(implicit_timestepping);
 DEFTAG(point_implicit);
 DEFTAG(imex_runge_kutta);
+DEFTAG(imex_scheme);
 DEFTAG(imex_maxiter);
 DEFTAG(imex_reltol);
 DEFTAG(imex_abstol);
