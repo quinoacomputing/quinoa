@@ -47,6 +47,7 @@
 #include "Problem/InterfaceAdvection.hpp"
 #include "Problem/ShockHeBubble.hpp"
 #include "Problem/ShockDensityWave.hpp"
+#include "Problem/SedovBlastwave.hpp"
 #include "Problem/EquilInterfaceAdvect.hpp"
 #include "Problem/RichtmyerMeshkov.hpp"
 #include "Problem/SinewavePacket.hpp"
@@ -60,6 +61,7 @@ using MultiMatProblems =
                , MultiMatProblemInterfaceAdvection
                , MultiMatProblemShockHeBubble
                , MultiMatProblemShockDensityWave
+               , MultiMatProblemSedovBlastwave
                , MultiMatProblemEquilInterfaceAdvect
                , MultiMatProblemRichtmyerMeshkov
                , MultiMatProblemSinewavePacket

@@ -4,6 +4,7 @@ add_library(MultiMatProblem
             InterfaceAdvection.cpp
             ShockHeBubble.cpp
             ShockDensityWave.cpp
+            SedovBlastwave.cpp
             EquilInterfaceAdvect.cpp
             RichtmyerMeshkov.cpp
             SinewavePacket.cpp
