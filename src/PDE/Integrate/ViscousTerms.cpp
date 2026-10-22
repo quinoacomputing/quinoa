@@ -322,6 +322,7 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   const Fields& U,
   const Fields& P,
   std::size_t elem,
+  const std::vector< tk::real >& state,
   const std::array< std::vector< tk::real >, 3 >& dBdx,
   const std::array< std::vector< tk::real >, 6 >& d2Bdx2,
   std::array< std::array< tk::real, 3 >, 5>& grad,
@@ -344,8 +345,10 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   using inciter::multispecies::densityDofIdx;
   using inciter::multispecies::energyDofIdx;
   using inciter::multispecies::temperatureDofIdx;
+  using inciter::multispecies::densityIdx;
+  using inciter::multispecies::momentumIdx;
 
-  Assert(m_nspec == 1, "DGP1 viscous gradient storage currently assumes one species");
+  Assert(m_nspec == 1, "DGP1,DGP2 viscous gradient storage currently assume one species");
   
   // Set grad evals to zero for every gp to avoid runaway rhs
   for (auto& component : grad)
@@ -357,27 +360,30 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   for (auto& component : hess)
     component.fill(0.0);
 
+  const auto rho = state[densityIdx(m_nspec,0)];
+
+  if (rho <= 0.0)
+    Throw("Negative density in viscous gradient computation");
   
   // Gradient of conserved quantities
-  real cellAvgRho(0.0);
+  auto localDof = dBdx[0].size();
   // d(\rho)/dx
   for (std::size_t k=0; k<m_nspec; ++k) {
     for (std::size_t j=0; j<3; ++j) {
-      grad[0][j] +=
-        dBdx[j][1] * U(elem, densityDofIdx(m_nspec,k,m_rdof,1))
-      + dBdx[j][2] * U(elem, densityDofIdx(m_nspec,k,m_rdof,2))
-      + dBdx[j][3] * U(elem, densityDofIdx(m_nspec,k,m_rdof,3));
+      for (std::size_t b=1; b < localDof; ++b){
+        grad[0][j] +=
+          dBdx[j][b] * U(elem, densityDofIdx(m_nspec,k,m_rdof,b));
+      }
     }
-    cellAvgRho += U(elem, densityDofIdx(m_nspec,k,m_rdof,0));
   }
 
   // d(\rho u)/dx
   for (std::size_t i=1; i<4; ++i) {
     for (std::size_t j=0; j<3; ++j) {
-      grad[i][j] = //drudx[i][j]
-        dBdx[j][1] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,1))
-      + dBdx[j][2] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,2))
-      + dBdx[j][3] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,3));
+      for (std::size_t b=1; b < localDof; ++b){
+        grad[i][j] += //drudx[i][j]
+          dBdx[j][b] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,b));
+      }
     }
   }
 
@@ -386,34 +392,28 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   // because quinoa stores temp not energy?
   for (std::size_t j=0; j<3; ++j) {
     // dEdx[j]
-    grad[4][j] = dBdx[j][1] * U(elem, energyDofIdx(m_nspec,0,m_rdof,1))
-               + dBdx[j][2] * U(elem, energyDofIdx(m_nspec,0,m_rdof,2))
-               + dBdx[j][3] * U(elem, energyDofIdx(m_nspec,0,m_rdof,3));
+    for (std::size_t b=1; b < localDof; ++b){
+      grad[4][j] += dBdx[j][b] * U(elem, energyDofIdx(m_nspec,0,m_rdof,b));
+    }
   }
 
   // Velocity and temperature gradients
 
   //std::array< std::array< tk::real, 3 >, 4> vgrad;
-  std::array< real, 3 > cellAvgVel;
   for (std::size_t i=0; i<3; ++i) {
-    cellAvgVel[i] = U(elem, momentumDofIdx(m_nspec,i,m_rdof,0))
-      / cellAvgRho;
-  }
+    const auto velocity = state[momentumIdx(m_nspec,i)] / rho;
 
-  // du/dx
-  for (std::size_t i=0; i<3; ++i) {
     for (std::size_t j=0; j<3; ++j) {
-      // dudx[i][j]
-      vgrad[i][j] = (grad[i+1][j] - cellAvgVel[i] * grad[0][j]) / cellAvgRho;
+      vgrad[i][j] = (grad[i+1][j] - velocity * grad[0][j])/ rho;
     }
   }
 
   // dT/dx_j
   for (std::size_t j=0; j<3; ++j) {
     // dTdx[j]
-    vgrad[3][j] = dBdx[j][1] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,1))
-               + dBdx[j][2] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,2))
-               + dBdx[j][3] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,3));
+    for (std::size_t b=1; b < localDof; ++b){
+      vgrad[3][j] += dBdx[j][b] * P(elem, temperatureDofIdx(m_nspec,0,m_rdof,b));
+    }
   }
 
   // Hessian 
@@ -421,28 +421,28 @@ MultiSpeciesViscousTermsDGP1::gradientIntElem(
   // d2(rho)dx_jdx_k
   for (std::size_t k=0; k<m_nspec; ++k) {
     for (std::size_t j=0; j<6; ++j) {
-      hess[0][j] +=
-        d2Bdx2[j][1] * U(elem, densityDofIdx(m_nspec,k,m_rdof,1))
-      + d2Bdx2[j][2] * U(elem, densityDofIdx(m_nspec,k,m_rdof,2))
-      + d2Bdx2[j][3] * U(elem, densityDofIdx(m_nspec,k,m_rdof,3));
+      for (std::size_t b=1; b < localDof; ++b){
+        hess[0][j] +=
+          d2Bdx2[j][b] * U(elem, densityDofIdx(m_nspec,k,m_rdof,b));
+      }
     }
   }
 
   // d2(rho*u_i)/dx_jdx_k
   for (std::size_t i=1; i<4; ++i) {
     for (std::size_t j=0; j<6; ++j) {
-      hess[i][j] =
-        d2Bdx2[j][1] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,1))
-      + d2Bdx2[j][2] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,2))
-      + d2Bdx2[j][3] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,3));
+      for (std::size_t b=1; b < localDof; ++b){
+      hess[i][j] +=
+        d2Bdx2[j][b] * U(elem, momentumDofIdx(m_nspec,i-1,m_rdof,b));
+      }
     }
   }
 
   // d2E/dx_jdx_k
   for (std::size_t j=0; j<6; ++j) {
-    hess[4][j] = d2Bdx2[j][1] * U(elem, energyDofIdx(m_nspec,0,m_rdof,1))
-               + d2Bdx2[j][2] * U(elem, energyDofIdx(m_nspec,0,m_rdof,2))
-               + d2Bdx2[j][3] * U(elem, energyDofIdx(m_nspec,0,m_rdof,3));
+    for (std::size_t b=1; b < localDof; ++b){
+      hess[4][j] += d2Bdx2[j][b] * U(elem, energyDofIdx(m_nspec,0,m_rdof,b));
+    }
   }
 
 }
@@ -683,8 +683,18 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   {{ 3, 1, 5 }},  // y row: xy, yy, yz
   {{ 4, 5, 2 }}   // z row: xz, yz, zz
   }};
-  auto beta0 = 4.0; // beta0 = (k+1)^2 for all k = polynomial degree. So k = 1 => beta0 = 4 for DGP1
-  auto beta1 = 0.25; // beta1 = 1/(2k*(k+1)) for all k = polynomial degree. So k = 1 => beta1 = 0.25
+  
+  auto beta0 = 0.0;
+  auto beta1 = 0.0;
+  if (m_rdof == 4){
+    beta0 = 4.0; // beta0 = (k+1)^2 for all k = polynomial degree. So k = 1 => beta0 = 4 for DGP1
+    beta1 = 0.25; // beta1 = 1/(2k*(k+1)) for all k = polynomial degree. So k = 1 => beta1 = 0.25
+  } else if (m_rdof == 10){
+    beta0 = 9.0; // beta0 = (k+1)^2 for all k = polynomial degree. So k = 2 => beta0 = 9 for DGP2
+    beta1 = 1.0/12.0; // 1/(2k*(k+1)). So k = 2 => beta1 = 1/12
+  } else {
+    Throw("Only DGP1 and DGP2 viscous fluxes implemented");
+  }
 
   for (std::size_t m = 0; m<ncomp; ++m) {
     for (std::size_t i = 0; i < 3; ++i) {

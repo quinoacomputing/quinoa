@@ -113,6 +113,7 @@ class MultiSpeciesViscousTermsDGP1 {
       const Fields& U,
       const Fields& P,
       std::size_t elem,
+      const std::vector< tk::real >& state,
       const std::array< std::vector< tk::real >, 3 >& dBdx,
       const std::array< std::vector< tk::real >, 6 >& d2Bdx2,
       std::array< std::array< tk::real, 3 >, 5>& grad,

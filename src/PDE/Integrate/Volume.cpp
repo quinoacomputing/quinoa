@@ -131,7 +131,7 @@ tk::volIntViscous(
         vgrad = {};
         hess = {};
 
-        viscousRhs.gradientIntElem(U, P, e, dBdx, d2Bdx2, grad, vgrad, hess);
+        viscousRhs.gradientIntElem(U, P, e, state, dBdx, d2Bdx2, grad, vgrad, hess);
         for (std::size_t l=0; l<ncomp; l++)
           visc_fl[l].fill(0.0); // reset flux to prevent spillage
 
@@ -564,7 +564,7 @@ tk::volIntViscousMultiSpecies(
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  if (ndof == 4) {
+  if (ndof >= 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     volIntViscous( viscousRhs, mat_blk, nspec, ndof, rdof, nelem,
       inpoel, coord, geoElem, U, P, ndofel, R );

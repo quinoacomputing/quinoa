@@ -279,7 +279,7 @@ viscousBoundaryFaceIntDG(
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto ndof_l = viscousRhs.localDof( el );
 
-        Assert( ndof_l <= 4, "Boundary Hessian computation is not implemented for DG(P2)");
+        //Assert( ndof_l <= 4, "Boundary Hessian computation is not implemented for DG(P2)");
         auto ng = tk::NGfa(ndof_l);
 
         // arrays for quadrature points
@@ -357,10 +357,10 @@ viscousBoundaryFaceIntDG(
           eval_basis( ndof_l, ref_gp_l[0], ref_gp_l[1], ref_gp_l[2], B_l );
 
           auto wt = wgp[igp] * geoFace(f,0);
-
+          // Obtain interior state at quadrature point
+          auto interiorState = viscousRhs.stateAt(mat_blk, U, P, el, ndof_l, B_l);
           // Boundary condition, i.e. ghost state
-          auto ghostState = state( ncomp, mat_blk,
-            viscousRhs.stateAt(mat_blk, U, P, el, ndof_l, B_l),
+          auto ghostState = state( ncomp, mat_blk, interiorState,
             gp[0], gp[1], gp[2], t, fn );
 
           // Gradients of basis functions
@@ -376,7 +376,11 @@ viscousBoundaryFaceIntDG(
               d2Bdx2[0][i].assign( ndof_l, 0.0); // second derivative of p0 and p1 basis function is zero
           }
           if (ndof_l == 10) {
-            eval_d2Bdx2_p2( ndof_l, jacInv_l, d2Bdx2[0] ); // no-op for now
+            const std::array<std::vector<tk::real>, 3> refCoords_l{{
+              {ref_gp_l[0]}, {ref_gp_l[1]}, {ref_gp_l[2]}}};
+
+            eval_dBdx_p2(0, refCoords_l, jacInv_l, dBdx_l);
+            eval_d2Bdx2_p2(ndof_l, jacInv_l, d2Bdx2[0]);
           }
 
           auto d2Bdx2_l = d2Bdx2[0];
@@ -387,7 +391,10 @@ viscousBoundaryFaceIntDG(
               component.fill(0.0);
 
           // Compute gradients
-          viscousRhs.gradientIntElem( U, P, el, dBdx_l, d2Bdx2_l, grad[0], vgrad[0], hess[0]); // no-op for now
+          viscousRhs.gradientIntElem( U, P, el, interiorState, dBdx_l, d2Bdx2_l, grad[0], vgrad[0], hess[0]); // no-op for now
+          
+          // Danis and Yan simply extrapolate the Hessians to the ghost-side.
+          hess[1] = hess[0]; 
           
           // Apply BCs on gradients
           // For DDG, "grad" contains gradients of conserved quantities, "vgrad" contains gradients of 
@@ -1262,7 +1269,7 @@ bndSurfIntViscousMultiSpecies(
       coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
   }
 
-  else if (ndof == 4) {
+  else if (ndof >= 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     viscousBoundaryFaceIntDG( viscousRhs, mat_blk, nspec, ndof, rdof, bcconfig, 
       inpoel, coord, fd, geoFace, geoElem, U, P, t, state, BgradFn, R );

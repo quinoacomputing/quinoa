@@ -388,6 +388,10 @@ viscousInternalFaceIntDG(
           d2Bdx2[0][i].assign( ndof_l, 0.0); // second derivative of p0 and p1 basis function is zero
       }
       if (ndof_l == 10) {
+        // prepare reference coordinates for second derivative evaluation
+        const std::array<std::vector<tk::real>, 3> refCoords_l{{{ref_gp_l[0]}, {ref_gp_l[1]}, {ref_gp_l[2]}}};
+        
+        eval_dBdx_p2( 0, refCoords_l, jacInv_l, dBdx[0] );
         eval_d2Bdx2_p2( ndof_l, jacInv_l, d2Bdx2[0] ); // no-op for now
       }
 
@@ -396,12 +400,16 @@ viscousInternalFaceIntDG(
           d2Bdx2[1][i].assign( ndof_r, 0.0 ); // second derivative of p0 and p1 basis function is zero
       }
       if (ndof_r == 10) {
+        // prepare reference coordinates for second derivative evaluation
+        const std::array<std::vector<tk::real>, 3> refCoords_r{{{ref_gp_r[0]}, {ref_gp_r[1]}, {ref_gp_r[2]}}};
+        
+        eval_dBdx_p2( 0, refCoords_r, jacInv_r, dBdx[1] );
         eval_d2Bdx2_p2( ndof_r, jacInv_r, d2Bdx2[1] ); // no-op for now
       }
 
       // Compute gradients and Hessians of conserved quantities
-      viscousRhs.gradientIntElem( U, P, el, dBdx[0], d2Bdx2[0], grad[0], vgrad[0], hess[0] );
-      viscousRhs.gradientIntElem( U, P, er, dBdx[1], d2Bdx2[1], grad[1], vgrad[1], hess[1] );
+      viscousRhs.gradientIntElem( U, P, el, state[0], dBdx[0], d2Bdx2[0], grad[0], vgrad[0], hess[0] );
+      viscousRhs.gradientIntElem( U, P, er, state[1], dBdx[1], d2Bdx2[1], grad[1], vgrad[1], hess[1] );
 
       auto dBdx_l = dBdx[0];
       auto dBdx_r = dBdx[1];
@@ -1365,7 +1373,7 @@ surfIntViscousMultiSpecies(
       geoFace, geoElem, U, P, R );
   }
 
-  else if (ndof == 4) {
+  else if (ndof >= 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     viscousInternalFaceIntDG( viscousRhs, mat_blk, ndof, inpoel, coord, fd,
       geoFace, geoElem, U, P, R ); // No-op

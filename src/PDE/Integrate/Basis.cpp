@@ -347,7 +347,180 @@ tk::eval_d2Bdx2_p2( const std::size_t ndof,
 //! \param[in,out] d2Bdx2 Array of the second derivatives of basis function
 // *****************************************************************************
 {
-  // no-op
+  if (ndof != 10)
+    Throw( "DG(P2) basis Hessians require ten degrees of freedom" );
+
+  // Modes 0-3 are constant or linear and have zero second derivatives.
+  for (auto& derivative : d2Bdx2)
+    derivative.assign( ndof, 0.0 );
+
+  // Basis mode 4: physical derivatives xx, yy, zz, xy, xz, yz.
+  d2Bdx2[0][4] =
+      12.0 * jacInv[0][0] * jacInv[0][0]
+    + 2.0 * jacInv[1][0] * jacInv[1][0]
+    + 2.0 * jacInv[2][0] * jacInv[2][0]
+    + 12.0 * jacInv[0][0] * jacInv[1][0]
+    + 12.0 * jacInv[0][0] * jacInv[2][0]
+    + 4.0 * jacInv[1][0] * jacInv[2][0];
+  d2Bdx2[1][4] =
+      12.0 * jacInv[0][1] * jacInv[0][1]
+    + 2.0 * jacInv[1][1] * jacInv[1][1]
+    + 2.0 * jacInv[2][1] * jacInv[2][1]
+    + 12.0 * jacInv[0][1] * jacInv[1][1]
+    + 12.0 * jacInv[0][1] * jacInv[2][1]
+    + 4.0 * jacInv[1][1] * jacInv[2][1];
+  d2Bdx2[2][4] =
+      12.0 * jacInv[0][2] * jacInv[0][2]
+    + 2.0 * jacInv[1][2] * jacInv[1][2]
+    + 2.0 * jacInv[2][2] * jacInv[2][2]
+    + 12.0 * jacInv[0][2] * jacInv[1][2]
+    + 12.0 * jacInv[0][2] * jacInv[2][2]
+    + 4.0 * jacInv[1][2] * jacInv[2][2];
+  d2Bdx2[3][4] =
+      12.0 * jacInv[0][0] * jacInv[0][1]
+    + 2.0 * jacInv[1][0] * jacInv[1][1]
+    + 2.0 * jacInv[2][0] * jacInv[2][1]
+    + 6.0 * (jacInv[0][0] * jacInv[1][1] + jacInv[1][0] * jacInv[0][1])
+    + 6.0 * (jacInv[0][0] * jacInv[2][1] + jacInv[2][0] * jacInv[0][1])
+    + 2.0 * (jacInv[1][0] * jacInv[2][1] + jacInv[2][0] * jacInv[1][1]);
+  d2Bdx2[4][4] =
+      12.0 * jacInv[0][0] * jacInv[0][2]
+    + 2.0 * jacInv[1][0] * jacInv[1][2]
+    + 2.0 * jacInv[2][0] * jacInv[2][2]
+    + 6.0 * (jacInv[0][0] * jacInv[1][2] + jacInv[1][0] * jacInv[0][2])
+    + 6.0 * (jacInv[0][0] * jacInv[2][2] + jacInv[2][0] * jacInv[0][2])
+    + 2.0 * (jacInv[1][0] * jacInv[2][2] + jacInv[2][0] * jacInv[1][2]);
+  d2Bdx2[5][4] =
+      12.0 * jacInv[0][1] * jacInv[0][2]
+    + 2.0 * jacInv[1][1] * jacInv[1][2]
+    + 2.0 * jacInv[2][1] * jacInv[2][2]
+    + 6.0 * (jacInv[0][1] * jacInv[1][2] + jacInv[1][1] * jacInv[0][2])
+    + 6.0 * (jacInv[0][1] * jacInv[2][2] + jacInv[2][1] * jacInv[0][2])
+    + 2.0 * (jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2]);
+
+  // Basis mode 5: physical derivatives xx, yy, zz, xy, xz, yz.
+  d2Bdx2[0][5] =
+      10.0 * jacInv[1][0] * jacInv[1][0]
+    + 2.0 * jacInv[2][0] * jacInv[2][0]
+    + 20.0 * jacInv[0][0] * jacInv[1][0]
+    + 4.0 * jacInv[0][0] * jacInv[2][0]
+    + 12.0 * jacInv[1][0] * jacInv[2][0];
+  d2Bdx2[1][5] =
+      10.0 * jacInv[1][1] * jacInv[1][1]
+    + 2.0 * jacInv[2][1] * jacInv[2][1]
+    + 20.0 * jacInv[0][1] * jacInv[1][1]
+    + 4.0 * jacInv[0][1] * jacInv[2][1]
+    + 12.0 * jacInv[1][1] * jacInv[2][1];
+  d2Bdx2[2][5] =
+      10.0 * jacInv[1][2] * jacInv[1][2]
+    + 2.0 * jacInv[2][2] * jacInv[2][2]
+    + 20.0 * jacInv[0][2] * jacInv[1][2]
+    + 4.0 * jacInv[0][2] * jacInv[2][2]
+    + 12.0 * jacInv[1][2] * jacInv[2][2];
+  d2Bdx2[3][5] =
+      10.0 * jacInv[1][0] * jacInv[1][1]
+    + 2.0 * jacInv[2][0] * jacInv[2][1]
+    + 10.0 * (jacInv[0][0] * jacInv[1][1] + jacInv[1][0] * jacInv[0][1])
+    + 2.0 * (jacInv[0][0] * jacInv[2][1] + jacInv[2][0] * jacInv[0][1])
+    + 6.0 * (jacInv[1][0] * jacInv[2][1] + jacInv[2][0] * jacInv[1][1]);
+  d2Bdx2[4][5] =
+      10.0 * jacInv[1][0] * jacInv[1][2]
+    + 2.0 * jacInv[2][0] * jacInv[2][2]
+    + 10.0 * (jacInv[0][0] * jacInv[1][2] + jacInv[1][0] * jacInv[0][2])
+    + 2.0 * (jacInv[0][0] * jacInv[2][2] + jacInv[2][0] * jacInv[0][2])
+    + 6.0 * (jacInv[1][0] * jacInv[2][2] + jacInv[2][0] * jacInv[1][2]);
+  d2Bdx2[5][5] =
+      10.0 * jacInv[1][1] * jacInv[1][2]
+    + 2.0 * jacInv[2][1] * jacInv[2][2]
+    + 10.0 * (jacInv[0][1] * jacInv[1][2] + jacInv[1][1] * jacInv[0][2])
+    + 2.0 * (jacInv[0][1] * jacInv[2][2] + jacInv[2][1] * jacInv[0][2])
+    + 6.0 * (jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2]);
+
+  // Basis mode 6: physical derivatives xx, yy, zz, xy, xz, yz.
+  d2Bdx2[0][6] =
+      12.0 * jacInv[2][0] * jacInv[2][0]
+    + 24.0 * jacInv[0][0] * jacInv[2][0]
+    + 12.0 * jacInv[1][0] * jacInv[2][0];
+  d2Bdx2[1][6] =
+      12.0 * jacInv[2][1] * jacInv[2][1]
+    + 24.0 * jacInv[0][1] * jacInv[2][1]
+    + 12.0 * jacInv[1][1] * jacInv[2][1];
+  d2Bdx2[2][6] =
+      12.0 * jacInv[2][2] * jacInv[2][2]
+    + 24.0 * jacInv[0][2] * jacInv[2][2]
+    + 12.0 * jacInv[1][2] * jacInv[2][2];
+  d2Bdx2[3][6] =
+      12.0 * jacInv[2][0] * jacInv[2][1]
+    + 12.0 * (jacInv[0][0] * jacInv[2][1] + jacInv[2][0] * jacInv[0][1])
+    + 6.0 * (jacInv[1][0] * jacInv[2][1] + jacInv[2][0] * jacInv[1][1]);
+  d2Bdx2[4][6] =
+      12.0 * jacInv[2][0] * jacInv[2][2]
+    + 12.0 * (jacInv[0][0] * jacInv[2][2] + jacInv[2][0] * jacInv[0][2])
+    + 6.0 * (jacInv[1][0] * jacInv[2][2] + jacInv[2][0] * jacInv[1][2]);
+  d2Bdx2[5][6] =
+      12.0 * jacInv[2][1] * jacInv[2][2]
+    + 12.0 * (jacInv[0][1] * jacInv[2][2] + jacInv[2][1] * jacInv[0][2])
+    + 6.0 * (jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2]);
+
+  // Basis mode 7: physical derivatives xx, yy, zz, xy, xz, yz.
+  d2Bdx2[0][7] =
+      20.0 * jacInv[1][0] * jacInv[1][0]
+    + 2.0 * jacInv[2][0] * jacInv[2][0]
+    + 16.0 * jacInv[1][0] * jacInv[2][0];
+  d2Bdx2[1][7] =
+      20.0 * jacInv[1][1] * jacInv[1][1]
+    + 2.0 * jacInv[2][1] * jacInv[2][1]
+    + 16.0 * jacInv[1][1] * jacInv[2][1];
+  d2Bdx2[2][7] =
+      20.0 * jacInv[1][2] * jacInv[1][2]
+    + 2.0 * jacInv[2][2] * jacInv[2][2]
+    + 16.0 * jacInv[1][2] * jacInv[2][2];
+  d2Bdx2[3][7] =
+      20.0 * jacInv[1][0] * jacInv[1][1]
+    + 2.0 * jacInv[2][0] * jacInv[2][1]
+    + 8.0 * (jacInv[1][0] * jacInv[2][1] + jacInv[2][0] * jacInv[1][1]);
+  d2Bdx2[4][7] =
+      20.0 * jacInv[1][0] * jacInv[1][2]
+    + 2.0 * jacInv[2][0] * jacInv[2][2]
+    + 8.0 * (jacInv[1][0] * jacInv[2][2] + jacInv[2][0] * jacInv[1][2]);
+  d2Bdx2[5][7] =
+      20.0 * jacInv[1][1] * jacInv[1][2]
+    + 2.0 * jacInv[2][1] * jacInv[2][2]
+    + 8.0 * (jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2]);
+
+  // Basis mode 8: physical derivatives xx, yy, zz, xy, xz, yz.
+  d2Bdx2[0][8] =
+      12.0 * jacInv[2][0] * jacInv[2][0]
+    + 36.0 * jacInv[1][0] * jacInv[2][0];
+  d2Bdx2[1][8] =
+      12.0 * jacInv[2][1] * jacInv[2][1]
+    + 36.0 * jacInv[1][1] * jacInv[2][1];
+  d2Bdx2[2][8] =
+      12.0 * jacInv[2][2] * jacInv[2][2]
+    + 36.0 * jacInv[1][2] * jacInv[2][2];
+  d2Bdx2[3][8] =
+      12.0 * jacInv[2][0] * jacInv[2][1]
+    + 18.0 * (jacInv[1][0] * jacInv[2][1] + jacInv[2][0] * jacInv[1][1]);
+  d2Bdx2[4][8] =
+      12.0 * jacInv[2][0] * jacInv[2][2]
+    + 18.0 * (jacInv[1][0] * jacInv[2][2] + jacInv[2][0] * jacInv[1][2]);
+  d2Bdx2[5][8] =
+      12.0 * jacInv[2][1] * jacInv[2][2]
+    + 18.0 * (jacInv[1][1] * jacInv[2][2] + jacInv[2][1] * jacInv[1][2]);
+
+  // Basis mode 9: physical derivatives xx, yy, zz, xy, xz, yz.
+  d2Bdx2[0][9] =
+      30.0 * jacInv[2][0] * jacInv[2][0];
+  d2Bdx2[1][9] =
+      30.0 * jacInv[2][1] * jacInv[2][1];
+  d2Bdx2[2][9] =
+      30.0 * jacInv[2][2] * jacInv[2][2];
+  d2Bdx2[3][9] =
+      30.0 * jacInv[2][0] * jacInv[2][1];
+  d2Bdx2[4][9] =
+      30.0 * jacInv[2][0] * jacInv[2][2];
+  d2Bdx2[5][9] =
+      30.0 * jacInv[2][1] * jacInv[2][2];
 }
 void
 tk::eval_basis( const std::size_t ndof,
