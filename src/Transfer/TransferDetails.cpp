@@ -208,12 +208,15 @@ TransferDetails::processCollisions(
   // Send out the lists of potential collisions to the source mesh chares
   for (int i = 0; i < numchares; i++) {
     auto I = static_cast< std::size_t >( i );
+    if (pColls[I].empty()) continue;
     m_numsent++;
     proxy[i].determineActualCollisions( thisProxy,
                                         thisIndex,
                                         static_cast<int>(pColls[I].size()),
                                         pColls[I].data() );
   }
+
+  if (m_numsent == 0) m_donecb.send();
 }
 
 void
