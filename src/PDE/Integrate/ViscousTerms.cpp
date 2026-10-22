@@ -587,7 +587,7 @@ MultiSpeciesViscousTermsDGP1::interiorFlux(
   A[2][1] = { { 
     { 0.0,             nu_m,  0.0 }, 
     { -nu_m*(2.0/3.0), 0.0,   0.0 }, 
-    { 0.0,             0.0,  nu_m } } };
+    { 0.0,             0.0,   0.0 } } };
 
   A[2][2] = { { 
     { nu_m,      0.0,      0.0 }, 
