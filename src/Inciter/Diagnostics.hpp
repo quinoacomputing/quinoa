@@ -37,7 +37,7 @@ enum Diag { L2SOL=0,       //!< L2 norm of numerical solution
             TIME,          //!< Physical time
             DT,            //!< Time step size
             IMEXACTIVE,    //!< Percentage of total elements with nonzero implicit iterations
-            IMEXMAXITER }; //!< Maximum number of implicit iterations in a single element };
+            IMEXMAXITER }; //!< Maximum number of implicit iterations in a single element
 
 } // inciter::
 
