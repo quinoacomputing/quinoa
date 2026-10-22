@@ -278,7 +278,7 @@ class ALE : public CBase_ALE {
     //! Query if ALE mesh force coefficients are all zero
     bool zeroMeshForce() const;
 
-    //! Query if ALE mesh velocity smoothing requires velocity derivatives
+    //! Query if ALE requires velocity derivatives
     bool needVelocityDerivatives() const;
 
     //! Finalize computing fluid vorticity and velocity divergence for ALE
