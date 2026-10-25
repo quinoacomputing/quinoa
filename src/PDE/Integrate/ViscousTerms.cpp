@@ -979,7 +979,7 @@ MultiSpeciesViscousTermsDGP1::volumeFlux(
   const std::size_t nspec,
   std::size_t ncomp,
   const std::vector<tk::real>& state,
-  const std::array< std::array< tk::real, 3 >, 4>& vgrad,
+  const std::vector<std::array<tk::real, 3>>& grad,
   std::vector<std::array<tk::real, 3>>& visc_fl ) const
 // *****************************************************************************
 //! \brief Compute the multispecies viscous flux on a tet volume
@@ -987,7 +987,7 @@ MultiSpeciesViscousTermsDGP1::volumeFlux(
 //! \param[in] nspec Number of species in this system
 //! \param[in] ncomp Number of components in this system
 //! \param[in] state vector of conserved quantities
-//! \param[in,out] vgrad Velocity, temperature gradients in element
+//! \param[in] grad Conserved-variable gradients in element
 //! \param[in,out] visc_fl viscous volume flux
 // *****************************************************************************
 {
@@ -998,9 +998,20 @@ MultiSpeciesViscousTermsDGP1::volumeFlux(
   using inciter::multispecies::energyIdx;
   using inciter::Mixture;
   
+  Assert(nspec == m_nspec && ncomp == nspec + 4,
+         "Incorrect multispecies component count");
+  Assert(grad.size() == ncomp && visc_fl.size() == ncomp,
+         "Incorrect volume-gradient or flux size");
+  Assert(mat_blk.size() >= nspec, "Missing species EOS");
+  Assert(state.size() > ncomp + temperatureIdx(nspec,0),
+         "Missing volume state or appended temperature");
+
   tk::real rhob(0.0);
   for (std::size_t k=0; k<nspec; ++k)
     rhob += state[densityIdx(nspec, k)];
+
+  if (rhob <= 0.0)
+    Throw("Non-positive volume quadrature-point density");
 
   std::array< tk::real, 3 > u{{
         state[momentumIdx(nspec,0)] / rhob,
@@ -1018,7 +1029,7 @@ MultiSpeciesViscousTermsDGP1::volumeFlux(
   auto conserved_temp = mix.temperature( rhob, u[0], u[1], u[2], state[energyIdx(nspec,0)], mat_blk, converged, T_guess );
 
   if (converged != 1) {
-    Throw("Mean interface temperature solve failed");
+    Throw("Volume quadrature-point temperature solve failed");
   }
   mu = mix.viscCoeff( conserved_temp,
                       mat_blk );
@@ -1026,14 +1037,50 @@ MultiSpeciesViscousTermsDGP1::volumeFlux(
   conduct = mu * mix.Cp(conserved_temp, mat_blk) / 0.71; 
   //TO-DO: make Pr user-configurable
 
-  for (std::size_t i=0; i<3; ++i) {
-    for (std::size_t j=0; j<3; ++j) {
-      dudx[i][j]=vgrad[i][j];
-    }
+  const auto energy = energyIdx(nspec, 0);
+  const auto kinetic =
+    0.5 * (u[0]*u[0] + u[1]*u[1] + u[2]*u[2]);
+
+  std::vector<tk::real> Y(nspec);
+  std::vector<tk::real> species_e(nspec);
+  std::vector<tk::real> species_h(nspec);
+  std::array<tk::real, 3> gradRho{};
+  tk::real cv = 0.0;
+
+  for (std::size_t s = 0; s < nspec; ++s) {
+    const auto density = densityIdx(nspec, s);
+    Y[s] = state[density] / rhob;
+    species_e[s] =
+      mat_blk[s].compute<inciter::EOS::internalenergy>(conserved_temp);
+    const auto Rs = mat_blk[s].compute<inciter::EOS::gas_constant>();
+    species_h[s] = species_e[s] + Rs * conserved_temp;
+    cv += Y[s] * mat_blk[s].compute<inciter::EOS::cv>(conserved_temp);
+
+    for (std::size_t j = 0; j < 3; ++j)
+      gradRho[j] += grad[density][j];
   }
 
-  for (std::size_t j=0; j<3; ++j)
-    dTdx[j] = vgrad[3][j];
+  if (cv <= 0.0)
+    Throw("Non-positive volume mixture heat capacity");
+
+  // Pointwise velocity gradients from conserved gradients.
+  for (std::size_t i = 0; i < 3; ++i) {
+    const auto momentum = momentumIdx(nspec, i);
+    for (std::size_t j = 0; j < 3; ++j)
+      dudx[i][j] =
+        (grad[momentum][j] - u[i] * gradRho[j]) / rhob;
+  }
+
+  // Chain rule for rhoE = sum_s rho_s e_s(T) + rho |u|^2 / 2.
+  for (std::size_t j = 0; j < 3; ++j) {
+    tk::real numerator = grad[energy][j];
+    for (std::size_t i = 0; i < 3; ++i)
+      numerator -= u[i] * grad[momentumIdx(nspec, i)][j];
+    for (std::size_t s = 0; s < nspec; ++s)
+      numerator += (kinetic - species_e[s]) *
+                   grad[densityIdx(nspec, s)][j];
+    dTdx[j] = numerator / (rhob * cv);
+  }
 
 
   tau[0][0] = mu * ( 4.0 * dudx[0][0] - 2.0*(dudx[1][1] + dudx[2][2]) ) / 3.0;
@@ -1061,6 +1108,34 @@ MultiSpeciesViscousTermsDGP1::volumeFlux(
       visc_fl[idx_2][i] += u[j] * tau[i][j];
     }
     visc_fl[idx_2][i] += conduct*dTdx[i];
+  }
+
+  const auto D = speciesDiffusivities(nspec, rhob, conserved_temp, Y);
+  Assert(D.size() == nspec,
+         "Incorrect number of species diffusion coefficients");
+
+  tk::real Dbar = 0.0;
+  for (std::size_t s = 0; s < nspec; ++s)
+    Dbar += Y[s] * D[s];
+
+  // Match the species-density blocks used by interiorFlux().
+  for (std::size_t s = 0; s < nspec; ++s) {
+    const auto row = densityIdx(nspec, s);
+    std::array<tk::real, 3> minusJs{};
+
+    for (std::size_t r = 0; r < nspec; ++r) {
+      const auto col = densityIdx(nspec, r);
+      const auto Bsr =
+        (s == r ? D[s] : 0.0)
+        - Y[s] * (D[s] + D[r] - Dbar);
+      for (std::size_t j = 0; j < 3; ++j)
+        minusJs[j] += Bsr * grad[col][j];
+    }
+
+    for (std::size_t j = 0; j < 3; ++j) {
+      visc_fl[row][j] += minusJs[j];
+      visc_fl[energy][j] += species_h[s] * minusJs[j];
+    }
   }
   
 }

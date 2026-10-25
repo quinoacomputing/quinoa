@@ -136,7 +136,7 @@ tk::volIntViscous(
           visc_fl[l].fill(0.0); // reset flux to prevent spillage
 
         // compute viscous flux
-        viscousRhs.volumeFlux( mat_blk, nspec, ncomp, state, vgrad, visc_fl );
+        viscousRhs.volumeFlux( mat_blk, nspec, ncomp, state, grad, visc_fl );
 
         // Weak form: -F_v \cdot \nabla(\phi)
         for (auto& flux : visc_fl)

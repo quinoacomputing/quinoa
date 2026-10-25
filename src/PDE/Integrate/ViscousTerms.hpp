@@ -149,7 +149,7 @@ class MultiSpeciesViscousTermsDGP1 {
     const std::size_t nspec,
     std::size_t ncomp,
     const std::vector<tk::real>& state,
-    const std::array<std::array<tk::real, 3>, 4>& vgrad,
+    const std::vector<std::array<tk::real, 3>>& grad,
     std::vector<std::array<tk::real, 3>>& visc_fl ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
