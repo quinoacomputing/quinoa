@@ -29,7 +29,7 @@ speciesDiffusivities(
   tk::real /*temperature*/,
   const std::vector<tk::real>& /*massFractions*/ )
 {
-  // TODO: Compute species diffusivities using Mutation++.
+  // no-op for now
   return std::vector<tk::real>(nspec, 0.0);
 }
 
