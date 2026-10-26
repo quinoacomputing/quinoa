@@ -95,7 +95,8 @@ resetSolidTensors(
   std::size_t k,
   std::size_t e,
   tk::Fields& U,
-  tk::Fields& P );
+  tk::Fields& P,
+  bool full_reset = false );
 
 //! Get the inverse deformation gradient tensor for a material at given location
 std::array< std::array< tk::real, 3 >, 3 >

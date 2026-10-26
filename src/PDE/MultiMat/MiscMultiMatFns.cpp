@@ -263,7 +263,11 @@ cleanTraceMultiMat(
                    "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
                    alpha_crossing ? "trace-crossing" : "unphysical",
                    t, e, k, solidx[k], alk);
-            resetSolidTensors(nmat, k, e, U, P);
+            // Full snap for the alpha-crossing case: once alpha rises past
+            // volfracSolidResetLim() it does not come back down, so this is
+            // the only cleanup chance this material gets -- see full_reset
+            // doc in resetSolidTensors().
+            resetSolidTensors(nmat, k, e, U, P, alpha_crossing);
           }
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
@@ -796,7 +800,8 @@ resetSolidTensors(
   std::size_t k,
   std::size_t e,
   tk::Fields& U,
-  tk::Fields& P )
+  tk::Fields& P,
+  bool full_reset )
 // *****************************************************************************
 //  Reset the solid tensors
 //! \param[in] nmat Number of materials in this PDE system
@@ -804,6 +809,15 @@ resetSolidTensors(
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in/out] U High-order solution vector which gets modified
 //! \param[in/out] P High-order vector of primitives which gets modified
+//! \param[in] full_reset If true, snap g/stress/eps_p straight to the clean
+//!   target (relax=1) instead of partially blending. The partial blend
+//!   relies on this material re-triggering solidTensorUnphysical() on a
+//!   later stage to finish converging to the target; the trace-crossing
+//!   case (alpha rising monotonically past volfracSolidResetLim(), as when
+//!   an interface permanently sweeps past this cell) only ever fires this
+//!   reset once, so a partial blend would leave it carrying a stale,
+//!   partially-corrupted g into full elastic/plastic physics with no
+//!   further chance of cleanup.
 // *****************************************************************************
 {
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -846,7 +860,14 @@ resetSolidTensors(
   // element keeps re-triggering solidTensorUnphysical() on subsequent
   // stages until it actually converges, the state still relaxes fully to
   // the target over a few stages.
-  const auto relax = solidResetRelaxFactor();
+  // The trace-crossing caller (alpha rising monotonically past
+  // volfracSolidResetLim(), never dropping back below it) only gets this one
+  // call -- solidTensorUnphysical() has no further chance to retrigger once
+  // alpha is bulk -- so it requests a full snap (relax=1) instead, trading
+  // the bounded-discontinuity argument above for guaranteeing this material
+  // doesn't carry a partially-corrupted g into full elastic/plastic physics
+  // with no way to finish converging.
+  const auto relax = full_reset ? 1.0 : solidResetRelaxFactor();
 
   // Blend g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not
   // pressure). If g itself is non-finite, blending with it (g + relax *
