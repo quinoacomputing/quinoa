@@ -849,19 +849,26 @@ resetSolidTensors(
   const auto relax = solidResetRelaxFactor();
 
   // Blend g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not
-  // pressure)
+  // pressure). If g itself is non-finite, blending with it (g + relax *
+  // (target - g)) just propagates the NaN/Inf forever -- damping only
+  // converges when g is finite-but-implausible. In that case snap straight
+  // to the target instead of blending.
   for (size_t i=0;i<3;++i)
     for (size_t j=0;j<3;++j) {
       tk::real gtarget = (i==j) ? new_gii : 0.0;
       U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) =
-        g[i][j] + relax * (gtarget - g[i][j]);
-      P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) *=
-        (1.0 - relax);
+        std::isfinite(g[i][j]) ? g[i][j] + relax * (gtarget - g[i][j])
+                                : gtarget;
+      auto& stress0 = P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j],
+        rdof, 0));
+      stress0 = std::isfinite(stress0) ? stress0 * (1.0 - relax) : 0.0;
       // Blend higher DOFs for g and elastic stress toward zero
       for (size_t l=1; l<rdof; ++l) {
-        U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) *= (1.0 - relax);
-        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) *=
-          (1.0 - relax);
+        auto& gl = U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l));
+        gl = std::isfinite(gl) ? gl * (1.0 - relax) : 0.0;
+        auto& stressl = P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j],
+          rdof, l));
+        stressl = std::isfinite(stressl) ? stressl * (1.0 - relax) : 0.0;
       }
     }
 
@@ -869,8 +876,10 @@ resetSolidTensors(
   // corrupted eps_p history left behind by a g-reset would otherwise keep
   // inflating the hardening-law yield stress indefinitely, even though the
   // tensor state it was derived from has just been discarded as unreliable.
-  for (size_t l=0; l<rdof; ++l)
-    U(e, epsPDofIdx(nmat, solidx[k], rdof, l)) *= (1.0 - relax);
+  for (size_t l=0; l<rdof; ++l) {
+    auto& epsl = U(e, epsPDofIdx(nmat, solidx[k], rdof, l));
+    epsl = std::isfinite(epsl) ? epsl * (1.0 - relax) : 0.0;
+  }
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
