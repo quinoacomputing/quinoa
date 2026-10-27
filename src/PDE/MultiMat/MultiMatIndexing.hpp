@@ -272,13 +272,20 @@ inline tk::real solidResetRelaxFactor()
 //!   floor, before a bad g has a chance to produce a bad stress -- rather
 //!   than the reactive cleanup in cleanTraceMaterial()/solidTensorUnphysical(),
 //!   which only runs after a stage has already baked a degraded g into
-//!   stress/flux. Matches the a_min already used by the plastic-relaxation
-//!   damping (see stiff_rhs()/balance_plastic_energy()): below that value the
-//!   damping already drives rel_factor to zero, so this just makes that
-//!   boundary a hard skip of the stress computation itself, instead of a
-//!   soft ramp applied after the fact.
+//!   stress/flux.
+//!   Set equal to volfracSolidResetLim(): a cell inside that band is, by
+//!   definition, one cleanTraceMaterial() is willing to reset on sight. Below
+//!   this floor it previously still got full elastic/plastic Newton physics
+//!   (deviatoric stress, Lp, hardening) run on it every stage, which can
+//!   re-corrupt g faster than resetSolidTensors()'s partial (25%) blend
+//!   converges it back -- a non-convergent reset/re-corrupt loop that drives
+//!   dt to the CFL floor (observed: element stuck at alpha~0.01, refiring
+//!   the reset every single stage for ~2000 steps with zero time advance).
+//!   Matching the two thresholds means any cell the reset logic considers
+//!   trace is also proactively skipped from physics that could re-corrupt
+//!   it, closing that loop at the source instead of tuning the blend factor.
 inline tk::real solidPhysicsAlphaFloor()
-{ return 1.0e-04; }
+{ return volfracSolidResetLim(); }
 
 //! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.
