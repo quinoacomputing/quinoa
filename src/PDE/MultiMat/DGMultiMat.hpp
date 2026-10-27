@@ -592,18 +592,24 @@ class MultiMat {
               // bound, so a corrupted g here produces an enormous stress
               // that then poisons the shared HLLC wave speed at every face
               // this element touches. Fall back to the undeformed state.
-              // Also bypass the stress EoS proactively -- before g has a
-              // chance to degrade at all -- for any trace solid below
-              // solidPhysicsAlphaFloor(): at that volume fraction, g is
+              // Also fade the stress contribution smoothly to zero for a
+              // trace solid via solidPhysicsWeight(): at low alpha, g is
               // driven almost entirely by advection/interface-sharpening
-              // noise rather than real deformation, so computing elastic
-              // stress from it just injects noise into the shared flux.
+              // noise rather than real deformation, so the full stress
+              // would just inject noise into the shared flux. Scale the
+              // OUTPUT stress tensor rather than blending g itself toward
+              // identity: CauchyStress is nonlinear (logarithmic Hencky
+              // strain) in g, so a blended input tensor does not correspond
+              // to a fraction of the true stress, only output-scaling does.
               static const std::array< std::array< tk::real, 3 >, 3 > idT{{
                 {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
+              auto gmat_safe = degenerateDeformGrad(gmat) ? idT : gmat;
               auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
-              alphamat, imat,
-              (alphamat < solidPhysicsAlphaFloor() || degenerateDeformGrad(gmat))
-                ? idT : gmat );
+                alphamat, imat, gmat_safe );
+              auto w_alpha = solidPhysicsWeight(alphamat);
+              for (std::size_t i=0; i<3; ++i)
+                for (std::size_t j=0; j<3; ++j)
+                  asigmat[i][j] *= w_alpha;
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -1304,18 +1310,31 @@ class MultiMat {
             dpsi += psi - psi_star;
           }
           // Damp the elastic-energy correction in true trace-material
-          // cells, consistent with the rel_factor damping applied to
-          // plasticity itself in stiff_rhs() below. Must use the same
-          // a_min/a_max thresholds so the energy correction reflects
-          // whatever plastic work was actually allowed to occur.
-          tk::real a_min = 1.0e-04, a_max = 0.2;
-          auto smoothstep = [&](tk::real a){
-            tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
-            return t*t*(3.0-2.0*t);
-          };
-          tk::real a_tilde = smoothstep(alpha);
+          // cells using the same w_alpha*w_g trust weight applied to the
+          // stress itself in stiff_rhs(), so the energy correction reflects
+          // whatever plastic work was actually allowed to occur. Evaluated
+          // on the constant (idof=0) DOF of g_star (the post-Newton-update
+          // tensor), matching the state this correction is being balanced
+          // into -- consistent with dE_vol below, which is also only
+          // meaningful for ndof=1.
+          std::array< std::array< tk::real, 3 >, 3 > g_star0;
+          for (std::size_t i=0; i<3; ++i)
+            for (std::size_t j=0; j<3; ++j)
+              g_star0[i][j] = x_star[solidTensorIdx(ksld,i,j)*ndof+0];
+          tk::real w_alpha = solidPhysicsWeight(alpha);
+          auto detg_star = tk::determinant(g_star0);
+          tk::real w_g = 0.0;
+          if (std::isfinite(detg_star) && detg_star > 0.0) {
+            constexpr tk::real log_lo = -3.0, log_hi = 3.0;
+            constexpr tk::real log_margin = 0.5;
+            tk::real logd = std::log10(detg_star);
+            tk::real dist = std::min(logd-log_lo, log_hi-logd);
+            tk::real t = std::clamp(dist/log_margin, 0.0, 1.0);
+            w_g = t*t*(3.0-2.0*t);
+          }
+          tk::real w_total = w_alpha * w_g;
           tk::real beta = 1.0;
-          const tk::real dE_vol = alpha * a_tilde * beta * (-dpsi);
+          const tk::real dE_vol = alpha * w_total * beta * (-dpsi);
           for (std::size_t idof=0; idof<ndof; ++idof)
             // Should have B[idof] here for it to work for high order
             // Currently, only useful for ndof=1
@@ -1409,49 +1428,45 @@ class MultiMat {
             // no upper bound on the stress it returns for a bad g, and
             // feeding that into Lp below would only drive g further from
             // physical, compounding the degradation this Newton solve is
-            // trying to relax away. Also skip proactively, before g has a
-            // chance to degrade, for any trace solid below
-            // solidPhysicsAlphaFloor() (see updatePrimitives()) -- with
-            // dev(sigma)=0 there, phi<=0 below and this material's Lp (and
-            // thus its contribution to the Newton stiff solve) is exactly
-            // zero rather than merely damped by the a_tilde ramp further
-            // down. traceSolid is alpha-based (not a function of the
-            // Newton unknown x), so it is safe to apply as a hard switch.
-            // degenerateDeformGrad(g), however, is evaluated on the
-            // CURRENT NEWTON ITERATE's g, which the Jacobian/line-search
+            // trying to relax away. degenerateDeformGrad(g) is evaluated on
+            // the CURRENT NEWTON ITERATE's g, which the Jacobian/line-search
             // probe as part of solving for x -- a hard idT:g switch there
             // makes this residual (and the FD Jacobian built from it)
             // discontinuous in x right at the det(g) threshold, which can
             // stall Newton near that threshold (observed: a real,
             // well-resolved cell parked at det(g)~0.000999, just inside
             // the degenerate side of the 1e-3 cutoff, failed to converge
-            // in 250 iterations). Blend smoothly between g and idT in
-            // log(det(g)) space instead, over a half-decade margin
-            // straddling each threshold, so the residual stays C1 in x.
+            // in 250 iterations). So rather than a hard idT:g switch, fold
+            // a smooth log(det(g))-space weight w_g into the OUTPUT stress
+            // (not the input g) alongside the alpha-based trust weight
+            // w_alpha from solidPhysicsWeight() -- also applied to the
+            // output, for the same reason given in updatePrimitives(): a
+            // blended INPUT tensor does not correspond to a fraction of the
+            // true (nonlinear) stress. The two weights are independent
+            // trust signals (is alpha high enough to trust g at all; is
+            // this g, whatever alpha is, numerically sane) and compose
+            // multiplicatively so that failing either pulls the result
+            // toward zero.
             static const std::array< std::array< tk::real, 3 >, 3 > idT{{
               {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
-            bool traceSolid = alpha < solidPhysicsAlphaFloor();
+            tk::real w_alpha = solidPhysicsWeight(alpha);
+            auto detg = tk::determinant(g);
             tk::real w_g = 0.0;
-            if (!traceSolid) {
-              auto detg = tk::determinant(g);
-              if (std::isfinite(detg) && detg > 0.0) {
-                constexpr tk::real log_lo = -3.0, log_hi = 3.0; // log10(1e-3/1e3)
-                constexpr tk::real log_margin = 0.5; // half a decade
-                tk::real logd = std::log10(detg);
-                tk::real dist = std::min(logd-log_lo, log_hi-logd);
-                tk::real t = std::clamp(dist/log_margin, 0.0, 1.0);
-                w_g = t*t*(3.0-2.0*t);
-              }
+            if (std::isfinite(detg) && detg > 0.0) {
+              constexpr tk::real log_lo = -3.0, log_hi = 3.0; // log10(1e-3/1e3)
+              constexpr tk::real log_margin = 0.5; // half a decade
+              tk::real logd = std::log10(detg);
+              tk::real dist = std::min(logd-log_lo, log_hi-logd);
+              tk::real t = std::clamp(dist/log_margin, 0.0, 1.0);
+              w_g = t*t*(3.0-2.0*t);
             }
-            std::array< std::array< tk::real, 3 >, 3 > g_blend;
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                g_blend[i][j] = w_g*g[i][j] + (1.0-w_g)*idT[i][j];
+            tk::real w_total = w_alpha * w_g;
+            auto g_safe = (std::isfinite(detg) && detg > 0.0) ? g : idT;
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
-              alpha, k, g_blend );
+              alpha, k, g_safe );
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
-                sigma_dev[i][j] /= alpha;
+                sigma_dev[i][j] = sigma_dev[i][j] / alpha * w_total;
             tk::real sigma_trace =
               sigma_dev[0][0]+sigma_dev[1][1]+sigma_dev[2][2];
             for (std::size_t i=0; i<3; ++i)
@@ -1503,22 +1518,12 @@ class MultiMat {
             tk::real rel_time = getmatprop< tag::plasticity_reltime >(k);
             if (phi > 0.0) {
               // Note: if plasticity becomes unstable, raise the power (below) to two
+              // No separate trace-material damping needed here: equiv_stress
+              // (and hence phi and rel_factor) is already derived from
+              // sigma_dev, which was scaled by w_total above, so this
+              // already fades to zero in trace cells without an extra,
+              // independently-banded multiplier.
               rel_factor = std::pow((phi/yield_stress),1.0)/rel_time;
-              // Damp rel_factor toward zero only in true trace-material
-              // cells (alpha below a_max), where the deformation gradient
-              // is driven mostly by numerical (advection/interface-
-              // sharpening) noise rather than real physics, rather than
-              // any partially-mixed cell. A wider band here previously
-              // suppressed plasticity in real mixed cells, letting
-              // deviatoric stress sit above yield indefinitely; this
-              // narrow, low ceiling only targets near-void noise cells.
-              tk::real a_min = 1.0e-04, a_max = 0.2;
-              auto smoothstep = [&](tk::real a){
-                tk::real t = std::clamp((a-a_min)/(a_max-a_min), 0.0, 1.0);
-                return t*t*(3.0-2.0*t);
-              };
-              tk::real a_tilde = smoothstep(alpha);
-              rel_factor *= a_tilde;
             }
             tk::real mu = getmatprop< tag::mu >(k);
             for (std::size_t i=0; i<3; ++i)

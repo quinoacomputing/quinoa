@@ -107,7 +107,7 @@ cleanTraceMultiMat(
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
-  const tk::Fields& Un,
+  [[maybe_unused]] const tk::Fields& Un,
   std::size_t nmat,
   tk::Fields& U,
   tk::Fields& P )
@@ -117,9 +117,10 @@ cleanTraceMultiMat(
 //! \param[in] nelem Number of elements
 //! \param[in] mat_blk EOS material block
 //! \param[in] geoElem Element geometry array
-//! \param[in] Un Solution vector at the start of the current time step (used
-//!   to detect a solid's volume fraction jumping from the trace regime to
-//!   bulk within a single step, see the alpha-crossing reset below)
+//! \param[in] Un Solution vector at the start of the current time step
+//!   (currently unused -- kept for call-site compatibility; was previously
+//!   used by a now-removed alpha-crossing reset condition, see
+//!   MultiMatIndexing.hpp's solidPhysicsWeight())
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in/out] U High-order solution vector which gets modified
 //! \param[in/out] P High-order vector of primitives which gets modified
@@ -189,14 +190,6 @@ cleanTraceMultiMat(
       auto alk = U(e, volfracDofIdx(nmat, k, rdof, 0));
       auto pk = P(e, pressureDofIdx(nmat, k, rdof, 0)) / alk;
 
-      // Volume fraction this solid had at the start of the current time
-      // step, before THINC interface sharpening/advection updated it. Used
-      // below to catch a trace solid whose alpha jumps straight past
-      // volfracSolidResetLim() within a single step -- see the alpha-
-      // crossing reset.
-      auto alk_un = (solidx[k] > 0) ?
-        Un(e, volfracDofIdx(nmat, k, rdof, 0)) : 0.0;
-
       // Determine if element-e needs trace-material cleanup. This decision is
       // based on specific scenarios.
       // WARNING: Changing this decision-making logic can adversely affect
@@ -221,30 +214,7 @@ cleanTraceMultiMat(
         //    tensor to actually be bad makes this a rare, targeted repair
         //    instead of a per-stage stomp.
         (solidx[k] > 0 && alk < volfracSolidResetLim() &&
-        solidTensorUnphysical(nmat, k, e, U)) ||
-        // 4. if current material is solid AND its volume fraction just
-        //    crossed solidPhysicsAlphaFloor() -- the actual boundary where
-        //    full elastic/plastic Newton physics switches on -- from below.
-        //    THINC interface sharpening can snap alpha from ~1e-5 to O(1) in
-        //    one step as a front reaches a cell, but a cell can just as well
-        //    climb gradually (e.g. ~0.021, ~0.028, ~0.035, ...) while
-        //    sitting below the floor and bypassed from physics the whole
-        //    way -- during that climb only g's advection/flux update runs,
-        //    not stress/Newton, so g can still drift away from physical
-        //    without degenerateDeformGrad() (a wide [1e-3,1e3] det(g)
-        //    sanity band) catching it, e.g. a highly anisotropic g with
-        //    det(g) just inside that band but components O(1). Gating this
-        //    condition on alk_un < volfracSolidResetBuffer() (not the
-        //    narrower volfracSolidResetLim()) catches that gradual-climb
-        //    case too: whatever path alpha took to get here, the moment it
-        //    is about to receive full physics for the first time, discard
-        //    whatever g it is carrying rather than trust it. Force the
-        //    reset unconditionally here (not gated on
-        //    solidTensorUnphysical()) since the point is exactly to discard
-        //    a stale trace-regime g before physics that trusts it runs, not
-        //    to wait for it to visibly degrade first.
-        (solidx[k] > 0 && alk_un < volfracSolidResetBuffer() &&
-        alk >= volfracSolidResetBuffer())
+        solidTensorUnphysical(nmat, k, e, U))
       )
         ctm_element = true;
 
@@ -253,20 +223,22 @@ cleanTraceMultiMat(
         std::array< std::array< tk::real, 3 >, 3 > gmat {{}};
         if (solidx[k] > 0) {
           // Reset deformation gradient and stress if the g-tensor has
-          // actually degraded (condition 3), or unconditionally if this
-          // solid's alpha just crossed all the way from trace to bulk
-          // (condition 4) -- ctm_element can also be true here purely
-          // because alk < volfracPRelaxLim() (condition 1, which is not
-          // solid-specific), so this check is still needed even though
-          // conditions 3/4 above already screen for it -- otherwise every
-          // solid cell below that fluid-oriented 1% cutoff gets its
-          // (possibly perfectly fine) tensor state stomped every stage.
-          bool alpha_crossing =
-            alk_un < volfracSolidResetBuffer() && alk >= volfracSolidResetBuffer();
-          if (solidTensorUnphysical(nmat, k, e, U) || alpha_crossing) {
-            printf("cleanTraceMaterial: resetting %s g-tensor: "
+          // actually degraded (condition 3) -- ctm_element can also be true
+          // here purely because alk < volfracPRelaxLim() (condition 1,
+          // which is not solid-specific), so this check is still needed
+          // even though condition 3 above already screens for it --
+          // otherwise every solid cell below that fluid-oriented 1% cutoff
+          // gets its (possibly perfectly fine) tensor state stomped every
+          // stage. (A former condition 4 here reset on sight whenever alpha
+          // crossed the bulk-physics activation boundary, to discard a
+          // stale g before full-strength physics trusted it for the first
+          // time -- made unnecessary once that boundary became the smooth
+          // solidPhysicsWeight() ramp in updatePrimitives()/stiff_rhs():
+          // there is no longer a discontinuous activation event for a
+          // stale g to be caught at.)
+          if (solidTensorUnphysical(nmat, k, e, U)) {
+            printf("cleanTraceMaterial: resetting unphysical g-tensor: "
                    "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
-                   alpha_crossing ? "trace-crossing" : "unphysical",
                    t, e, k, solidx[k], alk);
             resetSolidTensors(nmat, k, e, U, P);
           }
@@ -812,18 +784,11 @@ resetSolidTensors(
 //! \details Always blends toward the clean target by solidResetRelaxFactor()
 //!   rather than snapping to it in one step: a hard snap makes the face flux
 //!   at the very next stage jump by the full error, large enough to blow up
-//!   a neighboring element's Newton solve or collapse dt (observed for a
-//!   full snap applied to an alpha-crossing cell whose alpha then wobbled
-//!   back across volfracSolidResetLim() and re-triggered the reset
-//!   repeatedly -- each repeat re-injected the same full-size discontinuity).
-//!   Relying solely on a damped blend is safe here because cleanTraceMultiMat()
-//!   now requires alpha to clear the full [volfracSolidResetLim(),
-//!   volfracSolidResetBuffer()) band in one step before calling this as a
-//!   "crossing" -- i.e. this is only invoked for a cell that will continue
-//!   to either re-trigger solidTensorUnphysical() (condition 3) or stay
-//!   below solidPhysicsAlphaFloor() (bypassed from physics that could
-//!   re-corrupt it) on subsequent stages, so the blend is always given a
-//!   further chance to converge.
+//!   a neighboring element's Newton solve or collapse dt. This is only
+//!   invoked when solidTensorUnphysical() (condition 3 in
+//!   cleanTraceMultiMat()) flags a genuinely degenerate g-tensor, so the
+//!   blend is given a further chance to converge on each subsequent stage
+//!   that the tensor keeps re-triggering the check.
 // *****************************************************************************
 {
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();

@@ -102,16 +102,16 @@ struct HLLCMultiMat {
 
       // inv deformation gradient and Cauchy stress tensors
       gl.push_back(getDeformGrad(nmat, k, u[0]));
-      // Trace-solid or already-degenerate g: force identity here, at the
-      // point of extraction, so every downstream use in this function
-      // (star-state blending, this material's own deformation-gradient
-      // flux, and the riemannDeriv g-push below) inherits the clean value
-      // instead of needing separate guards at each use site. Mirrors the
-      // alpha-floor bypass already applied to the stress path in
-      // updatePrimitives()/stiff_rhs() (see solidPhysicsAlphaFloor()).
-      if (solidx[k] > 0 &&
-          (u[0][volfracIdx(nmat,k)] < solidPhysicsAlphaFloor() ||
-           degenerateG(gl[k])))
+      // Already-degenerate g: force identity here, at the point of
+      // extraction, so every downstream use in this function (star-state
+      // blending, this material's own deformation-gradient flux, and the
+      // riemannDeriv g-push below) inherits the clean value instead of
+      // needing separate guards at each use site. No alpha-based guard
+      // here: g's own advection/transport is independent of whether its
+      // stress contribution is currently trusted (that trust fade is
+      // applied to the stress tensor itself, via solidPhysicsWeight() in
+      // updatePrimitives(), which asigl below already reflects).
+      if (solidx[k] > 0 && degenerateG(gl[k]))
         gl[k] = idT;
       asigl = getCauchyStress(nmat, k, ncomp, u[0]);
       for (std::size_t i=0; i<3; ++i) asigl[i][i] -= apl[k];
@@ -140,9 +140,7 @@ struct HLLCMultiMat {
       // inv deformation gradient and Cauchy stress tensors
       gr.push_back(getDeformGrad(nmat, k, u[1]));
       // See matching gl[k] guard above.
-      if (solidx[k] > 0 &&
-          (u[1][volfracIdx(nmat,k)] < solidPhysicsAlphaFloor() ||
-           degenerateG(gr[k])))
+      if (solidx[k] > 0 && degenerateG(gr[k]))
         gr[k] = idT;
       asigr = getCauchyStress(nmat, k, ncomp, u[1]);
       for (std::size_t i=0; i<3; ++i) asigr[i][i] -= apr[k];

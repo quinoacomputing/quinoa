@@ -258,8 +258,9 @@ inline tk::real volfracSolidResetLim()
 //!   bulk-physics eligibility and reset triggering on the bare limit meant
 //!   every upward wobble (mis-)read as a permanent transition. Widening the
 //!   band this far above the limit before either treating the cell as truly
-//!   bulk (solidPhysicsAlphaFloor()) or declaring a crossing final (the
-//!   alpha-crossing condition in cleanTraceMultiMat()) means pure noise
+//!   bulk (solidPhysicsAlphaMax(), see solidPhysicsWeight()) or declaring a
+//!   crossing final (the alpha-crossing condition in cleanTraceMultiMat())
+//!   means pure noise
 //!   wobbling inside [volfracSolidResetLim(), volfracSolidResetBuffer())
 //!   never reaches full elastic/plastic physics and never triggers a
 //!   one-shot reset -- only a jump that clears the whole band in a single
@@ -282,41 +283,44 @@ inline tk::real volfracSolidResetBuffer()
 inline tk::real solidResetRelaxFactor()
 { return 0.25; }
 
-//! \brief Floor on solid volume fraction below which a solid's elastic
-//!   stress/plastic-relaxation physics is skipped outright: the deformation
-//!   gradient is treated as the identity (zero deviatoric stress) directly,
-//!   rather than computing Cauchy stress/Newton plastic relaxation from a g
-//!   that, at this volume fraction, is driven almost entirely by advection/
-//!   interface-sharpening noise rather than real deformation. This is a
-//!   proactive bypass -- applied unconditionally for any alpha below this
-//!   floor, before a bad g has a chance to produce a bad stress -- rather
-//!   than the reactive cleanup in cleanTraceMaterial()/solidTensorUnphysical(),
-//!   which only runs after a stage has already baked a degraded g into
-//!   stress/flux.
-//!   Set equal to volfracSolidResetLim(): a cell inside that band is, by
-//!   definition, one cleanTraceMaterial() is willing to reset on sight. Below
-//!   this floor it previously still got full elastic/plastic Newton physics
-//!   (deviatoric stress, Lp, hardening) run on it every stage, which can
-//!   re-corrupt g faster than resetSolidTensors()'s partial (25%) blend
-//!   converges it back -- a non-convergent reset/re-corrupt loop that drives
-//!   dt to the CFL floor (observed: element stuck at alpha~0.01, refiring
-//!   the reset every single stage for ~2000 steps with zero time advance).
-//!   Matching the two thresholds means any cell the reset logic considers
-//!   trace is also proactively skipped from physics that could re-corrupt
-//!   it, closing that loop at the source instead of tuning the blend factor.
-//!   Raised again to volfracSolidResetBuffer(): matching volfracSolidResetLim()
-//!   exactly closed the physics-vs-reset gap for a cell that stays below the
-//!   limit, but not for one whose alpha wobbles back and forth ACROSS the
-//!   limit (observed for several chronic elements) -- each upward wobble
-//!   flipped bulk physics back on and primed another one-shot reset, and the
-//!   resulting full-snap discontinuity (resetSolidTensors() previously took
-//!   a full_reset flag for this, now removed since this buffer is a more
-//!   direct fix) at the very next stage's face flux is what was collapsing
-//!   dt. Using the wider buffer means noise confined to [volfracSolidResetLim(),
-//!   volfracSolidResetBuffer()) never reaches bulk physics in the first
-//!   place, so it cannot source that discontinuity.
-inline tk::real solidPhysicsAlphaFloor()
+//! \brief Lower edge of the solid stress-physics trust ramp (see
+//!   solidPhysicsWeight()): at or below this volume fraction, a solid's
+//!   elastic/plastic stress contribution is weighted to zero.
+inline tk::real solidPhysicsAlphaMin()
+{ return 1.0e-04; }
+
+//! \brief Upper edge of the solid stress-physics trust ramp (see
+//!   solidPhysicsWeight()): at or above this volume fraction, a solid's
+//!   elastic/plastic stress contribution is weighted to its full value.
+//!   Tied to volfracSolidResetBuffer(): a cell inside
+//!   [volfracSolidResetLim(), volfracSolidResetBuffer()) is, by definition,
+//!   one cleanTraceMaterial() is willing to reset on sight, so it should
+//!   also be the band this ramp treats as still partially trace.
+inline tk::real solidPhysicsAlphaMax()
 { return volfracSolidResetBuffer(); }
+
+//! \brief Smooth [0,1] weight for how much a trace solid's elastic/plastic
+//!   stress physics should be trusted, as a function of its volume
+//!   fraction. Ramps from 0 at solidPhysicsAlphaMin() to 1 at
+//!   solidPhysicsAlphaMax(): below the former, g is driven almost entirely
+//!   by advection/interface-sharpening noise rather than real deformation;
+//!   above the latter, alpha is high enough that g reflects real material
+//!   deformation. Replaces a hard on/off switch at a single alpha value
+//!   (formerly solidPhysicsAlphaFloor()): THINC interface sharpening causes
+//!   many cells' alpha to hover and oscillate right at whatever single
+//!   value is chosen (observed identically at two different thresholds),
+//!   and every crossing of a hard switch injects a stress/flux
+//!   discontinuity large enough to collapse dt or fail the Newton plastic
+//!   relaxation solve. A continuous ramp has no such crossing: alpha
+//!   wobbling anywhere inside the band only wobbles the trust weight by a
+//!   similarly small, continuous amount.
+inline tk::real solidPhysicsWeight( tk::real alpha )
+{
+  tk::real t = std::clamp(
+    (alpha - solidPhysicsAlphaMin()) /
+    (solidPhysicsAlphaMax() - solidPhysicsAlphaMin()), 0.0, 1.0);
+  return t*t*(3.0 - 2.0*t);
+}
 
 //! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.
