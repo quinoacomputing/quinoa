@@ -223,29 +223,27 @@ cleanTraceMultiMat(
         (solidx[k] > 0 && alk < volfracSolidResetLim() &&
         solidTensorUnphysical(nmat, k, e, U)) ||
         // 4. if current material is solid AND its volume fraction just
-        //    crossed all the way from the trace regime (where its g-tensor
-        //    is only reactively cleaned, condition 3 above) to clearly bulk
-        //    within this single step. THINC interface sharpening can snap
-        //    alpha from ~1e-5 to O(1) in one step as a front reaches a cell;
-        //    the g this cell is carrying was last sanitized for a near-void
-        //    trace state and is not guaranteed physical merely because
-        //    degenerateDeformGrad() (a wide [1e-3,1e3] det(g) sanity band)
-        //    doesn't flag it -- e.g. a highly anisotropic g with det(g)
-        //    just inside that band but components O(1), fed wholesale into
-        //    CauchyStress/Lp once full elastic/plastic physics kicks in,
-        //    can source a stiff plasticity RHS large enough to blow up the
-        //    very next Newton solve. Force the reset unconditionally here
-        //    (not gated on solidTensorUnphysical()) since the point is
-        //    exactly to discard a stale trace-regime g before physics that
-        //    trusts it runs, not to wait for it to visibly degrade first.
-        //    Gated on clearing volfracSolidResetBuffer() (not the bare
-        //    volfracSolidResetLim()) so a cell whose alpha merely wobbles
-        //    back and forth across the limit -- rather than sweeping past it
-        //    for good -- is not mistaken for a permanent trace-to-bulk
-        //    transition: such a cell never reaches solidPhysicsAlphaFloor()
-        //    either, so it is simply left alone by this condition and still
-        //    covered by condition 3 if its tensor degrades.
-        (solidx[k] > 0 && alk_un < volfracSolidResetLim() &&
+        //    crossed solidPhysicsAlphaFloor() -- the actual boundary where
+        //    full elastic/plastic Newton physics switches on -- from below.
+        //    THINC interface sharpening can snap alpha from ~1e-5 to O(1) in
+        //    one step as a front reaches a cell, but a cell can just as well
+        //    climb gradually (e.g. ~0.021, ~0.028, ~0.035, ...) while
+        //    sitting below the floor and bypassed from physics the whole
+        //    way -- during that climb only g's advection/flux update runs,
+        //    not stress/Newton, so g can still drift away from physical
+        //    without degenerateDeformGrad() (a wide [1e-3,1e3] det(g)
+        //    sanity band) catching it, e.g. a highly anisotropic g with
+        //    det(g) just inside that band but components O(1). Gating this
+        //    condition on alk_un < volfracSolidResetBuffer() (not the
+        //    narrower volfracSolidResetLim()) catches that gradual-climb
+        //    case too: whatever path alpha took to get here, the moment it
+        //    is about to receive full physics for the first time, discard
+        //    whatever g it is carrying rather than trust it. Force the
+        //    reset unconditionally here (not gated on
+        //    solidTensorUnphysical()) since the point is exactly to discard
+        //    a stale trace-regime g before physics that trusts it runs, not
+        //    to wait for it to visibly degrade first.
+        (solidx[k] > 0 && alk_un < volfracSolidResetBuffer() &&
         alk >= volfracSolidResetBuffer())
       )
         ctm_element = true;
@@ -264,7 +262,7 @@ cleanTraceMultiMat(
           // solid cell below that fluid-oriented 1% cutoff gets its
           // (possibly perfectly fine) tensor state stomped every stage.
           bool alpha_crossing =
-            alk_un < volfracSolidResetLim() && alk >= volfracSolidResetBuffer();
+            alk_un < volfracSolidResetBuffer() && alk >= volfracSolidResetBuffer();
           if (solidTensorUnphysical(nmat, k, e, U) || alpha_crossing) {
             printf("cleanTraceMaterial: resetting %s g-tensor: "
                    "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
