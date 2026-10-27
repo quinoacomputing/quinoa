@@ -247,6 +247,26 @@ inline tk::real volfracPRelaxLim()
 inline tk::real volfracSolidResetLim()
 { return 2.0e-02; }
 
+//! \brief Upper edge of a buffer zone above volfracSolidResetLim(), used to
+//!   tell a genuine, lasting trace-to-bulk transition apart from alpha
+//!   merely wobbling back and forth across volfracSolidResetLim() itself.
+//! \details Observed in practice: some cells' alpha does not cross
+//!   volfracSolidResetLim() once and stay above it (the behavior the
+//!   trace-crossing reset below was originally designed around) -- it
+//!   oscillates repeatedly in a thin band straddling the limit (e.g.
+//!   2.00e-02, then 1e-8, then 2.02e-02, ...) for the entire run. Gating
+//!   bulk-physics eligibility and reset triggering on the bare limit meant
+//!   every upward wobble (mis-)read as a permanent transition. Widening the
+//!   band this far above the limit before either treating the cell as truly
+//!   bulk (solidPhysicsAlphaFloor()) or declaring a crossing final (the
+//!   alpha-crossing condition in cleanTraceMultiMat()) means pure noise
+//!   wobbling inside [volfracSolidResetLim(), volfracSolidResetBuffer())
+//!   never reaches full elastic/plastic physics and never triggers a
+//!   one-shot reset -- only a jump that clears the whole band in a single
+//!   step is treated as a real, lasting interface sweep.
+inline tk::real volfracSolidResetBuffer()
+{ return 2.0 * volfracSolidResetLim(); }
+
 //! \brief Per-call relaxation fraction used by resetSolidTensors() to blend
 //!   a trace solid's g/stress/eps_p toward their target (undeformed/
 //!   unstressed) state, rather than snapping to it in one step.
@@ -284,8 +304,19 @@ inline tk::real solidResetRelaxFactor()
 //!   Matching the two thresholds means any cell the reset logic considers
 //!   trace is also proactively skipped from physics that could re-corrupt
 //!   it, closing that loop at the source instead of tuning the blend factor.
+//!   Raised again to volfracSolidResetBuffer(): matching volfracSolidResetLim()
+//!   exactly closed the physics-vs-reset gap for a cell that stays below the
+//!   limit, but not for one whose alpha wobbles back and forth ACROSS the
+//!   limit (observed for several chronic elements) -- each upward wobble
+//!   flipped bulk physics back on and primed another one-shot reset, and the
+//!   resulting full-snap discontinuity (resetSolidTensors() previously took
+//!   a full_reset flag for this, now removed since this buffer is a more
+//!   direct fix) at the very next stage's face flux is what was collapsing
+//!   dt. Using the wider buffer means noise confined to [volfracSolidResetLim(),
+//!   volfracSolidResetBuffer()) never reaches bulk physics in the first
+//!   place, so it cannot source that discontinuity.
 inline tk::real solidPhysicsAlphaFloor()
-{ return volfracSolidResetLim(); }
+{ return volfracSolidResetBuffer(); }
 
 //! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.

@@ -223,12 +223,12 @@ cleanTraceMultiMat(
         (solidx[k] > 0 && alk < volfracSolidResetLim() &&
         solidTensorUnphysical(nmat, k, e, U)) ||
         // 4. if current material is solid AND its volume fraction just
-        //    crossed from the trace regime (where its g-tensor is only
-        //    reactively cleaned, condition 3 above) to bulk within this
-        //    single step. THINC interface sharpening can snap alpha from
-        //    ~1e-5 to O(1) in one step as a front reaches a cell; the g this
-        //    cell is carrying was last sanitized for a near-void trace
-        //    state and is not guaranteed physical merely because
+        //    crossed all the way from the trace regime (where its g-tensor
+        //    is only reactively cleaned, condition 3 above) to clearly bulk
+        //    within this single step. THINC interface sharpening can snap
+        //    alpha from ~1e-5 to O(1) in one step as a front reaches a cell;
+        //    the g this cell is carrying was last sanitized for a near-void
+        //    trace state and is not guaranteed physical merely because
         //    degenerateDeformGrad() (a wide [1e-3,1e3] det(g) sanity band)
         //    doesn't flag it -- e.g. a highly anisotropic g with det(g)
         //    just inside that band but components O(1), fed wholesale into
@@ -238,8 +238,15 @@ cleanTraceMultiMat(
         //    (not gated on solidTensorUnphysical()) since the point is
         //    exactly to discard a stale trace-regime g before physics that
         //    trusts it runs, not to wait for it to visibly degrade first.
+        //    Gated on clearing volfracSolidResetBuffer() (not the bare
+        //    volfracSolidResetLim()) so a cell whose alpha merely wobbles
+        //    back and forth across the limit -- rather than sweeping past it
+        //    for good -- is not mistaken for a permanent trace-to-bulk
+        //    transition: such a cell never reaches solidPhysicsAlphaFloor()
+        //    either, so it is simply left alone by this condition and still
+        //    covered by condition 3 if its tensor degrades.
         (solidx[k] > 0 && alk_un < volfracSolidResetLim() &&
-        alk >= volfracSolidResetLim())
+        alk >= volfracSolidResetBuffer())
       )
         ctm_element = true;
 
@@ -249,25 +256,21 @@ cleanTraceMultiMat(
         if (solidx[k] > 0) {
           // Reset deformation gradient and stress if the g-tensor has
           // actually degraded (condition 3), or unconditionally if this
-          // solid's alpha just crossed from trace to bulk (condition 4) --
-          // ctm_element can also be true here purely because
-          // alk < volfracPRelaxLim() (condition 1, which is not
+          // solid's alpha just crossed all the way from trace to bulk
+          // (condition 4) -- ctm_element can also be true here purely
+          // because alk < volfracPRelaxLim() (condition 1, which is not
           // solid-specific), so this check is still needed even though
           // conditions 3/4 above already screen for it -- otherwise every
           // solid cell below that fluid-oriented 1% cutoff gets its
           // (possibly perfectly fine) tensor state stomped every stage.
           bool alpha_crossing =
-            alk_un < volfracSolidResetLim() && alk >= volfracSolidResetLim();
+            alk_un < volfracSolidResetLim() && alk >= volfracSolidResetBuffer();
           if (solidTensorUnphysical(nmat, k, e, U) || alpha_crossing) {
             printf("cleanTraceMaterial: resetting %s g-tensor: "
                    "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
                    alpha_crossing ? "trace-crossing" : "unphysical",
                    t, e, k, solidx[k], alk);
-            // Full snap for the alpha-crossing case: once alpha rises past
-            // volfracSolidResetLim() it does not come back down, so this is
-            // the only cleanup chance this material gets -- see full_reset
-            // doc in resetSolidTensors().
-            resetSolidTensors(nmat, k, e, U, P, alpha_crossing);
+            resetSolidTensors(nmat, k, e, U, P);
           }
           for (std::size_t i=0; i<3; ++i)
             for (std::size_t j=0; j<3; ++j)
@@ -800,8 +803,7 @@ resetSolidTensors(
   std::size_t k,
   std::size_t e,
   tk::Fields& U,
-  tk::Fields& P,
-  bool full_reset )
+  tk::Fields& P )
 // *****************************************************************************
 //  Reset the solid tensors
 //! \param[in] nmat Number of materials in this PDE system
@@ -809,15 +811,21 @@ resetSolidTensors(
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in/out] U High-order solution vector which gets modified
 //! \param[in/out] P High-order vector of primitives which gets modified
-//! \param[in] full_reset If true, snap g/stress/eps_p straight to the clean
-//!   target (relax=1) instead of partially blending. The partial blend
-//!   relies on this material re-triggering solidTensorUnphysical() on a
-//!   later stage to finish converging to the target; the trace-crossing
-//!   case (alpha rising monotonically past volfracSolidResetLim(), as when
-//!   an interface permanently sweeps past this cell) only ever fires this
-//!   reset once, so a partial blend would leave it carrying a stale,
-//!   partially-corrupted g into full elastic/plastic physics with no
-//!   further chance of cleanup.
+//! \details Always blends toward the clean target by solidResetRelaxFactor()
+//!   rather than snapping to it in one step: a hard snap makes the face flux
+//!   at the very next stage jump by the full error, large enough to blow up
+//!   a neighboring element's Newton solve or collapse dt (observed for a
+//!   full snap applied to an alpha-crossing cell whose alpha then wobbled
+//!   back across volfracSolidResetLim() and re-triggered the reset
+//!   repeatedly -- each repeat re-injected the same full-size discontinuity).
+//!   Relying solely on a damped blend is safe here because cleanTraceMultiMat()
+//!   now requires alpha to clear the full [volfracSolidResetLim(),
+//!   volfracSolidResetBuffer()) band in one step before calling this as a
+//!   "crossing" -- i.e. this is only invoked for a cell that will continue
+//!   to either re-trigger solidTensorUnphysical() (condition 3) or stay
+//!   below solidPhysicsAlphaFloor() (bypassed from physics that could
+//!   re-corrupt it) on subsequent stages, so the blend is always given a
+//!   further chance to converge.
 // *****************************************************************************
 {
   const auto& solidx = g_inputdeck.get< tag::matidxmap, tag::solidx >();
@@ -856,18 +864,12 @@ resetSolidTensors(
   // zero eps_p) instead of snapping to it in one step. A hard snap makes the
   // face flux at the very next stage jump by the FULL error (which can be
   // O(1e3) for a badly-diverged g), large enough to blow up a neighboring
-  // element's Newton solve. Damping bounds that per-stage jump; since this
-  // element keeps re-triggering solidTensorUnphysical() on subsequent
+  // element's Newton solve or collapse dt. Damping bounds that per-stage
+  // jump; since this element keeps re-triggering either solidTensorUnphysical()
+  // (condition 3) or the alpha-crossing check (condition 4) on subsequent
   // stages until it actually converges, the state still relaxes fully to
   // the target over a few stages.
-  // The trace-crossing caller (alpha rising monotonically past
-  // volfracSolidResetLim(), never dropping back below it) only gets this one
-  // call -- solidTensorUnphysical() has no further chance to retrigger once
-  // alpha is bulk -- so it requests a full snap (relax=1) instead, trading
-  // the bounded-discontinuity argument above for guaranteeing this material
-  // doesn't carry a partially-corrupted g into full elastic/plastic physics
-  // with no way to finish converging.
-  const auto relax = full_reset ? 1.0 : solidResetRelaxFactor();
+  const auto relax = solidResetRelaxFactor();
 
   // Blend g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not
   // pressure). If g itself is non-finite, blending with it (g + relax *
