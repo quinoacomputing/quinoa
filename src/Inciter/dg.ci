@@ -66,9 +66,10 @@ module dg {
       entry void comnorm( const std::unordered_map< int,
         std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
       entry void refine( const std::vector< tk::real >& l2ref );
-      entry [reductiontarget] void initializeLinearSystem( tk::real newdt );
+      entry void initializeLinearSystem();
       entry void solveLinearSystem();
-      entry [reductiontarget] void solve( tk::real newdt );
+      entry [reductiontarget] void aleMove( tk::real newdt );
+      entry void solve();
       entry void resized();
       entry void transferSol();
       entry void advance( tk::real newdt, std::array< tk::real, 6 > F );
@@ -103,7 +104,7 @@ module dg {
         { lim(); } }
 
       entry void wait4lim() {
-        when ownlim_complete(), comlim_complete() serial "lim" { ALEComm(); } }
+        when ownlim_complete(), comlim_complete() serial "lim" { dt(); } }
 
       entry void wait4nod() {
         when ownnod_complete( CkCallback c,
@@ -112,7 +113,8 @@ module dg {
         serial "nod" { writeFields( c, addedTets ); } }
 
       entry void wait4ale() {
-        when ownale_complete(), comale_complete() serial "ale" { dt(); } }
+        when ownale_complete(), comale_complete() serial "ale"
+        { aleDone(); } }
 
       entry void ownsol_complete();
       entry void comsol_complete();

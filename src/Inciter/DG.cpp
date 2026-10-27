@@ -1476,32 +1476,55 @@ DG::dt()
     mindt = d->Dt();
   }
 
-  // Set up the reduction target for finding minimum dt across chares.
-  // 1. If implicit solver is used, first invoke the solver object via
-  // appropriate entry methods, and then proceed to solve.
-  // 2. If explicit, directly proceed to solve.
-  CkCallback minDtDone;
-  if (!g_inputdeck.get< tag::implicit_timestepping >())
-    minDtDone = CkCallback(CkReductionTarget(DG,solve), thisProxy);
-  else
-    minDtDone = CkCallback(CkReductionTarget(DG,initializeLinearSystem),
-      thisProxy);
+  // Set up the reduction target for finding minimum dt across chares and
+  // proceeding with ALE mesh motion logic. ALE mesh updates must run after the
+  // new time step size is known for GCL considerations.
+  CkCallback minDtDone = CkCallback(CkReductionTarget(DG,aleMove), thisProxy);
 
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double, minDtDone );
 }
 
 void
-DG::initializeLinearSystem( tk::real newdt )
+DG::aleMove( tk::real newdt )
 // *****************************************************************************
-// Initialize the linear solver via the interface BiCG::init()
+// Set the new time step size and perform the ALE mesh update
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Set new time step size
+  // Set new time step size before moving the mesh, so that the mesh motion and
+  // the flux integrals across the moved faces use the same dt.
   if (m_stage == 0) d->setdt( newdt );
+
+  // Move the mesh and communicate the updated ghost mesh data, routing via
+  // wait4ale() once complete.
+  ALEComm();
+}
+
+void
+DG::aleDone()
+// *****************************************************************************
+// Continue to the stage solve once the ALE mesh update is complete
+// *****************************************************************************
+{
+  // 1. If implicit solver is used, first invoke the solver object via
+  // appropriate methods, and then proceed to solve.
+  // 2. If explicit, directly proceed to solve.
+  if (!g_inputdeck.get< tag::implicit_timestepping >())
+    solve();
+  else
+    initializeLinearSystem();
+}
+
+void
+DG::initializeLinearSystem()
+// *****************************************************************************
+// Initialize the linear solver via the interface BiCG::init()
+// *****************************************************************************
+{
+  auto d = Disc();
 
   // Initialize linear solver, and route to solveLinearSystem()
   // TODO: linear solver:
@@ -1519,23 +1542,19 @@ DG::solveLinearSystem()
 {
   auto d = Disc();
 
-  // Get new time step size to pass along to solve()
-  auto dt = d->Dt();
-
   // Solve linear system, and route to solve()
   // TODO: linear solver:
   //  the following call is just a stand-in/example- verify correctness
   d->ImplicitSolver()[ thisIndex ].solve(
      g_inputdeck.get< tag::ale, tag::maxit >(),
      g_inputdeck.get< tag::residual >(),
-     CkCallback(CkIndex_DG::solve(dt), thisProxy[thisIndex]) );
+     CkCallback(CkIndex_DG::solve(), thisProxy[thisIndex]) );
 }
 
 void
-DG::solve( tk::real newdt )
+DG::solve()
 // *****************************************************************************
 // Compute right-hand side of discrete transport equations
-//! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
@@ -1553,11 +1572,6 @@ DG::solve( tk::real newdt )
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
-
-  // Set new time step size. If implicit solver, time step has already been
-  // set in initializeImplicitSystem()
-  if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
-    d->setdt( newdt );
 
   // Snapshot the solution at the start of the time step. Both the IMEX
   // stage-0 bootstrap and the explicit RK3 GCL update advance from m_un.

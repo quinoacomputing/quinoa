@@ -209,14 +209,17 @@ class DG : public CBase_DG {
     //! (no-op)
     void advance( tk::real, std::array< tk::real, 6 > ) {}
 
+    //! Set the new time step size and perform the ALE mesh update
+    void aleMove( tk::real newdt );
+
     //! Initialize the linear solver via the interface BiCG::init()
-    void initializeLinearSystem( tk::real newdt );
+    void initializeLinearSystem();
 
     //! Solve the linear system via the interface BiCG::solve()
     void solveLinearSystem();
 
     //! Compute right hand side and solve system
-    void solve( tk::real newdt );
+    void solve();
 
     //! Evaluate whether to continue with next time step
     void step();
@@ -473,6 +476,9 @@ class DG : public CBase_DG {
 
     //! Perform ALE mesh update and communicate updated ghost mesh data
     void ALEComm();
+
+    //! Continue to the stage solve once the ALE mesh update is complete
+    void aleDone();
 
     //! Compute boundary point normals for mesh velocity symmetry BCs
     void bnorm();
