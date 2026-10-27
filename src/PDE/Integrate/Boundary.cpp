@@ -288,7 +288,8 @@ viscousBoundaryFaceIntDG(
         std::size_t el = static_cast< std::size_t >(esuf[2*f]);
         auto ndof_l = viscousRhs.localDof( el );
 
-        Assert( ndof_l <= 4, "Boundary Hessian computation is not implemented for DG(P2)");
+        Assert( ndof_l == 4 || ndof_l == 10,
+                "DDG boundary operators require DGP1 or DGP2");
         auto ng = tk::NGfa(ndof_l);
 
         // arrays for quadrature points
@@ -385,7 +386,10 @@ viscousBoundaryFaceIntDG(
               d2Bdx2[0][i].assign( ndof_l, 0.0); // second derivative of p0 and p1 basis function is zero
           }
           if (ndof_l == 10) {
-            eval_d2Bdx2_p2( ndof_l, jacInv_l, d2Bdx2[0] ); // no-op for now
+            const std::array<std::vector<tk::real>, 3> refCoords_l{{
+              {ref_gp_l[0]}, {ref_gp_l[1]}, {ref_gp_l[2]}}};
+            eval_dBdx_p2( 0, refCoords_l, jacInv_l, dBdx_l );
+            eval_d2Bdx2_p2( ndof_l, jacInv_l, d2Bdx2[0] );
           }
 
           auto d2Bdx2_l = d2Bdx2[0];
@@ -396,7 +400,11 @@ viscousBoundaryFaceIntDG(
               component.fill(0.0);
 
           // Compute gradients
-          viscousRhs.gradientIntElem( U, P, el, dBdx_l, d2Bdx2_l, grad[0], vgrad[0], hess[0]); // no-op for now
+          viscousRhs.gradientIntElem(
+            U, P, el, dBdx_l, d2Bdx2_l, grad[0], vgrad[0], hess[0]);
+
+          // Extrapolate conserved Hessians to the ghost side, as in ddg_p2.
+          hess[1] = hess[0];
           
           // Apply BCs on gradients
           // For DDG, "grad" contains gradients of conserved quantities, "vgrad" contains gradients of 
@@ -1271,14 +1279,14 @@ bndSurfIntViscousMultiSpecies(
       coord, fd, geoFace, geoElem, U, P, t, state, gradFn, R );
   }
 
-  else if (ndof == 4) {
+  else if (ndof == 4 || ndof == 10) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     viscousBoundaryFaceIntDG( viscousRhs, mat_blk, nspec, ndof, rdof, bcconfig, 
       inpoel, coord, fd, geoFace, geoElem, U, P, t, state, BgradFn, R );
   }
 
   else
-    Throw( "Viscous operators only implemented for scheme = 'p0p1'." );
+    Throw( "Viscous operators require p0p1, dgp1, or dgp2." );
 }
 
 } // tk::

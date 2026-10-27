@@ -104,6 +104,8 @@ tk::volIntViscous(
     for (std::size_t i=0; i<3; ++i) dBdx[i].resize( dof_el, 0.0 );
     for (std::size_t j=0; j<6; ++j) d2Bdx2[j].resize( dof_el, 0.0);
     eval_dBdx_p1( dof_el, jacInv, dBdx );
+    if (dof_el == 10)
+      eval_d2Bdx2_p2( dof_el, jacInv, d2Bdx2 );
 
     std::vector< tk::real > B(dof_el);
 
@@ -564,7 +566,7 @@ tk::volIntViscousMultiSpecies(
 //! \param[in,out] R Right-hand side vector computed
 // *****************************************************************************
 {
-  if (ndof == 4) {
+  if (ndof == 4 || ndof == 10) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     volIntViscous( viscousRhs, mat_blk, nspec, ndof, rdof, nelem,
       inpoel, coord, geoElem, U, P, ndofel, R );

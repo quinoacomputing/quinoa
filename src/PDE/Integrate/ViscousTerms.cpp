@@ -893,8 +893,18 @@ for (std::size_t m = 0; m < ncomp; ++m) {
   {{ 3, 1, 5 }},  // y row: xy, yy, yz
   {{ 4, 5, 2 }}   // z row: xz, yz, zz
   }};
-  auto beta0 = 4.0; // beta0 = (k+1)^2 for all k = polynomial degree. So k = 1 => beta0 = 4 for DGP1
-  auto beta1 = 0.25; // beta1 = 1/(2k*(k+1)) for all k = polynomial degree. So k = 1 => beta1 = 0.25
+  // Match the degree-dependent DDG coefficients on ddg_p2.
+  tk::real beta0 = 0.0;
+  tk::real beta1 = 0.0;
+  if (m_rdof == 4) {
+    beta0 = 4.0;
+    beta1 = 0.25;
+  } else if (m_rdof == 10) {
+    beta0 = 9.0;
+    beta1 = 1.0 / 12.0;
+  } else {
+    Throw("Only DGP1 and DGP2 viscous fluxes implemented");
+  }
 
   for (std::size_t m = 0; m<ncomp; ++m) {
     for (std::size_t i = 0; i < 3; ++i) {
