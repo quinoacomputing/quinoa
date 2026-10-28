@@ -251,6 +251,8 @@ class DG : public CBase_DG {
       p | m_p;
       p | m_geoElemk;
       p | m_geoElemn;
+      p | m_geoElemc;
+      p | m_coordc;
       p | m_mtInv;
       p | m_rhs;
       p | m_stiffrhs;
@@ -340,6 +342,12 @@ class DG : public CBase_DG {
     tk::Fields m_geoElemk;
     //! Element geometry array at the previous time step
     tk::Fields m_geoElemn;
+    //! \brief Receive buffer for communicated ALE ghost-element geometry,
+    //!   keyed by local ghost-element id
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_geoElemc;
+    //! \brief Receive buffer for communicated ALE ghost-node coordinates,
+    //!   keyed by local ghost-node id
+    std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_coordc;
     //! Vector of right-hand side
     tk::Fields m_rhs;
     //! Vector of stiff right-hand side

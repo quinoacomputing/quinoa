@@ -1316,7 +1316,6 @@ DG::ALEComm()
       myGhosts()->m_geoElem(e,i) = ge_temp(e,i);
 
   if (myGhosts()->m_sendGhost.empty()) {
-    updateChareBoundaryGeoFace();
     comale_complete();
   } else {
     for (const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
@@ -1377,8 +1376,10 @@ DG::comale( int fromch,
     Assert( geoElem[i].size() == myGhosts()->m_geoElem.nprop(),
       "Geometry size mismatch in DG::comale()" );
 
-    for (std::size_t c=0; c<geoElem[i].size(); ++c)
-      myGhosts()->m_geoElem(j,c) = geoElem[i][c];
+    // Buffer the incoming data instead of writing it into the live mesh
+    // state, since a neighbor-chare may send its stage-wise ALE update before
+    // this chare has run its own ALEComm().
+    m_geoElemc[j] = geoElem[i];
 
     if (recvnode != end(myGhosts()->m_recvChBndNode)) {
       const auto n = recvnode->second.find( tetid[i] );
@@ -1386,16 +1387,17 @@ DG::comale( int fromch,
         auto p = n->second;
         Assert( p < myGhosts()->m_coord[0].size(),
           "Indexing out of extended ALE ghost coordinates" );
-        myGhosts()->m_coord[0][p] = coord[i][0];
-        myGhosts()->m_coord[1][p] = coord[i][1];
-        myGhosts()->m_coord[2][p] = coord[i][2];
+        m_coordc[p] = coord[i];
       }
     }
   }
 
+
+  // if we have received all geometry ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed.
   if (++m_nale == myGhosts()->m_sendGhost.size()) {
     m_nale = 0;
-    updateChareBoundaryGeoFace();
     comale_complete();
   }
 }
@@ -1509,6 +1511,24 @@ DG::aleDone()
 // Continue to the stage solve once the ALE mesh update is complete
 // *****************************************************************************
 {
+  // Apply the buffered ALE ghost mesh data received from neighboring chares
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    for (const auto& [j, geoElem] : m_geoElemc)
+      for (std::size_t c=0; c<geoElem.size(); ++c)
+        myGhosts()->m_geoElem(j,c) = geoElem[c];
+    m_geoElemc.clear();
+
+    for (const auto& [p, x] : m_coordc) {
+      myGhosts()->m_coord[0][p] = x[0];
+      myGhosts()->m_coord[1][p] = x[1];
+      myGhosts()->m_coord[2][p] = x[2];
+    }
+    m_coordc.clear();
+
+    // Recompute chare-boundary face geometry from the updated ghost data
+    updateChareBoundaryGeoFace();
+  }
+
   // 1. If implicit solver is used, first invoke the solver object via
   // appropriate methods, and then proceed to solve.
   // 2. If explicit, directly proceed to solve.
