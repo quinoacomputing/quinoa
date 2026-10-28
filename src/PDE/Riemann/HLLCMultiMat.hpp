@@ -183,6 +183,12 @@ struct HLLCMultiMat {
     auto Sm = ( rhor*vnr[0]*(Sr-vnr[0]) - rhol*vnl[0]*(Sl-vnl[0])
                 - signnl[0][0] + signnr[0][0] )
               /( rhor*(Sr-vnr[0]) - rhol*(Sl-vnl[0]) );
+    // HLLC theory requires Sl <= Sm <= Sr (Sm is the contact speed inside
+    // the fan bracketed by the outer signal speeds). Clamping Sm
+    // back into its theoretically-guaranteed range costs nothing in a
+    // healthy cell (clamp is a no-op there) and removes a blowup at its
+    // source.
+    Sm = std::clamp(Sm, Sl, Sr);
 
     // Middle-zone (star) variables
     // -------------------------------------------------------------------------
