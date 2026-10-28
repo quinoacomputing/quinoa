@@ -83,7 +83,6 @@ MeshConvDriver::execute() const
                   " files from base filename: '" + input_basename +'\'' );
 
     const auto eps = std::numeric_limits< tk::real >::epsilon();
-    //const auto eps = 1e-3;
 
     // Lambda to echo some diagnostics on the mesh being processes to screen
     auto diag = [&]( const std::string& name, const tk::UnsMesh& mesh ){
@@ -120,11 +119,10 @@ MeshConvDriver::execute() const
       times.push_back( {} );
       auto mesh = tk::readUnsMesh( m_print, name, times.back() );
       const auto& triinpoel = mesh.triinpoel();
-      // Skip meshes with a single triange cell
-      //if (triinpoel.size() == 3) continue;
       const auto& x = mesh.x();
       const auto& y = mesh.y();
       const auto& z = mesh.z();
+      // Skip meshes with a single triangle cell if that cell is degenerate
       if (triinpoel.size()==3 && //check if triangle is real or not
            std::abs(x[0]) < eps && std::abs(x[1]) < eps && std::abs(x[2]) < eps &&
            std::abs(y[0]) < eps && std::abs(y[1]) < eps && std::abs(y[2]) < eps &&
