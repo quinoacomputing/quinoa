@@ -314,6 +314,7 @@ using ConfigMembers = brigand::list<
   tag::cfl_ramping_steps,uint32_t,
   tag::ttyi,             uint32_t,
   tag::imex_runge_kutta, uint32_t,
+  tag::imex_scheme,      std::string,
   tag::imex_maxiter,     uint32_t,
   tag::imex_reltol,      tk::real,
   tag::imex_abstol,      tk::real,
@@ -577,6 +578,15 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         Bewley, T. (2015). Low-storage implicit/explicit Runge–Kutta schemes for
         the simulation of stiff high-dimensional ODE systems. Journal of
         Computational Physics, 286, 172-193.)", "uint 0/1"});
+
+      keywords.insert({"imex_scheme",
+        "Determine the IMplicit-EXplicit Runge-Kutta scheme used",
+        R"(This keywords is used to select the IMEX integration scheme used. Options
+        currently supported are 'IMEXRKCB3a' and 'IMEXRKCB3d'. Default is
+        'IMEXRKCB3d'. Schemes taken from Cavaglieri, D., &
+        Bewley, T. (2015). Low-storage implicit/explicit Runge–Kutta schemes for
+        the simulation of stiff high-dimensional ODE systems. Journal of
+        Computational Physics, 286, 172-193.)", "string"});
 
       keywords.insert({"imex_maxiter",
         "Set maximum number of iterations for non-linear solver with IMEX-RK scheme",

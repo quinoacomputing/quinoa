@@ -151,12 +151,14 @@ LuaParser::storeInputDeck(
     lua_ideck, "rescomp", gideck.get< tag::rescomp >(), 1);
   storeIfSpecd< uint32_t >(
     lua_ideck, "imex_runge_kutta", gideck.get< tag::imex_runge_kutta >(), 0);
+  storeIfSpecd< std::string >(
+    lua_ideck, "imex_scheme", gideck.get< tag::imex_scheme >(), "IMEXRKCB3d");
   storeIfSpecd< uint32_t >(
-    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 50);
+    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 250);
   storeIfSpecd< tk::real >(
     lua_ideck, "imex_reltol", gideck.get< tag::imex_reltol >(), 1.0e-02);
   storeIfSpecd< tk::real >(
-    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-04);
+    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-08);
   storeIfSpecd< uint32_t >(
     lua_ideck, "operator_split_plasticity",
     gideck.get< tag::operator_split_plasticity >(), 0);
