@@ -142,6 +142,39 @@ DG::use_imexrkcb3d() const
   return m_imexrk_scheme == IMEXRKScheme::CB3d;
 }
 
+tk::real
+DG::imexStageTimeFrac() const
+// *****************************************************************************
+//  Fraction of dt at which the current IMEX stage state lives
+//! \return Fraction alpha of dt such that the state produced by the current
+//!   IMEX Runge-Kutta stage corresponds to time t^n + alpha*dt
+//! \details The stage output times are the Runge-Kutta abscissae of the
+//!   following stage, since stage s consumes the state at c_s and produces the
+//!   state at c_{s+1}, with the last stage producing the new solution at
+//!   t^n + dt. Only valid for the IMEX schemes; the explicit SSP-RK3 scheme
+//!   blends stage positions with the Shu-Osher coefficients instead, see
+//!   ALEComm().
+// *****************************************************************************
+{
+  Assert( g_inputdeck.get< tag::imex_runge_kutta >(),
+          "IMEX stage abscissa queried for a non-IMEX scheme" );
+
+  // Default: the final stage produces the solution at t^n + dt
+  tk::real alpha = 1.0;
+
+  if (use_imexrkcb3d()) {
+    if (m_stage == 0) alpha = c2_imex3d;
+    else if (m_stage == 1) alpha = c3_imex3d;
+    else if (m_stage == 2) alpha = c4_imex3d;
+  }
+  else {
+    if (m_stage == 0) alpha = c2_imex3a;
+    else if (m_stage == 1) alpha = c3_imex3a;
+  }
+
+  return alpha;
+}
+
 DG::DG( const CProxy_Discretization& disc,
         const CProxy_Ghosts& ghostsproxy,
         const std::map< int, std::vector< std::size_t > >& bface,
@@ -1280,10 +1313,22 @@ DG::ALEComm()
   auto& coord = myGhosts()->m_coord;
   auto& disc_coord = d->Coord();
   const auto dc_size = disc_coord[0].size();
+  // The explicit SSP-RK3 update blends the mesh position with the same
+  // Shu-Osher coefficients as the solution update (see solve()), which keeps
+  // the stage volumes consistent with the stage states for GCL. The IMEX
+  // Runge-Kutta stages instead accumulate from the t^n state rather than from
+  // the previous stage, so there the mesh is positioned absolutely, at the
+  // abscissa of the state the current stage produces.
+  const auto imex_runge_kutta = g_inputdeck.get< tag::imex_runge_kutta >();
+  const auto adt = imex_runge_kutta ? imexStageTimeFrac() * d->Dt() : 0.0;
   for (auto j : g_inputdeck.get< tag::ale, tag::mesh_motion_directions >()) {
     for (std::size_t i=0; i<dc_size; ++i) {
-      auto x = rkcoef[0][m_stage] * d->Coordn()[j][i]
-        + rkcoef[1][m_stage] * ( disc_coord[j][i] + d->Dt() * meshvel(i,j) );
+      tk::real x;
+      if (imex_runge_kutta)
+        x = d->Coordn()[j][i] + adt * meshvel(i,j);
+      else
+        x = rkcoef[0][m_stage] * d->Coordn()[j][i]
+          + rkcoef[1][m_stage] * ( disc_coord[j][i] + d->Dt() * meshvel(i,j) );
       disc_coord[j][i] = x;
       coord[j][i] = x;
     }
@@ -2314,8 +2359,13 @@ DG::meshvelstart()
       m_nodevel );
   }
 
-  // Start computing the mesh velocity for ALE
-  const auto adt = rkcoef[1][m_stage] * d->Dt();
+  // Start computing the mesh velocity for ALE. This alpha*dt is the increment
+  // over which ALE advances a prescribed mesh position, so it must match the
+  // increment ALEComm() applies: the Shu-Osher stage weight for the explicit
+  // scheme, and the fraction of dt for IMEX.
+  const auto adt = g_inputdeck.get< tag::imex_runge_kutta >()
+                 ? imexStageTimeFrac() * d->Dt()
+                 : rkcoef[1][m_stage] * d->Dt();
   d->meshvelStart( m_nodevel, {}, m_bnorm, adt,
     CkCallback(CkIndex_DG::meshveldone(), thisProxy[thisIndex]) );
 }
