@@ -527,9 +527,6 @@ class DG : public CBase_DG {
     //! Return true if selected IMEX scheme is IMEXRKCB3d
     bool use_imexrkcb3d() const;
 
-    //! Fraction of dt at which the current IMEX stage state lives
-    tk::real imexStageTimeFrac() const;
-
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
 

@@ -876,6 +876,11 @@ LuaParser::storeInputDeck(
     auto& ale_deck = gideck.get< tag::ale >();
     ale_deck.get< tag::ale >() = true;
 
+    if (gideck.get< tag::imex_runge_kutta >() == 1)
+      Throw("IMEX schemes not configured with ALE. GCL consistency will "
+        "require low-storage register-based implementation of the mesh "
+        "updates.");
+
     // Mesh velocity smoother
     storeOptIfSpecd< inciter::ctr::MeshVelocitySmootherType,
       inciter::ctr::MeshVelocitySmoother >(lua_ideck["ale"], "smoother",
