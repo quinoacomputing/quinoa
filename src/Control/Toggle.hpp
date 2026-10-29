@@ -35,10 +35,12 @@ class Toggle {
     //! Lookup Enum value based on keyword, Enum must exist
     //! \param[in] keyword Keyword to search for
     //! \return Strongly-typed enum value associated to keyword if found
+    //! \details An unknown keyword is a user input error, so this is checked
+    //!   with ErrChk, i.e. also in builds that define NDEBUG.
     Enum value( const std::string& keyword ) const {
       auto it = values.find( keyword );
-      Assert( it != end(values),
-              std::string("Cannot find value for keyword \"") + keyword + "\"" );
+      ErrChk( it != end(values),
+              "Unknown " + groupname + " keyword \"" + keyword + "\"" );
       return it->second;
     }
 
