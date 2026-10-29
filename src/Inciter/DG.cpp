@@ -680,18 +680,10 @@ void DG::p_refine()
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
-  // Combine own and communicated contributions of unreconstructed solution and
-  // degrees of freedom in cells (if p-adaptive)
-  for (const auto& b : myGhosts()->m_bid) {
-    Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c) = m_uc[0][b.second][c];
-    }
-    for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c) = m_pc[0][b.second][c];
-    }
-    if (pref && m_stage == 0) {
+  // Combine own and communicated contributions of the degrees of freedom in
+  // cells (if p-adaptive)
+  if (pref && m_stage == 0) {
+    for (const auto& b : myGhosts()->m_bid) {
       m_ndof[ b.first ] = m_ndofc[0][ b.second ];
       m_interface[ b.first ] = m_interfacec[0][ b.second ];
     }
@@ -2260,13 +2252,24 @@ DG::step()
   }
 }
 
-
 void
 DG::computeBNorm()
 // *****************************************************************************
 // Start computing the boundary normals for ALE
 // *****************************************************************************
 {
+  // Apply the communicated solution ghost data before mesh velocity computation
+  for (const auto& b : myGhosts()->m_bid) {
+    Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_u(b.first,c) = m_uc[0][b.second][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(b.first,c) = m_pc[0][b.second][c];
+    }
+  }
+
   if (g_inputdeck.get< tag::ale, tag::ale >() &&
       !g_inputdeck.get< tag::ale, tag::symmetry >().empty())
   {
