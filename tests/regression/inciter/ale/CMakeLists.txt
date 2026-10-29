@@ -56,6 +56,23 @@ add_regression_test(compflow_euler_alecg_ale_lagrange ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)
 
+add_regression_test(multimat_sod_shocktube_dgp1_ale ${INCITER_EXECUTABLE}
+                    NUMPES 1
+                    INPUTFILES sod_shocktube_dgp1_ale.lua
+                               rectangle_2blk_01_int50_struc2k.exo
+                    ARGS -c sod_shocktube_dgp1_ale.lua
+                          -i rectangle_2blk_01_int50_struc2k.exo -v
+                    BIN_BASELINE sod_shocktube_dgp1_ale.0.std.exo
+                                 sod_shocktube_dgp1_ale.50.std.exo
+                                 sod_shocktube_dgp1_ale.100.std.exo
+                    BIN_RESULT out.e-s.0.1.0 out.e-s.50.1.0 out.e-s.100.1.0
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_sod_dgp1_ale.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF ale_dg_diag.ndiff.cfg
+                    LABELS dg ale multimat)
+
 # Parallel
 
 add_regression_test(compflow_euler_alecg_ale_gcl ${INCITER_EXECUTABLE}
@@ -257,3 +274,40 @@ add_regression_test(compflow_euler_alecg_ale_move_pos ${INCITER_EXECUTABLE}
                     TEXT_RESULT diag
                     TEXT_DIFF_PROG_CONF ale_diag.ndiff.cfg
                     LABELS alecg ale)
+
+add_regression_test(multimat_sod_shocktube_dgp1_ale ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES sod_shocktube_dgp1_ale.lua
+                               rectangle_2blk_01_int50_struc2k.exo
+                    ARGS -c sod_shocktube_dgp1_ale.lua
+                          -i rectangle_2blk_01_int50_struc2k.exo -v
+                    BIN_BASELINE sod_shocktube_dgp1_ale_pe4.0.std.exo.0
+                                 sod_shocktube_dgp1_ale_pe4.0.std.exo.1
+                                 sod_shocktube_dgp1_ale_pe4.0.std.exo.2
+                                 sod_shocktube_dgp1_ale_pe4.0.std.exo.3
+                                 sod_shocktube_dgp1_ale_pe4.50.std.exo.0
+                                 sod_shocktube_dgp1_ale_pe4.50.std.exo.1
+                                 sod_shocktube_dgp1_ale_pe4.50.std.exo.2
+                                 sod_shocktube_dgp1_ale_pe4.50.std.exo.3
+                                 sod_shocktube_dgp1_ale_pe4.100.std.exo.0
+                                 sod_shocktube_dgp1_ale_pe4.100.std.exo.1
+                                 sod_shocktube_dgp1_ale_pe4.100.std.exo.2
+                                 sod_shocktube_dgp1_ale_pe4.100.std.exo.3
+                    BIN_RESULT out.e-s.0.4.0
+                               out.e-s.0.4.1
+                               out.e-s.0.4.2
+                               out.e-s.0.4.3
+                               out.e-s.50.4.0
+                               out.e-s.50.4.1
+                               out.e-s.50.4.2
+                               out.e-s.50.4.3
+                               out.e-s.100.4.0
+                               out.e-s.100.4.1
+                               out.e-s.100.4.2
+                               out.e-s.100.4.3
+                    BIN_DIFF_PROG_CONF exodiff_dg.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    TEXT_BASELINE diag_sod_dgp1_ale.std
+                    TEXT_RESULT diag
+                    TEXT_DIFF_PROG_CONF ale_dg_diag.ndiff.cfg
+                    LABELS dg ale multimat)

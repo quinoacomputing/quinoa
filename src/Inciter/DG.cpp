@@ -678,18 +678,10 @@ void DG::p_refine()
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
 
-  // Combine own and communicated contributions of unreconstructed solution and
-  // degrees of freedom in cells (if p-adaptive)
-  for (const auto& b : myGhosts()->m_bid) {
-    Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
-    Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
-    for (std::size_t c=0; c<m_u.nprop(); ++c) {
-      m_u(b.first,c) = m_uc[0][b.second][c];
-    }
-    for (std::size_t c=0; c<m_p.nprop(); ++c) {
-      m_p(b.first,c) = m_pc[0][b.second][c];
-    }
-    if (pref && m_stage == 0) {
+  // Combine own and communicated contributions of the degrees of freedom in
+  // cells (if p-adaptive)
+  if (pref && m_stage == 0) {
+    for (const auto& b : myGhosts()->m_bid) {
       m_ndof[ b.first ] = m_ndofc[0][ b.second ];
       m_interface[ b.first ] = m_interfacec[0][ b.second ];
     }
@@ -1314,7 +1306,6 @@ DG::ALEComm()
       myGhosts()->m_geoElem(e,i) = ge_temp(e,i);
 
   if (myGhosts()->m_sendGhost.empty()) {
-    updateChareBoundaryGeoFace();
     comale_complete();
   } else {
     for (const auto& [cid, ghostdata] : myGhosts()->m_sendGhost) {
@@ -1375,8 +1366,10 @@ DG::comale( int fromch,
     Assert( geoElem[i].size() == myGhosts()->m_geoElem.nprop(),
       "Geometry size mismatch in DG::comale()" );
 
-    for (std::size_t c=0; c<geoElem[i].size(); ++c)
-      myGhosts()->m_geoElem(j,c) = geoElem[i][c];
+    // Buffer the incoming data instead of writing it into the live mesh
+    // state, since a neighbor-chare may send its stage-wise ALE update before
+    // this chare has run its own ALEComm().
+    m_geoElemc[j] = geoElem[i];
 
     if (recvnode != end(myGhosts()->m_recvChBndNode)) {
       const auto n = recvnode->second.find( tetid[i] );
@@ -1384,16 +1377,17 @@ DG::comale( int fromch,
         auto p = n->second;
         Assert( p < myGhosts()->m_coord[0].size(),
           "Indexing out of extended ALE ghost coordinates" );
-        myGhosts()->m_coord[0][p] = coord[i][0];
-        myGhosts()->m_coord[1][p] = coord[i][1];
-        myGhosts()->m_coord[2][p] = coord[i][2];
+        m_coordc[p] = coord[i];
       }
     }
   }
 
+
+  // if we have received all geometry ghost contributions from neighboring
+  // chares (chares we communicate along chare-boundary faces with), and
+  // contributed our solution to these neighbors, proceed.
   if (++m_nale == myGhosts()->m_sendGhost.size()) {
     m_nale = 0;
-    updateChareBoundaryGeoFace();
     comale_complete();
   }
 }
@@ -1474,32 +1468,73 @@ DG::dt()
     mindt = d->Dt();
   }
 
-  // Set up the reduction target for finding minimum dt across chares.
-  // 1. If implicit solver is used, first invoke the solver object via
-  // appropriate entry methods, and then proceed to solve.
-  // 2. If explicit, directly proceed to solve.
-  CkCallback minDtDone;
-  if (!g_inputdeck.get< tag::implicit_timestepping >())
-    minDtDone = CkCallback(CkReductionTarget(DG,solve), thisProxy);
-  else
-    minDtDone = CkCallback(CkReductionTarget(DG,initializeLinearSystem),
-      thisProxy);
+  // Set up the reduction target for finding minimum dt across chares and
+  // proceeding with ALE mesh motion logic. ALE mesh updates must run after the
+  // new time step size is known for GCL considerations.
+  CkCallback minDtDone = CkCallback(CkReductionTarget(DG,aleMove), thisProxy);
 
   // Contribute to minimum dt across all chares then advance to next step
   contribute( sizeof(tk::real), &mindt, CkReduction::min_double, minDtDone );
 }
 
 void
-DG::initializeLinearSystem( tk::real newdt )
+DG::aleMove( tk::real newdt )
 // *****************************************************************************
-// Initialize the linear solver via the interface BiCG::init()
+// Set the new time step size and perform the ALE mesh update
 //! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
   auto d = Disc();
 
-  // Set new time step size
+  // Set new time step size before moving the mesh, so that the mesh motion and
+  // the flux integrals across the moved faces use the same dt.
   if (m_stage == 0) d->setdt( newdt );
+
+  // Move the mesh and communicate the updated ghost mesh data, routing via
+  // wait4ale() once complete.
+  ALEComm();
+}
+
+void
+DG::aleDone()
+// *****************************************************************************
+// Continue to the stage solve once the ALE mesh update is complete
+// *****************************************************************************
+{
+  // Apply the buffered ALE ghost mesh data received from neighboring chares
+  if (g_inputdeck.get< tag::ale, tag::ale >()) {
+    for (const auto& [j, geoElem] : m_geoElemc)
+      for (std::size_t c=0; c<geoElem.size(); ++c)
+        myGhosts()->m_geoElem(j,c) = geoElem[c];
+    m_geoElemc.clear();
+
+    for (const auto& [p, x] : m_coordc) {
+      myGhosts()->m_coord[0][p] = x[0];
+      myGhosts()->m_coord[1][p] = x[1];
+      myGhosts()->m_coord[2][p] = x[2];
+    }
+    m_coordc.clear();
+
+    // Recompute chare-boundary face geometry from the updated ghost data
+    updateChareBoundaryGeoFace();
+  }
+
+  // 1. If implicit solver is used, first invoke the solver object via
+  // appropriate methods, and then proceed to solve.
+  // 2. If explicit, directly proceed to solve.
+  if (!g_inputdeck.get< tag::implicit_timestepping >())
+    solve();
+  else
+    initializeLinearSystem();
+}
+
+void
+DG::initializeLinearSystem()
+// *****************************************************************************
+// Initialize the linear solver via the interface BiCG::init()
+// *****************************************************************************
+{
+  auto d = Disc();
 
   // Initialize linear solver, and route to solveLinearSystem()
   // TODO: linear solver:
@@ -1517,23 +1552,19 @@ DG::solveLinearSystem()
 {
   auto d = Disc();
 
-  // Get new time step size to pass along to solve()
-  auto dt = d->Dt();
-
   // Solve linear system, and route to solve()
   // TODO: linear solver:
   //  the following call is just a stand-in/example- verify correctness
   d->ImplicitSolver()[ thisIndex ].solve(
      g_inputdeck.get< tag::ale, tag::maxit >(),
      g_inputdeck.get< tag::residual >(),
-     CkCallback(CkIndex_DG::solve(dt), thisProxy[thisIndex]) );
+     CkCallback(CkIndex_DG::solve(), thisProxy[thisIndex]) );
 }
 
 void
-DG::solve( tk::real newdt )
+DG::solve()
 // *****************************************************************************
 // Compute right-hand side of discrete transport equations
-//! \param[in] newdt Size of this new time step
 // *****************************************************************************
 {
   const auto pref = g_inputdeck.get< tag::pref, tag::pref >();
@@ -1551,11 +1582,6 @@ DG::solve( tk::real newdt )
   const auto rdof = g_inputdeck.get< tag::rdof >();
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto neq = m_u.nprop()/rdof;
-
-  // Set new time step size. If implicit solver, time step has already been
-  // set in initializeImplicitSystem()
-  if (m_stage == 0 && !g_inputdeck.get< tag::implicit_timestepping >())
-    d->setdt( newdt );
 
   // Snapshot the solution at the start of the time step. Both the IMEX
   // stage-0 bootstrap and the explicit RK3 GCL update advance from m_un.
@@ -2224,13 +2250,24 @@ DG::step()
   }
 }
 
-
 void
 DG::computeBNorm()
 // *****************************************************************************
 // Start computing the boundary normals for ALE
 // *****************************************************************************
 {
+  // Apply the communicated solution ghost data before mesh velocity computation
+  for (const auto& b : myGhosts()->m_bid) {
+    Assert( m_uc[0][b.second].size() == m_u.nprop(), "ncomp size mismatch" );
+    Assert( m_pc[0][b.second].size() == m_p.nprop(), "ncomp size mismatch" );
+    for (std::size_t c=0; c<m_u.nprop(); ++c) {
+      m_u(b.first,c) = m_uc[0][b.second][c];
+    }
+    for (std::size_t c=0; c<m_p.nprop(); ++c) {
+      m_p(b.first,c) = m_pc[0][b.second][c];
+    }
+  }
+
   if (g_inputdeck.get< tag::ale, tag::ale >() &&
       !g_inputdeck.get< tag::ale, tag::symmetry >().empty())
   {
