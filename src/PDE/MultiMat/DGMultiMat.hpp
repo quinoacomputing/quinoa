@@ -1461,7 +1461,25 @@ class MultiMat {
               w_g = t*t*(3.0-2.0*t);
             }
             tk::real w_total = w_alpha * w_g;
-            auto g_safe = (std::isfinite(detg) && detg > 0.0) ? g : idT;
+            // g_safe must reject the same degenerate band that w_g already
+            // scores as untrustworthy (det(g) outside [1e-3,1e3]), not just
+            // non-finite/non-positive values. A g inside that band -- e.g.
+            // one row O(10) against others O(1), det(g)~2.5e-4 -- is finite
+            // and positive-determinant yet numerically poisonous: computing
+            // CauchyStress() from it runs getLeftCauchyGreen()/
+            // getIsochorRightCauchyGreen(), both of which invert g.g^T (or
+            // g^T.g), a matrix whose own determinant is the square of an
+            // already near-singular det(g) -- a textbook catastrophic-
+            // cancellation setup that can return a spurious negative
+            // determinant into a std::pow(.,1.0/3.0), yielding NaN. Once
+            // CauchyStress returns NaN, scaling by w_total afterward cannot
+            // recover it (0 * NaN = NaN under IEEE arithmetic), so the NaN
+            // was reaching the Newton residual/Jacobian on the very first
+            // iteration (observed: "Stage Newton failed" with niter=1 and
+            // rim_g all -nan) despite w_g already being computed as ~0 for
+            // this g. Matching updatePrimitives()'s degenerateDeformGrad()
+            // guard here closes that gap.
+            auto g_safe = degenerateDeformGrad(g) ? idT : g;
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
               alpha, k, g_safe );
             for (std::size_t i=0; i<3; ++i)
