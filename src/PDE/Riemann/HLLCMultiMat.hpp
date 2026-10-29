@@ -184,11 +184,23 @@ struct HLLCMultiMat {
                 - signnl[0][0] + signnr[0][0] )
               /( rhor*(Sr-vnr[0]) - rhol*(Sl-vnl[0]) );
     // HLLC theory requires Sl <= Sm <= Sr (Sm is the contact speed inside
-    // the fan bracketed by the outer signal speeds). Clamping Sm
-    // back into its theoretically-guaranteed range costs nothing in a
-    // healthy cell (clamp is a no-op there) and removes a blowup at its
-    // source.
-    Sm = std::clamp(Sm, Sl, Sr);
+    // the fan bracketed by the outer signal speeds). Clamping Sm back into
+    // its theoretically-guaranteed range costs nothing in a healthy cell
+    // (clamp is a no-op there) and removes a blowup at its source. The
+    // clamp bounds are padded inward by a small epsilon so the clamped Sm
+    // can never land exactly on Sl or Sr -- otherwise (Sm-Sl)/(Sm-Sr), used
+    // as a denominator throughout the star-state math below, divides by
+    // exact zero (this is what produced a SIGFPE with p0p1/hllc). If the
+    // raw (unclamped) Sm actually fell outside [Sl,Sr] (or was non-finite)
+    // -- a real violation of the HLLC ordering assumption, not just
+    // roundoff -- the star-state construction below is not trustworthy for
+    // this face; smClamped (used in the flux dispatch further down)
+    // reroutes that case to the plain bounding-state flux instead.
+    const auto Sm_raw = Sm;
+    const auto epsSm =
+      std::min( 1.0e-10*std::max(std::abs(Sr-Sl), 1.0), 0.1*(Sr-Sl) );
+    const bool smClamped = !std::isfinite(Sm_raw) || Sm_raw < Sl || Sm_raw > Sr;
+    Sm = smClamped ? 0.5*(Sl+Sr) : std::clamp(Sm_raw, Sl+epsSm, Sr-epsSm);
 
     // Middle-zone (star) variables
     // -------------------------------------------------------------------------
@@ -367,7 +379,15 @@ struct HLLCMultiMat {
 
     // Numerical fluxes
     // -------------------------------------------------------------------------
-    if (0.0 <= Sl) {
+    // When the raw Sm violated the HLLC bracket (smClamped), the star-state
+    // math above (built on the sanitized/clamped Sm) is not physically
+    // meaningful for this face. Rather than trust it, bypass both star-state
+    // branches and fall back to a plain upwind choice between the pure-left
+    // and pure-right bounding-state fluxes (which don't depend on Sm at
+    // all), using the average face-normal velocity to pick a side.
+    const bool pureLeft =
+      smClamped ? (0.5*(vnl[0]+vnr[0]) >= 0.0) : (0.0 <= Sl);
+    if (pureLeft) {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
@@ -414,7 +434,7 @@ struct HLLCMultiMat {
 
     }
 
-    else if (Sl < 0.0 && 0.0 <= Sm) {
+    else if (!smClamped && Sl < 0.0 && 0.0 <= Sm) {
 
       std::array< tk::real, 3 > ulStarPhysical{{
           vlStar[0] + wn*fn[0],
@@ -469,7 +489,7 @@ struct HLLCMultiMat {
 
     }
 
-    else if (Sm < 0.0 && 0.0 <= Sr) {
+    else if (!smClamped && Sm < 0.0 && 0.0 <= Sr) {
 
       std::array< tk::real, 3 > urStarPhysical{{
           vrStar[0] + wn*fn[0],
@@ -526,6 +546,9 @@ struct HLLCMultiMat {
 
     else {
 
+      // Reached either because 0.0 <= Sr < Sm (normal HLLC pure-right
+      // state), or because smClamped and the upwind choice above picked
+      // the right state.
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
           u[1][momentumIdx(nmat, idir)] * vnr[0] - Tnr[idir];
