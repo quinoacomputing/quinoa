@@ -27,9 +27,10 @@ inciter = {
     mesh_velocity = "fluid",
     smoother = "laplace",
     vortmult = 0.0,      -- no vorticity scaling in Laplace smoother
+    vortscale = 1.0,
     maxit = 20,
     tolerance = 2.0e-2,
-    mesh_motion = { 0 }, -- mesh moves only in x
+    mesh_motion_directions = { 0 }, -- mesh moves only in x
     dirichlet = { 1, 3 }
   },
 

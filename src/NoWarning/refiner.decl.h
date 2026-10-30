@@ -15,6 +15,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wtemplate-id-cdtor"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wdocumentation"
   #pragma clang diagnostic ignored "-Wdocumentation-unknown-command"
@@ -44,6 +45,7 @@
   #pragma clang diagnostic ignored "-Wunused-private-field"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wtemplate-id-cdtor"
   #pragma GCC diagnostic ignored "-Wextra"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wshadow"

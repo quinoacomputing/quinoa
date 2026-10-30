@@ -249,6 +249,8 @@ Transporter::info( const InciterPrint& print )
   print.item( "Local time stepping", steady );
   auto implicitts = g_inputdeck.get< tag::implicit_timestepping >();
   print.item( "Implicit time stepping", implicitts );
+  auto point_implicit = g_inputdeck.get< tag::point_implicit >();
+  print.item( "Point-implicit time stepping", point_implicit );
   if (steady || implicitts) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::residual >() );
@@ -366,12 +368,14 @@ Transporter::info( const InciterPrint& print )
     print.item( "Volume-change CFL coefficient", dvcfl );
     print.Item< ctr::MeshVelocity, tag::ale, tag::mesh_velocity >();
     print.Item< ctr::MeshVelocitySmoother, tag::ale, tag::smoother >();
-    print.item( "Mesh motion dimensions", tk::parameters(
-                g_inputdeck.get< tag::ale, tag::mesh_motion >() ) );
+    print.item( "Mesh motion directions", tk::parameters(
+                g_inputdeck.get< tag::ale, tag::mesh_motion_directions >() ) );
     const auto& meshforce = g_inputdeck.get< tag::ale, tag::meshforce >();
     print.item( "Mesh velocity force coefficients", tk::parameters(meshforce) );
     print.item( "Vorticity multiplier",
                 g_inputdeck.get< tag::ale, tag::vortmult >() );
+    print.item( "Vorticity scale",
+                g_inputdeck.get< tag::ale, tag::vortscale >() );
     print.item( "Mesh velocity linear solver tolerance",
                 g_inputdeck.get< tag::ale, tag::tolerance >() );
     print.item( "Mesh velocity linear solver maxit",
@@ -614,20 +618,12 @@ Transporter::createPartitioner()
     mr.readSidesetFaces( bface, faces );
 
     bool bcs_set = false;
-    if (centering == tk::Centering::ELEM) {
-
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bcs_set = matchBCs( bface );
-
-    } else if (centering == tk::Centering::NODE) {
-
-      // Read node lists on side sets
-      bnode = mr.readSidesetNodes();
-      // Verify boundarty condition (BC) side sets used exist in mesh file
-      bool bcnode_set = matchBCs( bnode );
-      bool bcface_set = matchBCs( bface );
-      bcs_set = bcface_set or bcnode_set;
-    }
+    // Read node lists on side sets
+    bnode = mr.readSidesetNodes();
+    // Verify boundarty condition (BC) side sets used exist in mesh file
+    bool bcnode_set = matchBCs( bnode );
+    bool bcface_set = matchBCs( bface );
+    bcs_set = bcface_set or bcnode_set;
 
     // Warn on no BCs
     if (!bcs_set) print << "\n>>> WARNING: No boundary conditions set\n\n";
@@ -1187,6 +1183,11 @@ Transporter::diagHeader()
       for (std::size_t i=0; i<3; ++i) d.push_back( "R" + std::to_string(i+1) );
     }
 
+    if (g_inputdeck.get< tag::imex_runge_kutta >()) {
+      d.push_back( "IMEX_ACTIVE" );
+      d.push_back( "IMEX_MAXITER" );
+    }
+
     // Write diagnostics header
     dw.header( d );
 
@@ -1622,6 +1623,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
       diag.push_back( d[DISPLACEMNT][i] );
     for (std::size_t i=0; i<3; ++i)
       diag.push_back( d[ROTATION][i] );
+  }
+
+  // Append IMEX diagnostics
+  if (g_inputdeck.get< tag::imex_runge_kutta >()) {
+    diag.push_back( d[IMEXACTIVE][0]*100.0/m_nelem[0] );
+    diag.push_back( static_cast<uint64_t>(d[IMEXMAXITER][0]) );
   }
 
   // Append diagnostics file at selected times

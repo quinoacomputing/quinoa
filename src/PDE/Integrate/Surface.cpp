@@ -399,8 +399,10 @@ surfInt( const bool pref,
          const VelFn& vel,
          const Fields& U,
          const Fields& P,
+         const Fields& W,
          const std::vector< std::size_t >& ndofel,
          const tk::real /*dt*/,
+         const std::vector< int >& srcFlag,
          Fields& R,
          std::vector< std::vector< tk::real > >& riemannDeriv,
          int intsharp )
@@ -422,7 +424,9 @@ surfInt( const bool pref,
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
 //! \param[in] ndofel Vector of local number of degrees of freedom
+//! \param[in] srcFlag Whether a source was added to each element
 // //! \param[in] dt Delta time
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
@@ -433,6 +437,7 @@ surfInt( const bool pref,
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
@@ -567,15 +572,23 @@ surfInt( const bool pref,
       auto wt = wgp[igp] * geoFace(f,0);
 
       evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof, nmat, el, dof_el,
-        inpoel, coord, geoElem, ref_gp_l, B_l, U, P, state[0]);
+        inpoel, coord, geoElem, ref_gp_l, B_l, U, P, state[0], srcFlag[el]);
       evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof, nmat, er, dof_er,
-        inpoel, coord, geoElem, ref_gp_r, B_r, U, P, state[1]);
+        inpoel, coord, geoElem, ref_gp_r, B_r, U, P, state[1], srcFlag[er]);
 
       // evaluate prescribed velocity (if any)
       auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
+      // mesh velocity at quadrature point
+      tk::real wn_igp(0.0);
+      if (ale) {
+        auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+        // mesh velocity normal to element face
+        wn_igp = tk::dot(w_igp, fn);
+      }
+
       // compute flux
-      auto fl = flux( mat_blk, fn, state, v );
+      auto fl = flux( mat_blk, fn, state, v, wn_igp );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndofel[el], ndofel[er], wt, fn,
@@ -743,7 +756,9 @@ surfInt_constP(
   const VelFn& vel,
   const Fields& U,
   const Fields& P,
+  const Fields& W,
   const tk::real /*dt*/,
+  const std::vector< int >& srcFlag,
   Fields& R,
   std::vector< std::vector< tk::real > >& riemannDeriv,
   int intsharp )
@@ -764,6 +779,8 @@ surfInt_constP(
 //! \param[in] vel Function to use to query prescribed velocity (if any)
 //! \param[in] U Solution vector at recent time step
 //! \param[in] P Vector of primitives at recent time step
+//! \param[in] W Mesh velocity vector at recent time step
+//! \param[in] srcFlag Whether a source was added to each element
 // //! \param[in] dt Delta time
 //! \param[in,out] R Right-hand side vector computed
 //! \param[in,out] riemannDeriv Derivatives of partial-pressures and velocities
@@ -774,6 +791,7 @@ surfInt_constP(
 //!   default 0, so that it is unused for single-material and transport.
 // *****************************************************************************
 {
+  const auto& ale = inciter::g_inputdeck.get< tag::ale, tag::ale >();
   const auto& esuf = fd.Esuf();
   const auto& inpofa = fd.Inpofa();
 
@@ -879,15 +897,25 @@ surfInt_constP(
       auto wt = wgp[igp] * geoFace(f,0);
 
       evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
-        nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P, state[0]);
+        nmat, el, rdof, inpoel, coord, geoElem, ref_gp_l, B_l, U, P,
+        state[0], srcFlag[el]);
       evalPolynomialSol(mat_blk, intsharp, ncomp, nprim, rdof,
-        nmat, er, rdof, inpoel, coord, geoElem, ref_gp_r, B_r, U, P, state[1]);
+        nmat, er, rdof, inpoel, coord, geoElem, ref_gp_r, B_r, U, P,
+        state[1], srcFlag[er]);
 
       // evaluate prescribed velocity (if any)
       auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
+      // mesh velocity at quadrature point
+      tk::real wn_igp(0.0);
+      if (ale) {
+        auto w_igp = evaluateMeshVelTri( f, igp, inpofa, coordgp, W );
+        // mesh velocity normal to element face
+        wn_igp = tk::dot(w_igp, fn);
+      }
+
       // compute flux
-      auto fl = flux( mat_blk, fn, state, v );
+      auto fl = flux( mat_blk, fn, state, v, wn_igp );
 
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndof, ndof, wt, fn,
@@ -990,7 +1018,7 @@ surfIntFV(
     auto v = vel( ncomp, gp[0], gp[1], gp[2], t );
 
     // compute flux
-    auto fl = flux( mat_blk, fn, state, v );
+    auto fl = flux( mat_blk, fn, state, v, 0.0 );
 
     // compute non-conservative terms
     std::vector< tk::real > var_riemann(nmat+1, 0.0);
@@ -1248,14 +1276,14 @@ surfIntViscousMultiSpecies(
       geoFace, geoElem, U, P, R );
   }
 
-  if (ndof == 4) {
+  else if (ndof == 4) {
     MultiSpeciesViscousTermsDGP1 viscousRhs( nspec, rdof );
     viscousInternalFaceIntDG( viscousRhs, mat_blk, ndof, inpoel, coord, fd,
       geoFace, geoElem, U, P, R ); // No-op
   }
   
   else
-    Throw( "Viscous operators only implemented for scheme = 'p0p1'." );
+    Throw( "Viscous operators only implemented for scheme = 'p0p1' and 'dgp1'." );
 }
 
 std::vector< real >

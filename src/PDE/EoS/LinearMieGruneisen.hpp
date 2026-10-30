@@ -7,7 +7,7 @@
              All rights reserved. See the LICENSE file for details.
   \brief     Linear Mie-Gruneisen equation of state (a.k.a. shock-wave EOS)
   \details   This file declares functions for the LinearMieGruneisen equation of
-             state for solids. The elastic contribution follows SmallShearSolid.
+             state for solids. The elastic contribution follows NeoHookeanSolid.
              The hydrodynamic contribution uses a linear Us-Up Hugoniot and a
              density-dependent Gruneisen coefficient. Ref. Shyue, K. M. (2001).
              A fluid-mixture type algorithm for compressible multicomponent flow
@@ -166,6 +166,9 @@ class LinearMieGruneisen {
 
     //! Return dynamic viscosity coefficient
     tk::real viscCoeff( tk::real ) const { return 0.0; }
+
+    //! Return specific heat derivative (no-op)
+    tk::real dcvdT( [[maybe_unused]] tk::real temp) const { return 0.0; }
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

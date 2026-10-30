@@ -141,6 +141,8 @@ LuaParser::storeInputDeck(
     lua_ideck, "ttyi", gideck.get< tag::ttyi >(), 1);
   storeIfSpecd< bool >(lua_ideck, "implicit_timestepping",
     gideck.get< tag::implicit_timestepping >(), false);
+  storeIfSpecd< bool >(lua_ideck, "point_implicit",
+    gideck.get< tag::point_implicit >(), false);
   storeIfSpecd< bool >(
     lua_ideck, "steady_state", gideck.get< tag::steady_state >(), false);
   storeIfSpecd< tk::real >(
@@ -149,12 +151,25 @@ LuaParser::storeInputDeck(
     lua_ideck, "rescomp", gideck.get< tag::rescomp >(), 1);
   storeIfSpecd< uint32_t >(
     lua_ideck, "imex_runge_kutta", gideck.get< tag::imex_runge_kutta >(), 0);
+  storeIfSpecd< std::string >(
+    lua_ideck, "imex_scheme", gideck.get< tag::imex_scheme >(), "IMEXRKCB3d");
   storeIfSpecd< uint32_t >(
-    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 50);
+    lua_ideck, "imex_maxiter", gideck.get< tag::imex_maxiter >(), 250);
   storeIfSpecd< tk::real >(
     lua_ideck, "imex_reltol", gideck.get< tag::imex_reltol >(), 1.0e-02);
   storeIfSpecd< tk::real >(
-    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-04);
+    lua_ideck, "imex_abstol", gideck.get< tag::imex_abstol >(), 1.0e-08);
+  storeIfSpecd< uint32_t >(
+    lua_ideck, "operator_split_plasticity",
+    gideck.get< tag::operator_split_plasticity >(), 0);
+
+  // Operator-split plasticity cannot coexist with unsplit IMEX or BDF1
+  if (gideck.get< tag::operator_split_plasticity >() &&
+      (gideck.get< tag::imex_runge_kutta >() ||
+       gideck.get< tag::implicit_timestepping >()))
+    Throw("operator_split_plasticity is mutually exclusive with "
+      "imex_runge_kutta and implicit_timestepping. Enable only one time "
+      "integration scheme for the stiff plasticity terms.");
 
   if (gideck.get< tag::dt >() < 1e-12 && gideck.get< tag::cfl >() < 1e-12)
     Throw("No time step calculation policy has been selected in the "
@@ -572,11 +587,8 @@ LuaParser::storeInputDeck(
       if (mesh_deck[i].get< tag::body_force >().size() != 3)
         Throw("Mesh body force requires 3 coordinates.");
 
-      // Transfer object
+      // Assign depvar for overset mesh
       if (i > 0) {
-        gideck.get< tag::transfer >().emplace_back( 0, i );
-
-        // assign depvar
         ++depvar_cnt;
         gideck.get< tag::depvar >().push_back(depvar_cnt);
 
@@ -864,6 +876,11 @@ LuaParser::storeInputDeck(
     auto& ale_deck = gideck.get< tag::ale >();
     ale_deck.get< tag::ale >() = true;
 
+    if (gideck.get< tag::imex_runge_kutta >() == 1)
+      Throw("IMEX schemes not configured with ALE. GCL consistency will "
+        "require low-storage register-based implementation of the mesh "
+        "updates.");
+
     // Mesh velocity smoother
     storeOptIfSpecd< inciter::ctr::MeshVelocitySmootherType,
       inciter::ctr::MeshVelocitySmoother >(lua_ideck["ale"], "smoother",
@@ -874,9 +891,9 @@ LuaParser::storeInputDeck(
       inciter::ctr::MeshVelocity >(lua_ideck["ale"], "mesh_velocity",
       ale_deck.get< tag::mesh_velocity >(), inciter::ctr::MeshVelocityType::SINE);
 
-    // Mesh motion direction
-    storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "mesh_motion",
-      ale_deck.get< tag::mesh_motion >(), { 0, 1, 2 });
+    // Mesh motion directions
+    storeVecIfSpecd< std::size_t >(lua_ideck["ale"], "mesh_motion_directions",
+      ale_deck.get< tag::mesh_motion_directions >(), { 0, 1, 2 });
 
     // Mesh force
     storeVecIfSpecd< tk::real >(lua_ideck["ale"], "meshforce",
@@ -920,7 +937,11 @@ LuaParser::storeInputDeck(
 
     // Vorticity multiplier
     storeIfSpecd< tk::real >(lua_ideck["ale"], "vortmult",
-      ale_deck.get< tag::vortmult >(), 0.0);
+      ale_deck.get< tag::vortmult >(), 1.0);
+
+    // Vorticity scale
+    storeIfSpecd< tk::real >(lua_ideck["ale"], "vortscale",
+      ale_deck.get< tag::vortscale >(), 0.25);
 
     // Mesh velocity max iterations
     storeIfSpecd< std::size_t >(lua_ideck["ale"], "maxit",
@@ -1452,7 +1473,7 @@ LuaParser::registerMaterials(
   }
   // Small-shear solid materials
   else if (mati_deck.get< tag::eos >() ==
-    inciter::ctr::MaterialType::SMALLSHEARSOLID) {
+    inciter::ctr::MaterialType::NEOHOOKEANSOLID) {
     // gamma
     checkStoreMatProp(sol_mat[imat+1], "gamma", ntype,
       mati_deck.get< tag::gamma >());
@@ -1466,13 +1487,6 @@ LuaParser::registerMaterials(
     // mu
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
-
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-05);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
@@ -1511,13 +1525,6 @@ LuaParser::registerMaterials(
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
 
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-05);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
-
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
       sol_mat[imat+1]["yield_stress"] =
@@ -1538,13 +1545,6 @@ LuaParser::registerMaterials(
     // mu
     checkStoreMatProp(sol_mat[imat+1], "mu", ntype,
       mati_deck.get< tag::mu >());
-
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-07);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
@@ -1578,13 +1578,6 @@ LuaParser::registerMaterials(
     // K0
     checkStoreMatProp(sol_mat[imat+1], "K0", ntype,
       mati_deck.get< tag::K0 >());
-
-    // plasticity_reltime
-    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
-      sol_mat[imat+1]["plasticity_reltime"] =
-        std::vector< tk::real >(ntype, 1.0e-07);
-    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
-      mati_deck.get< tag::plasticity_reltime >());
 
     // yield_stress
     if (!sol_mat[imat+1]["yield_stress"].valid())
@@ -1643,6 +1636,15 @@ LuaParser::registerMaterials(
     else
       Throw("Either reference density or reference temperature must be "
         "specified for JWL equation of state (EOS).");
+  }
+
+  if (is_solid) {
+    // plasticity_reltime
+    if (!sol_mat[imat+1]["plasticity_reltime"].valid())
+      sol_mat[imat+1]["plasticity_reltime"] =
+        std::vector< tk::real >(ntype, 1.0e-08);
+    checkStoreMatProp(sol_mat[imat+1], "plasticity_reltime", ntype,
+      mati_deck.get< tag::plasticity_reltime >());
   }
 }
 

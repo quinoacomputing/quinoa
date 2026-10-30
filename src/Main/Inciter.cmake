@@ -47,9 +47,18 @@ target_link_libraries(${INCITER_EXECUTABLE}
                       ${LIBCXX_LIBRARIES}     # only for static link with libc++
                       ${LIBCXXABI_LIBRARIES}) # only for static link with libc++
 
+if (ENABLE_GPU)
+  # Link Kokkos CUDA objects with nvcc_wrapper, but keep Charm++ host-built.
+  set_property(TARGET ${INCITER_EXECUTABLE} APPEND_STRING PROPERTY LINK_FLAGS
+               " -ld++ ${QUINOA_NVCC_WRAPPER_LAUNCHER}")
+endif()
+
 # Add custom dependencies for Inciter's main Charm++ module
 addCharmModule( "inciter" "${INCITER_EXECUTABLE}" "-I${PROJECT_BINARY_DIR}")
 addCharmModule( "lbswitch" "inciterCharmModule" )
 
 add_dependencies( "inciterCharmModule" "charestatecollectorCharmModule" )
 add_dependencies( "inciterCharmModule" "meshwriterCharmModule" )
+# inciter.ci declares both linear-solver modules.
+add_dependencies( "inciterCharmModule" "conjugategradientsCharmModule" )
+add_dependencies( "inciterCharmModule" "bicgCharmModule" )

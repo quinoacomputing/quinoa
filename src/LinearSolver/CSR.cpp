@@ -10,6 +10,8 @@
 */
 // *****************************************************************************
 
+#include <algorithm>
+
 #include "Exception.hpp"
 #include "CSR.hpp"
 
@@ -136,6 +138,16 @@ CSR::dirichlet( std::size_t i,
   // zero row and put in diagonal
   for (std::size_t j=ia[incomp+pos]-1; j<ia[incomp+pos+1]-1; ++j)
     if (incomp+pos+1==ja[j]) a[j] = diag; else a[j] = 0.0;
+}
+
+void
+CSR::fill( real value )
+// *****************************************************************************
+//  Fill all stored matrix entries with a value
+//! \param[in] value Value to assign to all stored sparse-matrix entries
+// *****************************************************************************
+{
+  std::fill( begin(a), end(a), value );
 }
 
 void

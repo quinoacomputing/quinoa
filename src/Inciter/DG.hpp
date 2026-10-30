@@ -42,6 +42,12 @@ namespace inciter {
 class DG : public CBase_DG {
 
   public:
+
+    //! Available IMEX Runge-Kutta schemes
+    enum class IMEXRKScheme {
+      CB3a,
+      CB3d
+    };
     #if defined(__clang__)
       #pragma clang diagnostic push
       #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -69,7 +75,7 @@ class DG : public CBase_DG {
     explicit DG( const CProxy_Discretization& disc,
                  const CProxy_Ghosts& ghostsproxy,
                  const std::map< int, std::vector< std::size_t > >& bface,
-                 const std::map< int, std::vector< std::size_t > >& /* bnode */,
+                 const std::map< int, std::vector< std::size_t > >& bnode,
                  const std::vector< std::size_t >& triinpoel );
 
     #if defined(__clang__)
@@ -138,6 +144,16 @@ class DG : public CBase_DG {
                  const std::vector< std::size_t >& interface,
                  const std::vector< std::size_t >& ndof );
 
+    //! Receive updated ALE ghost mesh data from neighboring chares
+    void comale( int fromch,
+                 const std::vector< std::size_t >& tetid,
+                 const std::vector< std::vector< tk::real > >& geoElem,
+                 const std::vector< std::array< tk::real, 3 > >& coord );
+
+    //! Receive boundary point normals on chare-boundaries
+    void comnorm( const std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > >& innorm );
+
     //! \brief Receive nodal solution (ofor field output) contributions from
     //!   neighboring chares
     void comnodeout( const std::vector< std::size_t >& gid,
@@ -160,7 +176,7 @@ class DG : public CBase_DG {
       const tk::NodeCommMap& nodeCommMap,
       const tk::EdgeCommMap& edgeCommMap,
       const std::map< int, std::vector< std::size_t > >& bface,
-      const std::map< int, std::vector< std::size_t > >& /* bnode */,
+      const std::map< int, std::vector< std::size_t > >& bnode,
       const std::vector< std::size_t >& triinpoel,
       const std::unordered_map< std::size_t, std::set< std::size_t > >&
         elemblockid );
@@ -194,17 +210,26 @@ class DG : public CBase_DG {
     //! (no-op)
     void advance( tk::real, std::array< tk::real, 6 > ) {}
 
+    //! Set the new time step size and perform the ALE mesh update
+    void aleMove( tk::real newdt );
+
     //! Initialize the linear solver via the interface BiCG::init()
-    void initializeLinearSystem( tk::real newdt );
+    void initializeLinearSystem();
 
     //! Solve the linear system via the interface BiCG::solve()
     void solveLinearSystem();
 
     //! Compute right hand side and solve system
-    void solve( tk::real newdt );
+    void solve();
 
     //! Evaluate whether to continue with next time step
     void step();
+
+    //! Start computing the boundary normals for ALE
+    void computeBNorm();
+
+    //! Done with computing the mesh mesh velocity for ALE
+    void meshveldone();
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{
@@ -220,23 +245,33 @@ class DG : public CBase_DG {
       p | m_nrefine;
       p | m_nsmooth;
       p | m_nreco;
+      p | m_nale;
+      p | m_nbnorm;
       p | m_u;
       p | m_un;
       p | m_p;
-      p | m_geoElem;
+      p | m_geoElemk;
+      p | m_geoElemn;
+      p | m_geoElemc;
+      p | m_coordc;
       p | m_mtInv;
       p | m_rhs;
-      p | m_rhsprev;
       p | m_stiffrhs;
-      p | m_stiffrhsprev;
+      p | m_imex_x;
+      p | m_imex_y;
+      p | m_imex_zim;
+      p | m_imex_maxiter;
+      p | m_imex_activeElem;
       p | m_stiffEqIdx;
       p | m_nonStiffEqIdx;
       p | m_nstiffeq;
       p | m_nnonstiffeq;
       p | m_npoin;
       p | m_diag;
+      p | m_imexrk_scheme;
       p | m_nstage;
       p | m_stage;
+      p | m_stiffSolverMode;
       p | m_ndof;
       p | m_interface;
       p | m_numEqDof;
@@ -253,7 +288,14 @@ class DG : public CBase_DG {
       p | m_pNodefieldsc;
       p | m_outmesh;
       p | m_boxelems;
+      p | m_srcFlag;
       p | m_shockmarker;
+      p | m_nodevel;
+      p | m_bnode;
+      p | m_bface;
+      p | m_triinpoel;
+      p | m_bnorm;
+      p | m_bnormc;
       p | m_dte;
       p | m_finished;
     }
@@ -285,6 +327,10 @@ class DG : public CBase_DG {
     std::size_t m_nsmooth;
     //! Counter signaling that we have received all our reconstructed ghost data
     std::size_t m_nreco;
+    //! Counter signaling that we have received all ALE ghost mesh updates
+    std::size_t m_nale;
+    //! Counter for receiving boundary point normals
+    std::size_t m_nbnorm;
     //! Counters signaling how many stiff and non-stiff equations in the system
     std::size_t m_nstiffeq, m_nnonstiffeq;
     //! Vector of unknown/solution average over each mesh element
@@ -293,24 +339,47 @@ class DG : public CBase_DG {
     tk::Fields m_un;
     //! Vector of primitive quantities over each mesh element
     tk::Fields m_p;
-    //! Element geometry
-    tk::Fields m_geoElem;
+    //! Element geometry array at the previous RK-stage
+    tk::Fields m_geoElemk;
+    //! Element geometry array at the previous time step
+    tk::Fields m_geoElemn;
+    //! \brief Receive buffer for communicated ALE ghost-element geometry,
+    //!   keyed by local ghost-element id
+    std::unordered_map< std::size_t, std::vector< tk::real > > m_geoElemc;
+    //! \brief Receive buffer for communicated ALE ghost-node coordinates,
+    //!   keyed by local ghost-node id
+    std::unordered_map< std::size_t, std::array< tk::real, 3 > > m_coordc;
     //! Vector of right-hand side
     tk::Fields m_rhs;
-    //! Vector of previous right-hand side values used in the IMEX-RK scheme
-    tk::Fields m_rhsprev;
-    //! Vector of right-hand side for stiff equations
+    //! Vector of stiff right-hand side
     tk::Fields m_stiffrhs;
-    //! Vector of previous right-hand side values for stiff equations
-    tk::Fields m_stiffrhsprev;
+    //! IMEX accumulated solution register
+    tk::Fields m_imex_x;
+    //! IMEX stage-state register
+    tk::Fields m_imex_y;
+    //! IMEX implicit RHS register
+    tk::Fields m_imex_zim;
+    //! IMEX diagnostic for maximum number of iterations
+    std::size_t m_imex_maxiter;
+    //! IMEX diagnostic to flag active elements in IMEX
+    std::vector< std::size_t > m_imex_activeElem;
     //! Vectors that indicates which equations are stiff and non-stiff
     std::vector< std::size_t > m_stiffEqIdx, m_nonStiffEqIdx;
+    //! Which stiff-equation residual nonlinear_func() should assemble.
+    enum class StiffSolverMode { IMEX=0, OperatorSplit=1 };
+    StiffSolverMode m_stiffSolverMode = StiffSolverMode::IMEX;
+    //! \brief Post-RK stiff DOFs of the element currently being relaxed, used as
+    //!   the constant term in the operator-split backward-Euler residual. Transient
+    //!   per-element scratch (not PUPed).
+    std::vector< tk::real > m_gStar;
     //! Inverse of Taylor mass-matrix
     std::vector< std::vector< tk::real > > m_mtInv;
     //! Counter for number of nodes on this chare excluding ghosts
     std::size_t m_npoin;
     //! Diagnostics object
     ElemDiagnostics m_diag;
+    //! Selected IMEX Runge-Kutta scheme
+    IMEXRKScheme m_imexrk_scheme;
     //! Total number of Runge-Kutta stages
     std::size_t m_nstage;
     //! Runge-Kutta stage counter
@@ -354,8 +423,29 @@ class DG : public CBase_DG {
     Ghosts::OutMesh m_outmesh;
     //! Element ids at which box ICs are defined by user (multiple boxes)
     std::vector< std::unordered_set< std::size_t > > m_boxelems;
+    //! Vector indicating if a source was added to element
+    std::vector< int > m_srcFlag;
     //! Shock detection marker for field output
     std::vector< std::size_t > m_shockmarker;
+    //! Velocity at nodes for ALE
+    tk::UnsMesh::Coords m_nodevel;
+    //! Boundary node lists mapped to side set ids used in the input file
+    std::map< int, std::vector< std::size_t > > m_bnode;
+    //! Boundary face lists mapped to side set ids used in the input file
+    std::map< int, std::vector< std::size_t > > m_bface;
+    //! Boundary triangle face connecitivity where BCs are set by user
+    std::vector< std::size_t > m_triinpoel;
+    //! Face normals in boundary points associated to side sets
+    //! \details Key: local node id, value: unit normal and inverse distance
+    //!   square between face centroids and points, outer key: side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnorm;
+    //! \brief Receive buffer for communication of the boundary point normals
+    //!   associated to side sets
+    //! \details Key: global node id, value: normals (first 3 components),
+    //!   inverse distance squared (4th component), outer key, side set id
+    std::unordered_map< int,
+      std::unordered_map< std::size_t, std::array< tk::real, 4 > > > m_bnormc;
     //! Time step size for each element (for local time stepping)
     std::vector< tk::real > m_dte;
     //! Flag for completed calculation
@@ -390,6 +480,24 @@ class DG : public CBase_DG {
     //! Compute limiter function
     void lim();
 
+    //! Recompute chare-boundary face geometry after ALE ghost updates arrive
+    void updateChareBoundaryGeoFace();
+
+    //! Perform ALE mesh update and communicate updated ghost mesh data
+    void ALEComm();
+
+    //! Continue to the stage solve once the ALE mesh update is complete
+    void aleDone();
+
+    //! Compute boundary point normals for mesh velocity symmetry BCs
+    void bnorm();
+
+    //! Finish computing boundary point normals
+    void normfinal();
+
+    //! Start computing the mesh velocity after boundary normals are ready
+    void meshvelstart();
+
     //! Compute time step size
     void dt();
 
@@ -414,25 +522,86 @@ class DG : public CBase_DG {
     //! Start preparing fields for output to file
     void startFieldOutput( CkCallback c );
 
+    //! Parse selected IMEX Runge-Kutta scheme from input
+    IMEXRKScheme imex_scheme_from_input() const;
+
+    //! Return true if selected IMEX scheme is IMEXRKCB3d
+    bool use_imexrkcb3d() const;
+
     //! Perform the Implicit-Explicit Runge-Kutta stage update
     void imex_integrate();
+
+    //! Perform one IMEXRKCB3a stage update
+    void imex_integrate_cb3a();
+
+    //! Perform one IMEXRKCB3d stage update
+    void imex_integrate_cb3d();
+
+    //! Perform the operator-split plasticity relaxation substep
+    void plasticity_split_integrate();
 
     //! Perform the BDF1 update
     void BDF1_integrate();
 
-    //! Non-linear solver using Broyden's method
-    std::vector< tk::real > nonlinear_broyden(std::size_t e,
-                                              std::vector< tk::real > x,
-                                              bool solver_failed );
+    //! Local stiff RHS evaluated at a packed element-local stiff state
+    std::vector< tk::real >
+    compute_stiff_rhs_local( std::size_t e,
+                             const std::vector< tk::real >& x );
 
-    //! Non-linear solver using Newton's method
-    std::vector< tk::real > nonlinear_newton(std::size_t e,
-                                             std::vector< tk::real > x,
-                                             bool solver_failed );
+    //! Perform the point-implicit update
+    void point_implicit_integrate();
 
-    //! Non-linear function necessary to integrate with IMEX
-    std::vector< tk::real > nonlinear_func(std::size_t e,
-                                           std::vector< tk::real > x);
+    //! Nonlinear residual for one diagonal implicit RK stage
+    std::vector< tk::real >
+    nonlinear_func_stage( std::size_t e,
+                          const std::vector< tk::real >& x,
+                          const std::vector< tk::real >& stage_base,
+                          tk::real aii );
+
+    //! Jacobian for one diagonal implicit RK stage residual
+    std::vector< double >
+    compute_jacobian_stage( std::size_t e,
+                            const std::vector< tk::real >& x,
+                            tk::real aii );
+
+    //! Newton solve for one diagonal implicit RK stage
+    std::vector< tk::real >
+    nonlinear_newton_stage( std::size_t e,
+                            std::vector< tk::real > x,
+                            const std::vector< tk::real >& stage_base,
+                            tk::real aii );
+
+    //! Solve element-local implicit system using Newton's method
+    bool element_implicit_step(std::size_t e,
+                                const std::vector< tk::real >& u_old,
+                                std::vector< tk::real >& u_new,
+                                tk::real dte,
+                                tk::real vole,
+                                const std::vector< std::vector< tk::real > >&
+                                  dRdu );
+
+    //! Calculate element-local RHS for point-implicit solve
+    std::vector< tk::real > point_implicit_rhs(std::size_t e,
+                                              const std::vector< tk::real >& ue,
+                                              const tk::Fields& Ubase,
+                                              const tk::Fields& Pbase ) const;
+
+    //! Calculate element-local Jacobian for point-implicit solve
+    std::vector< std::vector< std::vector< tk::real > > >
+      point_implicit_jacobian(
+        const tk::Fields& Ubase,
+        const tk::Fields& Pbase,
+        const tk::Fields& Rbase ) const;
+
+    //! Calculate element-local Jacobian for point-implicit solve using
+    //! analytic solution
+    std::vector< std::vector< std::vector< tk::real > > >
+      point_implicit_jacobian_analytic(
+        const tk::Fields& Ubase,
+        const tk::Fields& Pbase ) const;
+
+    //! Coloring algorithm to separate elements that share a face
+    std::vector< int > point_implicit_elem_coloring() const;
 };
 
 } // inciter::

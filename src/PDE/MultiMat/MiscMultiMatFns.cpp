@@ -220,6 +220,21 @@ cleanTraceMultiMat(
           U(e, densityDofIdx(nmat, k, rdof, 0)) = alk * rhok;
         }
 
+        // check for unphysical partial density: for a trace material the
+        // volume fraction can remain valid while the partial density (alpha*rho)
+        // goes negative/non-finite due to the (non-SSP IMEX) flux update. Reset
+        // it to a physical value consistent with the relaxation
+        // pressure/temperature, using the same recipe as the volume-fraction
+        // repair above. Done before the relaxation-pressure and energy
+        // computations below so that they see the corrected density.
+        // Once an SSP-IMEX scheme is implemented, this can be removed.
+        auto arhok = U(e, densityDofIdx(nmat, k, rdof, 0));
+        if (arhok <= 0.0 || !std::isfinite(arhok)) {
+          auto rhok = mat_blk[k].compute< EOS::density >(p_target,
+            std::max(1e-8,tmax));
+          U(e, densityDofIdx(nmat, k, rdof, 0)) = alk * rhok;
+        }
+
         // determine target relaxation pressure
         prelax = mat_blk[k].compute< EOS::min_eff_pressure >(1e-10,
           U(e, densityDofIdx(nmat, k, rdof, 0)), alk);
@@ -337,6 +352,8 @@ timeStepSizeMultiMat(
 {
   const auto ndof = g_inputdeck.get< tag::ndof >();
   const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto use_mass_avg =
+    g_inputdeck.get< tag::multimat, tag::dt_sos_massavg >();
   std::size_t ncomp = U.nprop()/rdof;
   std::size_t nprim = P.nprop()/rdof;
 
@@ -375,16 +392,30 @@ timeStepSizeMultiMat(
 
     // acoustic speed
     a = 0.0;
+    tk::real mixtureDensity = 0.0;
     for (std::size_t k=0; k<nmat; ++k)
     {
-      if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
-        auto gk = getDeformGrad(nmat, k, ugp);
-        gk = tk::rotateTensor(gk, fn);
-        a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
-          ugp[densityIdx(nmat, k)],
-          pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk ) );
+      auto gk = getDeformGrad(nmat, k, ugp);
+      gk = tk::rotateTensor(gk, fn);
+      if (use_mass_avg > 0)
+      {
+        // mass averaging SoS
+        a += ugp[densityIdx(nmat,k)]*mat_blk[k].compute< EOS::soundspeed >(
+          ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+          ugp[volfracIdx(nmat, k)], k, gk );
+
+        mixtureDensity += ugp[densityIdx(nmat,k)];
+      }
+      else
+      {
+        if (ugp[volfracIdx(nmat, k)] > 1.0e-04) {
+          a = std::max( a, mat_blk[k].compute< EOS::soundspeed >(
+            ugp[densityIdx(nmat, k)],
+            pgp[pressureIdx(nmat, k)], ugp[volfracIdx(nmat, k)], k, gk ) );
+        }
       }
     }
+    if (use_mass_avg > 0) a /= mixtureDensity;
 
     dSV_l = geoFace(f,0) * (std::fabs(vn) + a);
 
@@ -532,6 +563,76 @@ timeStepSizeMultiMatFV(
   }
 
   return mindt;
+}
+
+void
+soundSpeedMultiMat(
+  const std::vector< EOS >& mat_blk,
+  std::size_t nielem,
+  std::size_t nmat,
+  const tk::Fields& U,
+  const tk::Fields& P,
+  std::vector< tk::real >& ss )
+// *****************************************************************************
+//  Compute relevant sound speed for output
+//! \param[in] mat_blk Material EOS block
+//! \param[in] nielem Number of internal elements
+//! \param[in] nmat Number of materials in this PDE system
+//! \param[in] U Solution vector at recent time step
+//! \param[in] P Primitive vector at recent time step
+//! \param[in,out] ss Sound speed vector
+// *****************************************************************************
+{
+  Assert( ss.size() == nielem, "Size of sound speed vector incorrect " );
+
+  const auto ndof = g_inputdeck.get< tag::ndof >();
+  const auto rdof = g_inputdeck.get< tag::rdof >();
+  const auto use_mass_avg =
+    g_inputdeck.get< tag::multimat, tag::dt_sos_massavg >();
+  std::size_t ncomp = U.nprop()/rdof;
+  std::size_t nprim = P.nprop()/rdof;
+
+  std::vector< tk::real > ugp(ncomp, 0.0), pgp(nprim, 0.0);
+
+  for (std::size_t e=0; e<nielem; ++e) {
+    // basis function at centroid
+    std::vector< tk::real > B(rdof, 0.0);
+    B[0] = 1.0;
+
+    // get conserved quantities
+    eval_state(ncomp, rdof, ndof, e, U, B, ugp.data());
+    // get primitive quantities
+    eval_state(nprim, rdof, ndof, e, P, B, pgp.data());
+
+    // acoustic speed (this should be consistent with time-step calculation)
+    ss[e] = 0.0;
+    tk::real mixtureDensity = 0.0;
+    for (std::size_t k=0; k<nmat; ++k)
+    {
+      // deformation gradient contribution to sound speed for solid materials
+      auto gk = getDeformGrad(nmat, k, ugp);
+
+      if (use_mass_avg > 0)
+      {
+        // mass averaging SoS
+        ss[e] += ugp[densityIdx(nmat,k)]*mat_blk[k].compute< EOS::soundspeed >(
+          ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+          ugp[volfracIdx(nmat, k)], k, gk );
+
+        mixtureDensity += ugp[densityIdx(nmat,k)];
+      }
+      else
+      {
+        if (ugp[volfracIdx(nmat, k)] > 1.0e-04)
+        {
+          ss[e] = std::max( ss[e], mat_blk[k].compute< EOS::soundspeed >(
+            ugp[densityIdx(nmat, k)], pgp[pressureIdx(nmat, k)],
+            ugp[volfracIdx(nmat, k)], k, gk ) );
+        }
+      }
+    }
+    if (use_mass_avg > 0) ss[e] /= mixtureDensity;
+  }
 }
 
 tk::real
