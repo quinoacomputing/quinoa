@@ -1,0 +1,232 @@
+/*!
+  @page      build_macos Build on macOS
+
+This page describes a macOS build using Homebrew's OpenMPI and clang.
+MacOS builds are not routinely tested. Proceed at your own risk.
+
+@section build_macos_prerequisites Prerequisites
+
+Charm++'s `buildold` does not correctly pick up a custom-built MPI
+installation on macOS. Use Homebrew's OpenMPI instead. Building OpenMPI with GCC
+on macOS has also been broken since 2022, so use the clang shipped with macOS.
+
+Ensure that the Xcode command-line tools are installed and locate the macOS
+SDK:
+
+       xcode-select --install
+       xcode-select -p
+       xcrun --sdk macosx --show-sdk-path
+       ls -l "$(xcrun --sdk macosx --show-sdk-path)/usr/lib" | head
+
+Install the required Homebrew packages:
+
+       brew install autoconf automake gcc open-mpi
+
+Install CMake version 3.x, not version 4.x, from https://cmake.org/files/.
+
+@section build_macos_patches Patch the TPLs
+
+Apply the macOS patches manually before configuring the TPL build. Full patches
+are in @ref macos_patch_contents
+
+@subsection build_macos_patch_charm Patch Charm++
+
+The Charm++ patch updates the MPI configuration checks with explicit `int`
+return types for their generated `main` functions. Apply it from the Charm++
+source directory:
+
+       cd quinoa-tpl/src/charm
+       git apply <charm-macos-patch>
+
+@subsection build_macos_patch_trilinos Patch Trilinos
+
+The Trilinos patch adds the `sort_option` member to the Kokkos sparse-addition
+handle. Apply it from the Trilinos source directory:
+
+       cd quinoa-tpl/src/trilinos
+       git apply <trilinos-macos-patch>
+
+@subsection build_macos_patch_eigen Patch Eigen
+
+The Eigen patch adjusts the transposition product construction. Apply it from
+the Eigen source directory:
+
+       cd quinoa-tpl/src/eigen
+       git apply <eigen-macos-patch>
+
+@section build_macos_tpls Build the TPLs
+
+Create a TPL build directory, then configure it with the Homebrew MPI wrappers:
+
+       cd quinoa-tpl
+       mkdir build/appleclang-arm64
+       cd build/appleclang-arm64
+
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc \
+             -DCMAKE_Fortran_COMPILER=mpif90 -DCMAKE_BUILD_TYPE=Release \
+             -DINCITER_ONLY=true -DCMAKE_INSTALL_PREFIX=<tpl-install-dir> ../..
+
+Build Charm++ serially, then build the remaining TPLs in parallel:
+
+       make charm -j1
+       make -j8
+
+@section build_macos_quinoa Build Quinoa
+
+Create a Quinoa build directory. Configure it with the TPL installation
+directory and Ninja:
+
+       cd quinoa
+       mkdir build/appleclang-arm64
+       cd build/appleclang-arm64
+
+       cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_C_COMPILER=mpicc \
+             -DCMAKE_BUILD_TYPE=Release \
+             -DTPL_DIR=<tpl-install-dir> \
+             ../../src
+
+Replace the `<tpl-install-dir>` value with the path to the corresponding TPL
+installation on your system, then build:
+
+       make -j8
+
+@section macos_patch_contents Patch file contents
+
+The following are the complete macOS patches referenced above.
+
+@subsection macos_charm_patch_contents Charm++ patch
+
+@verbatim
+diff --git a/src/libs/ck-libs/ampi/romio/configure b/src/libs/ck-libs/ampi/romio/configure
+index b8f0ae39c..83b7fd174 100755
+--- a/src/libs/ck-libs/ampi/romio/configure
++++ b/src/libs/ck-libs/ampi/romio/configure
+@@ -20616,7 +20616,7 @@ $as_echo_n "checking if MPI_LONG_LONG_INT is defined in mpi.h... " >&6; }
+   rm -f mpitest.c
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+-     main(int argc, char **argv)
++     int main(int argc, char **argv)
+      {
+          long long i;
+          MPI_Init(&argc,&argv);
+@@ -20870,7 +20870,7 @@ $as_echo_n "checking if MPI_Info functions are defined in the MPI implementation
+   rm -f mpitest.c
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+-     main(int argc, char **argv)
++     int main(int argc, char **argv)
+      {
+          MPI_Info info;
+          MPI_Init(&argc,&argv);
+@@ -20920,7 +20920,7 @@ $as_echo_n "checking if MPI_SGI_type_is_contig is defined... " >&6; }
+   rm -f mpitest.c
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+-     main(int argc, char **argv)
++     int main(int argc, char **argv)
+      {
+          MPI_Datatype type;
+          int i;
+@@ -20950,7 +20950,7 @@ $as_echo_n "checking if MPI-2 combiners are defined in mpi.h... " >&6; }
+   rm -f mpitest.c
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+-     main(int argc, char **argv)
++     int main(int argc, char **argv)
+      {
+          int i;
+ 
+@@ -21010,7 +21010,7 @@ $as_echo_n "checking if darray and subarray constructors are defined in the MPI
+   rm -f mpitest.c
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+-     main(int argc, char **argv)
++     int main(int argc, char **argv)
+      {
+          int i=MPI_DISTRIBUTE_CYCLIC;
+          MPI_Datatype t;
+@@ -23773,7 +23773,7 @@ $as_echo_n "checking if a simple MPI program compiles and links... " >&6; }
+   rm -f mpitest.c
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+-     main(int argc, char **argv)
++     int main(int argc, char **argv)
+      {
+          MPI_Init(&argc,&argv);
+          MPI_Finalize();
+@@ -23801,7 +23801,7 @@ $as_echo "yes" >&6; }
+ $as_echo_n "checking if MPI_Fint is defined in the MPI implementation... " >&6; }
+   cat > mpitest1.c <<EOF
+ #include "mpi.h"
+-     main()
++     int main()
+      {
+          MPI_Fint i;
+          i = 0;
+@@ -23944,7 +23944,7 @@ $as_echo_n "checking if MPIR_Status_set_bytes is defined... " >&6; }
+   rm -f mpitest.c
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+-     main(int argc, char **argv)
++     int main(int argc, char **argv)
+      {
+      	 MPI_Status *status;
+          MPI_Datatype type;
+@@ -23976,7 +23976,7 @@ $as_echo_n "checking support for generalized requests... " >&6; }
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+ #include "stdio.h"
+-    main(int argc, char **argv)
++    int main(int argc, char **argv)
+     {
+        MPI_Request request;
+        MPI_Init(&argc, &argv);
+@@ -24006,7 +24006,7 @@ $as_echo_n "checking support for MPICH memory macros... " >&6; }
+   cat > mpitest.c <<EOF
+ #include "mpi.h"
+ #include "stdio.h"
+-  main(Int argc, char **argv)
++  int main(Int argc, char **argv)
+   {
+       MPIU_Free(NULL);
+   }
+@endverbatim
+
+@subsection macos_trilinos_patch_contents Trilinos patch
+
+@verbatim
+diff --git a/packages/kokkos-kernels/sparse/src/KokkosSparse_spadd_handle.hpp b/packages/kokkos-kernels/sparse/src/KokkosSparse_spadd_handle.hpp
+index 2902550d6a9..83ae8f253a0 100644
+--- a/packages/kokkos-kernels/sparse/src/KokkosSparse_spadd_handle.hpp
++++ b/packages/kokkos-kernels/sparse/src/KokkosSparse_spadd_handle.hpp
+@@ -87,6 +87,8 @@ class SPADDHandle {
+ 
+   virtual ~SPADDHandle(){};
+ 
++  int sort_option = 0;
++
+   bool is_symbolic_called() { return this->called_symbolic; }
+   bool is_numeric_called() { return this->called_numeric; }
+ 
+@endverbatim
+
+@subsection macos_eigen_patch_contents Eigen patch
+
+@verbatim
+diff --git a/Eigen/src/Core/Transpositions.h b/Eigen/src/Core/Transpositions.h
+index 19c17bb..86da5af 100644
+--- a/Eigen/src/Core/Transpositions.h
++++ b/Eigen/src/Core/Transpositions.h
+@@ -384,7 +384,7 @@ class Transpose<TranspositionsBase<TranspositionsDerived> >
+     const Product<OtherDerived, Transpose, AliasFreeProduct>
+     operator*(const MatrixBase<OtherDerived>& matrix, const Transpose& trt)
+     {
+-      return Product<OtherDerived, Transpose, AliasFreeProduct>(matrix.derived(), trt.derived());
++      return Product<OtherDerived, Transpose, AliasFreeProduct>(matrix.derived(), trt);
+     }
+ 
+     /** \returns the \a matrix with the inverse transpositions applied to the rows.
+@endverbatim
+
+*/
