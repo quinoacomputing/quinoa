@@ -281,9 +281,16 @@ cleanTraceMultiMat(
         auto arhoEmat = mat_blk[k].compute< EOS::totalenergy >(arhomat, u, v, w,
           alk*prelax, alk, gmat);
 
-        // total energy flux into majority material
-        d_arE += (U(e, energyDofIdx(nmat, k, rdof, 0))
-          - arhoEmat);
+        // total energy flux into majority material. The stored energy being
+        // fluxed out here can have gone non-finite (e.g. from a stiff
+        // plasticity blowup in a trace solid), unlike alk/arhomat above which
+        // are explicitly guarded -- flux the freshly-computed finite
+        // arhoEmat instead in that case, since there is then nothing
+        // physical left to flux out and the overwrite below replaces it with
+        // arhoEmat anyway.
+        auto arhoEmat_raw = U(e, energyDofIdx(nmat, k, rdof, 0));
+        if (!std::isfinite(arhoEmat_raw)) arhoEmat_raw = arhoEmat;
+        d_arE += (arhoEmat_raw - arhoEmat);
 
         // update state of trace material
         U(e, volfracDofIdx(nmat, k, rdof, 0)) = alk;
