@@ -74,7 +74,7 @@ Build Charm++ serially, then build the remaining TPLs in parallel:
 @section build_macos_quinoa Build Quinoa
 
 Create a Quinoa build directory. Configure it with the TPL installation
-directory and Ninja:
+directory:
 
        cd quinoa
        mkdir build/appleclang-arm64
@@ -96,7 +96,7 @@ The following are the complete macOS patches referenced above.
 
 @subsection macos_charm_patch_contents Charm++ patch
 
-@verbatim
+@code{.diff}
 diff --git a/src/libs/ck-libs/ampi/romio/configure b/src/libs/ck-libs/ampi/romio/configure
 index b8f0ae39c..83b7fd174 100755
 --- a/src/libs/ck-libs/ampi/romio/configure
@@ -191,11 +191,11 @@ index b8f0ae39c..83b7fd174 100755
    {
        MPIU_Free(NULL);
    }
-@endverbatim
+@endcode
 
 @subsection macos_trilinos_patch_contents Trilinos patch
 
-@verbatim
+@code{.diff}
 diff --git a/packages/kokkos-kernels/sparse/src/KokkosSparse_spadd_handle.hpp b/packages/kokkos-kernels/sparse/src/KokkosSparse_spadd_handle.hpp
 index 2902550d6a9..83ae8f253a0 100644
 --- a/packages/kokkos-kernels/sparse/src/KokkosSparse_spadd_handle.hpp
@@ -209,11 +209,11 @@ index 2902550d6a9..83ae8f253a0 100644
    bool is_symbolic_called() { return this->called_symbolic; }
    bool is_numeric_called() { return this->called_numeric; }
  
-@endverbatim
+@endcode
 
 @subsection macos_eigen_patch_contents Eigen patch
 
-@verbatim
+@code{.diff}
 diff --git a/Eigen/src/Core/Transpositions.h b/Eigen/src/Core/Transpositions.h
 index 19c17bb..86da5af 100644
 --- a/Eigen/src/Core/Transpositions.h
@@ -227,6 +227,6 @@ index 19c17bb..86da5af 100644
      }
  
      /** \returns the \a matrix with the inverse transpositions applied to the rows.
-@endverbatim
+@endcode
 
 */
