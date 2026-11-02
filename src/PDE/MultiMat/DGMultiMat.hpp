@@ -593,10 +593,14 @@ class MultiMat {
               // that then poisons the shared HLLC wave speed at every face
               // this element touches. Fall back to the undeformed state.
               // Also fade the stress contribution smoothly to zero for a
-              // trace solid via solidPhysicsWeight(): at low alpha, g is
-              // driven almost entirely by advection/interface-sharpening
-              // noise rather than real deformation, so the full stress
-              // would just inject noise into the shared flux. Scale the
+              // trace solid via solidPhysicsWeight(), AND smoothly for a
+              // g that is numerically unsound (low det(g) OR anisotropic,
+              // see gTensorTrustWeight()) regardless of alpha: a hard
+              // idT-vs-gmat switch on degenerateDeformGrad() alone makes
+              // this stress -- which feeds every neighboring element's
+              // shared HLLC flux every stage -- jump discontinuously right
+              // at that cutoff, independent of whether strain hardening or
+              // the Newton plasticity solve is even active. Scale the
               // OUTPUT stress tensor rather than blending g itself toward
               // identity: CauchyStress is nonlinear (logarithmic Hencky
               // strain) in g, so a blended input tensor does not correspond
@@ -607,9 +611,11 @@ class MultiMat {
               auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
                 alphamat, imat, gmat_safe );
               auto w_alpha = solidPhysicsWeight(alphamat);
+              auto w_g = gTensorTrustWeight(gmat);
+              auto w_total = w_alpha * w_g;
               for (std::size_t i=0; i<3; ++i)
                 for (std::size_t j=0; j<3; ++j)
-                  asigmat[i][j] *= w_alpha;
+                  asigmat[i][j] *= w_total;
 
               pri[stressIdx(nmat,solidx[imat],0)] = asigmat[0][0];
               pri[stressIdx(nmat,solidx[imat],1)] = asigmat[1][1];
@@ -1322,16 +1328,7 @@ class MultiMat {
             for (std::size_t j=0; j<3; ++j)
               g_star0[i][j] = x_star[solidTensorIdx(ksld,i,j)*ndof+0];
           tk::real w_alpha = solidPhysicsWeight(alpha);
-          auto detg_star = tk::determinant(g_star0);
-          tk::real w_g = 0.0;
-          if (std::isfinite(detg_star) && detg_star > 0.0) {
-            constexpr tk::real log_lo = -3.0, log_hi = 3.0;
-            constexpr tk::real log_margin = 0.5;
-            tk::real logd = std::log10(detg_star);
-            tk::real dist = std::min(logd-log_lo, log_hi-logd);
-            tk::real t = std::clamp(dist/log_margin, 0.0, 1.0);
-            w_g = t*t*(3.0-2.0*t);
-          }
+          tk::real w_g = gTensorTrustWeight(g_star0);
           tk::real w_total = w_alpha * w_g;
           tk::real beta = 1.0;
           const tk::real dE_vol = alpha * w_total * beta * (-dpsi);
@@ -1437,36 +1434,29 @@ class MultiMat {
             // well-resolved cell parked at det(g)~0.000999, just inside
             // the degenerate side of the 1e-3 cutoff, failed to converge
             // in 250 iterations). So rather than a hard idT:g switch, fold
-            // a smooth log(det(g))-space weight w_g into the OUTPUT stress
-            // (not the input g) alongside the alpha-based trust weight
-            // w_alpha from solidPhysicsWeight() -- also applied to the
-            // output, for the same reason given in updatePrimitives(): a
-            // blended INPUT tensor does not correspond to a fraction of the
-            // true (nonlinear) stress. The two weights are independent
-            // trust signals (is alpha high enough to trust g at all; is
-            // this g, whatever alpha is, numerically sane) and compose
+            // a smooth g-sanity weight w_g (det(g) AND anisotropy, see
+            // gTensorTrustWeight()) into the OUTPUT stress (not the input
+            // g) alongside the alpha-based trust weight w_alpha from
+            // solidPhysicsWeight() -- also applied to the output, for the
+            // same reason given in updatePrimitives(): a blended INPUT
+            // tensor does not correspond to a fraction of the true
+            // (nonlinear) stress. The two weights are independent trust
+            // signals (is alpha high enough to trust g at all; is this g,
+            // whatever alpha is, numerically sane) and compose
             // multiplicatively so that failing either pulls the result
             // toward zero.
             static const std::array< std::array< tk::real, 3 >, 3 > idT{{
               {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
             tk::real w_alpha = solidPhysicsWeight(alpha);
-            auto detg = tk::determinant(g);
-            tk::real w_g = 0.0;
-            if (std::isfinite(detg) && detg > 0.0) {
-              constexpr tk::real log_lo = -3.0, log_hi = 3.0; // log10(1e-3/1e3)
-              constexpr tk::real log_margin = 0.5; // half a decade
-              tk::real logd = std::log10(detg);
-              tk::real dist = std::min(logd-log_lo, log_hi-logd);
-              tk::real t = std::clamp(dist/log_margin, 0.0, 1.0);
-              w_g = t*t*(3.0-2.0*t);
-            }
+            tk::real w_g = gTensorTrustWeight(g);
             tk::real w_total = w_alpha * w_g;
             // g_safe must reject the same degenerate band that w_g already
-            // scores as untrustworthy (det(g) outside [1e-3,1e3]), not just
-            // non-finite/non-positive values. A g inside that band -- e.g.
-            // one row O(10) against others O(1), det(g)~2.5e-4 -- is finite
-            // and positive-determinant yet numerically poisonous: computing
-            // CauchyStress() from it runs getLeftCauchyGreen()/
+            // scores as untrustworthy (det(g) outside [1e-3,1e3], or
+            // anisotropy beyond 650 -- see degenerateDeformGrad()), not
+            // just non-finite/non-positive values. A g inside that band --
+            // e.g. one row O(10) against others O(1), det(g)~2.5e-4 -- is
+            // finite and positive-determinant yet numerically poisonous:
+            // computing CauchyStress() from it runs getLeftCauchyGreen()/
             // getIsochorRightCauchyGreen(), both of which invert g.g^T (or
             // g^T.g), a matrix whose own determinant is the square of an
             // already near-singular det(g) -- a textbook catastrophic-

@@ -88,6 +88,11 @@ bool
 degenerateDeformGrad(
   const std::array< std::array< tk::real, 3 >, 3 >& g );
 
+//! Smooth [0,1] trust weight for a deformation gradient tensor's sanity
+tk::real
+gTensorTrustWeight(
+  const std::array< std::array< tk::real, 3 >, 3 >& g );
+
 //! Reset the solid tensors
 void
 resetSolidTensors(
