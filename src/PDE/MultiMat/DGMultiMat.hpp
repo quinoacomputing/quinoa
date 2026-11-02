@@ -1490,15 +1490,23 @@ class MultiMat {
             for (std::size_t i=0; i<3; ++i)
               sigma_dev[i][i] -= sigma_trace/3.0;
 
-            // 2. Compute g*dev(sigma), symmetrized
+            // 2. Compute g*dev(sigma), symmetrized. Uses g_safe, not the
+            // raw Newton-iterate g: Lp directly sources dg/dt below, so
+            // multiplying by an already-anisotropic/degenerate g here would
+            // keep driving g further from physical every stage -- the same
+            // self-reinforcing feedback loop degenerateDeformGrad() (now
+            // widened to catch anisotropy, not just extreme det(g)) was
+            // introduced to break for the stress tensor above, but which
+            // still reached g's own evolution equation through this
+            // (previously unguarded) use of the unscaled g.
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
               {
                 tk::real sum1 = 0.0;
                 tk::real sum2 = 0.0;
                 for (std::size_t l=0; l<3; ++l) {
-                  sum1 += g[i][l]*sigma_dev[l][j];
-                  sum2 += sigma_dev[i][l]*g[l][j];
+                  sum1 += g_safe[i][l]*sigma_dev[l][j];
+                  sum2 += sigma_dev[i][l]*g_safe[l][j];
                 }
                 Lp[i][j] = 0.5*(sum1+sum2);
               }

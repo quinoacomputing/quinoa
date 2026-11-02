@@ -771,7 +771,26 @@ degenerateDeformGrad(
   // deformation. Outside this range, g has degraded from advection/flux
   // noise rather than reflecting real material deformation.
   auto detg = tk::determinant(g);
-  return (!std::isfinite(detg) || detg < 1e-3 || detg > 1e3);
+  if (!std::isfinite(detg) || detg < 1e-3 || detg > 1e3) return true;
+
+  // det(g) alone is blind to a highly anisotropic g (e.g. one singular
+  // value O(10), another O(1), a third O(1e-3)) that keeps det(g) inside
+  // the O(1) band above while being just as unphysical: every observed
+  // Newton-convergence failure in production Taylor-impact runs had
+  // det(g) comfortably inside [1e-3,1e3] (0.001-0.01) yet a condition
+  // number (ratio of largest to smallest singular value) in the
+  // thousands. Catch that case via ||g||_F^3 / (3^1.5 * |det(g)|): this
+  // ratio equals 1 for g proportional to a rotation (all singular values
+  // equal) and grows rapidly with anisotropy (e.g. ~25 at a 5x stretch
+  // ratio between the largest and smallest singular value, assuming unit
+  // determinant), without requiring an eigen/SVD solve -- it only needs
+  // the already-computed det(g) plus the Frobenius norm.
+  tk::real froNorm2 = 0.0;
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      froNorm2 += g[i][j]*g[i][j];
+  auto anisotropy = std::pow(froNorm2/3.0, 1.5) / std::abs(detg);
+  return (!std::isfinite(anisotropy) || anisotropy > 650.0);
 }
 
 void
