@@ -382,16 +382,18 @@ determinant( const std::array< std::array< tk::real, 3 >, 3 >& a )
          + a[0][2] * (a[1][0]*a[2][1]-a[1][1]*a[2][0]) );
 }
 
-//! Compute the inverse of 3x3 matrix
+//! Compute the inverse of 3x3 matrix using a precomputed determinant
 //!  \param[in] m 3x3 matrix
+//!  \param[in] det Determinant of m, supplied by the caller. Use this
+//!    overload when det is known from an expression simpler/more accurate
+//!    than m's own cofactor expansion (e.g. det(g.g^T) = det(g)^2): m's
+//!    entries can span a much wider dynamic range than g's (squared), so
+//!    recomputing det from m directly is prone to catastrophic cancellation
+//!    that an analytically-equivalent expression avoids.
 //!  \return Inverse of the 3x3 matrix
 inline std::array< std::array< tk::real, 3 >, 3 >
-inverse( const std::array< std::array< tk::real, 3 >, 3 >& m )
+inverse( const std::array< std::array< tk::real, 3 >, 3 >& m, tk::real det )
 {
-  tk::real det = m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
-                 m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
-                 m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
-
   tk::real invdet = 1.0 / det;
 
   std::array< std::array< tk::real, 3 >, 3 > minv;
@@ -406,6 +408,15 @@ inverse( const std::array< std::array< tk::real, 3 >, 3 >& m )
   minv[2][2] = (m[0][0] * m[1][1] - m[1][0] * m[0][1]) * invdet;
 
   return minv;
+}
+
+//! Compute the inverse of 3x3 matrix
+//!  \param[in] m 3x3 matrix
+//!  \return Inverse of the 3x3 matrix
+inline std::array< std::array< tk::real, 3 >, 3 >
+inverse( const std::array< std::array< tk::real, 3 >, 3 >& m )
+{
+  return tk::inverse( m, tk::determinant(m) );
 }
 
 //! Solve a 3x3 system of equations using Cramer's rule
@@ -540,11 +551,19 @@ getRightCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
   // get inv(g.g^T) using the closed-form analytic 3x3 inverse. g.g^T is
   // guaranteed symmetric positive definite as long as g is nonsingular, so
   // this is always well defined for physically valid deformation states.
+  // det(g.g^T) = det(g)^2 is supplied explicitly rather than left for
+  // tk::inverse() to recompute from GGt's own entries: those entries are
+  // g's entries squared/cross-multiplied, so under anisotropy they span a
+  // far wider dynamic range than g's, making their own cofactor-expansion
+  // determinant prone to catastrophic cancellation (which can go slightly
+  // negative and silently corrupt every entry of the inverse) in exactly
+  // the regime this function needs to stay well-behaved in.
   std::array< std::array< real, 3 >, 3 > C{{ {GGt[0], GGt[1], GGt[2]},
                                               {GGt[3], GGt[4], GGt[5]},
                                               {GGt[6], GGt[7], GGt[8]} }};
+  auto detg = tk::determinant(g);
 
-  return tk::inverse(C);
+  return tk::inverse(C, detg*detg);
 }
 
 //! \brief Get the Left Cauchy-Green strain tensor from the inverse deformation
@@ -574,11 +593,14 @@ getLeftCauchyGreen(const std::array< std::array< real, 3 >, 3 >& g)
   // get inv(g^T.g) using the closed-form analytic 3x3 inverse. g^T.g is
   // guaranteed symmetric positive definite as long as g is nonsingular, so
   // this is always well defined for physically valid deformation states.
+  // det(g^T.g) = det(g)^2 supplied explicitly -- see matching comment in
+  // getRightCauchyGreen() above.
   std::array< std::array< real, 3 >, 3 > b{{ {GtG[0], GtG[1], GtG[2]},
                                               {GtG[3], GtG[4], GtG[5]},
                                               {GtG[6], GtG[7], GtG[8]} }};
+  auto detg = tk::determinant(g);
 
-  return tk::inverse(b);
+  return tk::inverse(b, detg*detg);
 }
 
 //! \brief Get the volume-preserving part of the right Cauchy-Green strain
