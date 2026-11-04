@@ -1057,7 +1057,12 @@ namespace AMR {
             }
 
             /**
-             * @brief Deletes the intermediate edge in the delete list for derefinement
+             * @brief Deletes the intermediate edge in the delete list for
+             *   derefinement, and removes points from the intermediate list
+             *   that are no longer used by any active tet. Points of deleted
+             *   edges cannot be removed directly, since after a partial
+             *   derefinement (e.g. 1:8 to 1:4) they may still be intermediate
+             *   points of the remaining children.
              *
              * @param tet_store Tet store to use
              */
@@ -1065,11 +1070,24 @@ namespace AMR {
             {
               for (const auto& edge : delete_list) {
                 tet_store.edge_store.erase(edge);
-                tet_store.intermediate_list.erase(edge.get_data()[0]);
-                tet_store.intermediate_list.erase(edge.get_data()[1]);
               }
 
               delete_list.clear();
+
+              // collect all point ids
+              std::unordered_set< size_t > used;
+              for (const auto& kv : tet_store.tets) {
+                if (tet_store.is_active(kv.first)) {
+                  for (auto p : kv.second) used.insert(p);
+                }
+              }
+
+              // only remove points from intermediate list if they are not used
+              auto& ilist = tet_store.intermediate_list;
+              for (auto it = ilist.begin(); it != ilist.end(); ) {
+                if (used.count(*it) == 0) it = ilist.erase(it);
+                else ++it;
+              }
             }
 
             /**

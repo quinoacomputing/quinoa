@@ -1223,12 +1223,47 @@ namespace AMR {
     {
         const size_t max_num_rounds = AMR_MAX_ROUNDS;
 
+        // flag tracking if a kept point deactivated any edge during a round
+        bool kept_deactivated(false);
+
+        // When a family accepts a partial derefinement (4:2, 8:4, 8:2),
+        // it has decided to keep a non-parent point (as opposed to *:1 deref).
+        // When this happens, the following lambda make its neighbours also
+        // keep those same points. For each kept (non-parent) point, unmark
+        // from deref the two child-edges joining it to the parent nodes, i.e.
+        // the two halves of the parent edge that point splits. This addresses
+        // the comment in the paper "for derefinement compatibilty, consistency
+        // with the allowed derefinement cases must be enforced at the
+        // neighboring parent elements".
+        auto deactivate_kept_points = [&]( const child_id_list_t& children,
+          const std::unordered_set< size_t >& non_parent_nodes,
+          const std::unordered_set< size_t >& removed_nodes )
+        {
+          for (auto child_id : children) {
+            for (const auto& edge : tet_store.generate_edge_keys(child_id)) {
+              auto A = edge.first();
+              auto B = edge.second();
+              bool keptA = non_parent_nodes.count(A) && !removed_nodes.count(A);
+              bool keptB = non_parent_nodes.count(B) && !removed_nodes.count(B);
+              if ((keptA && !non_parent_nodes.count(B)) ||
+                  (keptB && !non_parent_nodes.count(A))) {
+                auto& ed = tet_store.edge_store.get(edge);
+                if (ed.needs_derefining) {
+                  ed.needs_derefining = false;
+                  kept_deactivated = true;
+                }
+              }
+            }
+          }
+        };
+
         // Mark refinements
         size_t iter;
         //Iterate until convergence
         for (iter = 0; iter < max_num_rounds; iter++)
         {
             tet_store.marked_derefinements.get_state_changed() = false;
+            kept_deactivated = false;
 
             // set of elements which have been considered for derefinement
             std::unordered_set< size_t > done_deref_marking;
@@ -1367,6 +1402,8 @@ namespace AMR {
                         trace_out << "Accept as 4:2" << std::endl;
                         //refiner.derefine_four_to_two(tet_store,  node_connectivity, tet_id);
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::four_to_two);
+                        deactivate_kept_points(children, non_parent_nodes,
+                          derefine_node_set);
                     }
                     // "Else
                     else {
@@ -1426,6 +1463,8 @@ namespace AMR {
                             tet_store.edge_store.mark_edges_for_deref_ref(ref_edges);
                             //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
                             tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
+                            deactivate_kept_points(children, non_parent_nodes,
+                              derefine_node_set);
                         }
                         // "Else
                         else {
@@ -1470,7 +1509,22 @@ namespace AMR {
 
                     if (same_face.first == true)
                     {
-                        // deactivate the edges associated with same_face.second
+                        // deactivate the edges connecting same_face.second to
+                        // the parent nodes, i.e. the two halves of the parent
+                        // edge split by same_face.second. This keeps
+                        // same_face.second, since a non-parent node is only
+                        // derefined if all child-edges connected to it are
+                        // marked for derefinement.
+                        // The edges connecting same_face.second to other
+                        // non-parent nodes must not be deactivated: that would
+                        // also keep those non-parent nodes, which are supposed
+                        // to be removed. Then this family would no longer have
+                        // the intended 8:4 node set. Moreover, such edges on a
+                        // parent face are shared with the neighbouring family
+                        // across that face, whose nodes would then also be
+                        // kept. The outcome would then depend on the order in
+                        // which families are visited, and thus differ between
+                        // serial and parallel runs.
                         for (size_t i = 0; i < children.size(); i++)
                         {
                           edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
@@ -1479,7 +1533,10 @@ namespace AMR {
                             edge_t edge = edge_list[k];
                             size_t A = edge.first();
                             size_t B = edge.second();
-                            if (A == same_face.second || B == same_face.second)
+                            if ((A == same_face.second &&
+                                 !non_parent_nodes.count(B)) ||
+                                (B == same_face.second &&
+                                 !non_parent_nodes.count(A)))
                               tet_store.edge_store.get(edge).needs_derefining = false;
                           }
                         }
@@ -1498,6 +1555,14 @@ namespace AMR {
                         trace_out << "Accept as 8:4" << std::endl;
                         //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
+                        // same_face.second is kept by this 8:4, so it could be
+                        // erased from derefine_node_set to make the set hold
+                        // only the removed points. This is not needed, since
+                        // the edges deactivate_kept_points() would deactivate
+                        // for same_face.second are already deactivated above.
+                        //derefine_node_set.erase(same_face.second);
+                        deactivate_kept_points(children, non_parent_nodes,
+                          derefine_node_set);
                     }
                     // "Else
                     else {
@@ -1517,6 +1582,8 @@ namespace AMR {
                     trace_out << "Accept as 8:2 " << std::endl;
                     //refiner.derefine_eight_to_two(tet_store,  node_connectivity, tet_id);
                     tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_two);
+                    deactivate_kept_points(children, non_parent_nodes,
+                      derefine_node_set);
                 }
 
                 // "If nderefine = 6
@@ -1540,7 +1607,8 @@ namespace AMR {
             }
 
             // If nothing changed during that round, break
-            if (!tet_store.marked_derefinements.get_state_changed())
+            if (!tet_store.marked_derefinements.get_state_changed() &&
+                !kept_deactivated)
             {
                 trace_out << "Terminating loop at iter " << iter << std::endl;
                 break;

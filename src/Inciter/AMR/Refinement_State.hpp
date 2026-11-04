@@ -86,7 +86,11 @@ namespace AMR {
                     normal(0),
                     has_parent(has_parent_in)
             {
-                if (refinement_case_in == Refinement_Case::initial_grid)
+                // Children of 1:8 refinements contain no intermediate points
+                // (points of 1:2 or 1:4 children that do not belong to the
+                // parent), therefore they are normal elements
+                if (refinement_case_in == Refinement_Case::initial_grid ||
+                    refinement_case_in == Refinement_Case::one_to_eight)
                   normal = true;
                 // Set default size of children to be sensible
                 children.reserve(MAX_CHILDREN);
