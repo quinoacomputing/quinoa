@@ -88,9 +88,25 @@ bool
 degenerateDeformGrad(
   const std::array< std::array< tk::real, 3 >, 3 >& g );
 
+//! Anisotropy ratio of a deformation gradient tensor
+tk::real
+gAnisotropyRatio(
+  const std::array< std::array< tk::real, 3 >, 3 >& g );
+
+//! Smooth [0,1] weight fading to 0 as an anisotropy ratio approaches the
+//! degenerateDeformGrad() cutoff
+tk::real
+anisotropyWeight( tk::real anisotropy );
+
 //! Smooth [0,1] trust weight for a deformation gradient tensor's sanity
 tk::real
 gTensorTrustWeight(
+  const std::array< std::array< tk::real, 3 >, 3 >& g );
+
+//! Closest well-behaved isotropic (volume-preserving) tensor to a given
+//! deformation gradient tensor
+std::array< std::array< tk::real, 3 >, 3 >
+isotropicTarget(
   const std::array< std::array< tk::real, 3 >, 3 >& g );
 
 //! Reset the solid tensors

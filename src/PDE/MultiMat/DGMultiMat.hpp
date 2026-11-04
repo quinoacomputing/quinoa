@@ -585,29 +585,18 @@ class MultiMat {
               pri[pressureIdx(nmat,imat)], arhomat, alphamat, imat);
 
             if (solidx[imat] > 0) {
-              // A degenerate g (not yet caught by cleanTraceMaterial(),
-              // which only runs after the full stage update) must not be
-              // fed into the stress EoS: WilkinsAluminum::CauchyStress()
-              // derives the Hencky strain directly from g with no upper
-              // bound, so a corrupted g here produces an enormous stress
-              // that then poisons the shared HLLC wave speed at every face
-              // this element touches. Fall back to the undeformed state.
-              // Also fade the stress contribution smoothly to zero for a
-              // trace solid via solidPhysicsWeight(), AND smoothly for a
-              // g that is numerically unsound (low det(g) OR anisotropic,
-              // see gTensorTrustWeight()) regardless of alpha: a hard
-              // idT-vs-gmat switch on degenerateDeformGrad() alone makes
-              // this stress -- which feeds every neighboring element's
-              // shared HLLC flux every stage -- jump discontinuously right
-              // at that cutoff, independent of whether strain hardening or
-              // the Newton plasticity solve is even active. Scale the
-              // OUTPUT stress tensor rather than blending g itself toward
-              // identity: CauchyStress is nonlinear (logarithmic Hencky
-              // strain) in g, so a blended input tensor does not correspond
-              // to a fraction of the true stress, only output-scaling does.
+              // Only reject non-finite/non-positive det(g) here (where
+              // CauchyStress's underlying 1/det(g.g^T) is undefined); the
+              // wider degenerateDeformGrad() band fades out smoothly below
+              // via w_total instead of a hard switch, to avoid a
+              // discontinuous stress at every element sharing this face.
+              // Scaling the OUTPUT stress (not blending g itself) matters
+              // because CauchyStress is nonlinear in g.
               static const std::array< std::array< tk::real, 3 >, 3 > idT{{
                 {{1,0,0}}, {{0,1,0}}, {{0,0,1}} }};
-              auto gmat_safe = degenerateDeformGrad(gmat) ? idT : gmat;
+              auto detgmat = tk::determinant(gmat);
+              auto gmat_safe =
+                (std::isfinite(detgmat) && detgmat > 0.0) ? gmat : idT;
               auto asigmat = m_mat_blk[imat].template computeTensor< EOS::CauchyStress >(
                 alphamat, imat, gmat_safe );
               auto w_alpha = solidPhysicsWeight(alphamat);
@@ -1450,26 +1439,14 @@ class MultiMat {
             tk::real w_alpha = solidPhysicsWeight(alpha);
             tk::real w_g = gTensorTrustWeight(g);
             tk::real w_total = w_alpha * w_g;
-            // g_safe must reject the same degenerate band that w_g already
-            // scores as untrustworthy (det(g) outside [1e-3,1e3], or
-            // anisotropy beyond 650 -- see degenerateDeformGrad()), not
-            // just non-finite/non-positive values. A g inside that band --
-            // e.g. one row O(10) against others O(1), det(g)~2.5e-4 -- is
-            // finite and positive-determinant yet numerically poisonous:
-            // computing CauchyStress() from it runs getLeftCauchyGreen()/
-            // getIsochorRightCauchyGreen(), both of which invert g.g^T (or
-            // g^T.g), a matrix whose own determinant is the square of an
-            // already near-singular det(g) -- a textbook catastrophic-
-            // cancellation setup that can return a spurious negative
-            // determinant into a std::pow(.,1.0/3.0), yielding NaN. Once
-            // CauchyStress returns NaN, scaling by w_total afterward cannot
-            // recover it (0 * NaN = NaN under IEEE arithmetic), so the NaN
-            // was reaching the Newton residual/Jacobian on the very first
-            // iteration (observed: "Stage Newton failed" with niter=1 and
-            // rim_g all -nan) despite w_g already being computed as ~0 for
-            // this g. Matching updatePrimitives()'s degenerateDeformGrad()
-            // guard here closes that gap.
-            auto g_safe = degenerateDeformGrad(g) ? idT : g;
+            // Only reject non-finite/non-positive det(g) here; the wider
+            // degenerateDeformGrad() band is now handled by the smooth
+            // w_total fade instead of a hard idT switch, which used to be
+            // the actual source of the Newton-stall discontinuity (every
+            // observed crash had g parked at anisotropy 380-650, straddling
+            // that old cutoff).
+            auto detg = tk::determinant(g);
+            auto g_safe = (std::isfinite(detg) && detg > 0.0) ? g : idT;
             auto sigma_dev = m_mat_blk[k].template computeTensor< EOS::CauchyStress >(
               alpha, k, g_safe );
             for (std::size_t i=0; i<3; ++i)
@@ -1546,20 +1523,10 @@ class MultiMat {
               for (std::size_t j=0; j<3; ++j)
                 Lp[i][j] *= rel_factor/(2.0*mu);
 
-            // Compute the source terms
-            for (std::size_t i=0; i<3; ++i)
-              for (std::size_t j=0; j<3; ++j)
-                for (std::size_t idof=0; idof<ndof; ++idof)
-                {
-                  s[(i*3+j)*ndof+idof] = B[idof] * Lp[i][j];
-                }
-
-            // eps_p rate = sqrt(2/3 * Lp:Lp), using the fully-scaled Lp
-            // (the same plastic velocity gradient that sources g_ij above).
-            // Only accumulated as a stiff unknown when strain hardening is
-            // active -- with hardening off, eps_p isn't part of the stiff
-            // set at all (see setStiffEqIdx()), so there is no RHS slot to
-            // write into.
+            // eps_p rate = sqrt(2/3 * Lp:Lp). Uses the physical Lp only,
+            // computed before the numerical g-relaxation term below is
+            // folded in -- that term is a regularization, not real plastic
+            // strain, and must not inflate the hardening yield-stress law.
             if (hardening) {
               tk::real Lp_contraction = 0.0;
               for (std::size_t i=0; i<3; ++i)
@@ -1569,6 +1536,36 @@ class MultiMat {
               for (std::size_t idof=0; idof<ndof; ++idof)
                 s[9*ndof+idof] = B[idof] * eps_p_rate;
             }
+
+            // Numerical g-relaxation term: Lp is the only force pulling g
+            // back toward isotropic, but gTensorTrustWeight() fades it to
+            // zero before anisotropy reaches degenerateDeformGrad()'s 650
+            // cutoff, leaving g to drift via advection alone until Newton's
+            // FD Jacobian saturates (every observed crash sat at anisotropy
+            // 380-650). Relax toward the same target resetSolidTensors()
+            // uses, at the plasticity_reltime timescale, ramped on by
+            // exactly the anisotropy weight that faded the physical force.
+            //
+            // Gated by w_alpha too: ungated, this fired on near-void trace
+            // cells with no real physics (alpha~8e-7) and broke Newton there
+            // instead -- those cells already have resetSolidTensors() via
+            // cleanTraceMultiMat(); this term is only for "bulk" cells.
+            auto g_target = isotropicTarget(g);
+            tk::real correction_weight =
+              w_alpha * (1.0 - anisotropyWeight(gAnisotropyRatio(g)));
+            std::array< std::array< tk::real, 3 >, 3 > Lp_total;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                Lp_total[i][j] = Lp[i][j] +
+                  correction_weight * (g_target[i][j] - g[i][j]) / rel_time;
+
+            // Compute the source terms
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j)
+                for (std::size_t idof=0; idof<ndof; ++idof)
+                {
+                  s[(i*3+j)*ndof+idof] = B[idof] * Lp_total[i][j];
+                }
 
             auto wt = wgp[igp] * geoElem(e, 0);
 

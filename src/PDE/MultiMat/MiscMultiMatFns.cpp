@@ -773,24 +773,54 @@ degenerateDeformGrad(
   auto detg = tk::determinant(g);
   if (!std::isfinite(detg) || detg < 1e-3 || detg > 1e3) return true;
 
-  // det(g) alone is blind to a highly anisotropic g (e.g. one singular
-  // value O(10), another O(1), a third O(1e-3)) that keeps det(g) inside
-  // the O(1) band above while being just as unphysical: every observed
-  // Newton-convergence failure in production Taylor-impact runs had
-  // det(g) comfortably inside [1e-3,1e3] (0.001-0.01) yet a condition
-  // number (ratio of largest to smallest singular value) in the
-  // thousands. Catch that case via ||g||_F^3 / (3^1.5 * |det(g)|): this
-  // ratio equals 1 for g proportional to a rotation (all singular values
-  // equal) and grows rapidly with anisotropy (e.g. ~25 at a 5x stretch
-  // ratio between the largest and smallest singular value, assuming unit
-  // determinant), without requiring an eigen/SVD solve -- it only needs
-  // the already-computed det(g) plus the Frobenius norm.
+  // det(g) alone misses a highly anisotropic g that keeps det(g) in-band
+  // (e.g. singular values O(10)/O(1)/O(1e-3)) yet is just as unphysical --
+  // every observed Newton-convergence failure had det(g) in [1e-3,1e3] but
+  // a condition number in the thousands. gAnisotropyRatio() catches that.
+  auto anisotropy = gAnisotropyRatio(g);
+  return (!std::isfinite(anisotropy) || anisotropy > 650.0);
+}
+
+tk::real
+gAnisotropyRatio(
+  const std::array< std::array< tk::real, 3 >, 3 >& g )
+// *****************************************************************************
+//  Anisotropy ratio of a deformation gradient tensor
+//! \param[in] g Inverse deformation gradient tensor
+//! \return ||g||_F^3 / (3^1.5 * |det(g)|): 1 for g proportional to a
+//!   rotation, growing rapidly with anisotropy. Shared by
+//!   degenerateDeformGrad(), gTensorTrustWeight(), and stiff_rhs()'s
+//!   g-relaxation source so all three agree on what "degenerate" means.
+// *****************************************************************************
+{
+  auto detg = tk::determinant(g);
   tk::real froNorm2 = 0.0;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
       froNorm2 += g[i][j]*g[i][j];
-  auto anisotropy = std::pow(froNorm2/3.0, 1.5) / std::abs(detg);
-  return (!std::isfinite(anisotropy) || anisotropy > 650.0);
+  return std::pow(froNorm2/3.0, 1.5) / std::abs(detg);
+}
+
+tk::real
+anisotropyWeight( tk::real anisotropy )
+// *****************************************************************************
+//  Smooth [0,1] weight fading to 0 as an anisotropy ratio approaches the
+//  degenerateDeformGrad() cutoff
+//! \param[in] anisotropy Anisotropy ratio, see gAnisotropyRatio()
+//! \return 1 for a well-behaved (low-anisotropy) g, smoothstepped down to 0
+//!   at degenerateDeformGrad()'s hard cutoff (650) instead of jumping there
+//!   -- margin taken in log-space (half a decade), since this ratio spans
+//!   orders of magnitude the same way det(g) does.
+// *****************************************************************************
+{
+  if (!std::isfinite(anisotropy) || anisotropy <= 0.0) return 0.0;
+  constexpr tk::real aniso_hi = 650.0;
+  constexpr tk::real log_aniso_margin = 0.5;
+  tk::real log_aniso_hi = std::log10(aniso_hi);
+  tk::real loga = std::log10(anisotropy);
+  tk::real t_aniso = std::clamp(
+    (log_aniso_hi-loga)/log_aniso_margin, 0.0, 1.0);
+  return t_aniso*t_aniso*(3.0-2.0*t_aniso);
 }
 
 tk::real
@@ -802,25 +832,11 @@ gTensorTrustWeight(
 //! \return 1 for a well-behaved g, fading smoothly to 0 as either det(g) or
 //!   the anisotropy ratio approaches the hard cutoffs used by
 //!   degenerateDeformGrad()
-//! \details degenerateDeformGrad() is a hard true/false switch: feeding its
-//!   output straight into a idT-vs-g choice for stress/Lp makes the
-//!   residual (and any finite-difference Jacobian built from it)
-//!   discontinuous in state space right at the cutoff. That discontinuity
-//!   previously stalled Newton for det(g) alone (observed: a cell parked at
-//!   det(g)~0.000999, just inside the degenerate side of 1e-3, failed to
-//!   converge in 250 iterations) -- the fix at the time was a smooth
-//!   log(det(g))-space ramp applied to the OUTPUT stress. When
-//!   degenerateDeformGrad() was later widened to also catch anisotropy
-//!   (every observed Newton failure had det(g) safely in-band but a
-//!   singular-value condition number in the thousands), that widening only
-//!   touched the hard switch, re-introducing the same discontinuity at the
-//!   new anisotropy cutoff -- and updatePrimitives() never had a smooth
-//!   ramp for g-sanity at all, only the hard switch, meaning this new
-//!   discontinuity reaches the shared HLLC face flux every stage,
-//!   independent of whether strain hardening (or Newton plasticity at all)
-//!   is active. This combines both components into one ramp, each fading
-//!   to exactly zero at degenerateDeformGrad()'s own hard edges so the two
-//!   functions never disagree about when g is untrustworthy.
+//! \details degenerateDeformGrad()'s hard true/false switch makes the
+//!   Newton residual/Jacobian discontinuous right at its cutoffs, which has
+//!   repeatedly stalled convergence in production runs. This ramps both the
+//!   det(g) and anisotropy components to zero smoothly at those same
+//!   cutoffs instead, so stress/Lp fade out continuously as g degrades.
 // *****************************************************************************
 {
   auto detg = tk::determinant(g);
@@ -837,26 +853,54 @@ gTensorTrustWeight(
   tk::real w_det = t_det*t_det*(3.0-2.0*t_det);
 
   // Anisotropy-based component: same ratio as degenerateDeformGrad(),
-  // smoothstepped down to zero at that function's hard cutoff (650) instead
-  // of jumping there -- margin taken in log-space (half a decade), since
-  // this ratio spans orders of magnitude the same way det(g) does.
-  tk::real froNorm2 = 0.0;
-  for (std::size_t i=0; i<3; ++i)
-    for (std::size_t j=0; j<3; ++j)
-      froNorm2 += g[i][j]*g[i][j];
-  auto anisotropy = std::pow(froNorm2/3.0, 1.5) / std::abs(detg);
-  tk::real w_aniso = 0.0;
-  if (std::isfinite(anisotropy) && anisotropy > 0.0) {
-    constexpr tk::real aniso_hi = 650.0;
-    constexpr tk::real log_aniso_margin = 0.5;
-    tk::real log_aniso_hi = std::log10(aniso_hi);
-    tk::real loga = std::log10(anisotropy);
-    tk::real t_aniso = std::clamp(
-      (log_aniso_hi-loga)/log_aniso_margin, 0.0, 1.0);
-    w_aniso = t_aniso*t_aniso*(3.0-2.0*t_aniso);
-  }
+  // smoothstepped down to zero at that function's hard cutoff.
+  tk::real w_aniso = anisotropyWeight(gAnisotropyRatio(g));
 
   return w_det * w_aniso;
+}
+
+std::array< std::array< tk::real, 3 >, 3 >
+isotropicTarget(
+  const std::array< std::array< tk::real, 3 >, 3 >& g )
+// *****************************************************************************
+//  Closest well-behaved isotropic (volume-preserving) tensor to a given
+//  deformation gradient tensor
+//! \param[in] g Inverse deformation gradient tensor
+//! \return det(g)^(1/3) * I, smoothly blended toward I as det(g) approaches
+//!   or falls outside a plausible range
+//! \details Blends with the same smoothstep as gTensorTrustWeight()'s
+//!   w_det, rather than a hard switch at the 1e-3/1e3 edges: this target
+//!   now also feeds the Newton-solved g-relaxation source in stiff_rhs(),
+//!   where a discontinuous target poisons the FD Jacobian the same way a
+//!   hard g-sanity switch did before gTensorTrustWeight() replaced it --
+//!   confirmed in practice, a cell at det(g)=0.0009990 (just inside the old
+//!   hard edge) failed to converge until this was smoothed. Shared by
+//!   resetSolidTensors() and stiff_rhs() so both relax toward the same
+//!   target.
+// *****************************************************************************
+{
+  auto detg = tk::determinant(g);
+  tk::real gii;
+  if (!std::isfinite(detg) || detg <= 0.0) {
+    gii = 1.0;
+  } else {
+    // Same det(g) ramp as gTensorTrustWeight()'s w_det: full trust more
+    // than half a decade inside [1e-3,1e3], smoothstepped to zero trust
+    // exactly at those edges.
+    constexpr tk::real log_lo = -3.0, log_hi = 3.0;
+    constexpr tk::real log_margin = 0.5;
+    tk::real logd = std::log10(detg);
+    tk::real dist_det = std::min(logd-log_lo, log_hi-logd);
+    tk::real t_det = std::clamp(dist_det/log_margin, 0.0, 1.0);
+    tk::real w_det = t_det*t_det*(3.0-2.0*t_det);
+    tk::real gii_phys = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
+    gii = w_det*gii_phys + (1.0-w_det)*1.0;
+  }
+
+  std::array< std::array< tk::real, 3 >, 3 > target{{}};
+  for (std::size_t i=0; i<3; ++i)
+    target[i][i] = gii;
+  return target;
 }
 
 void
@@ -900,20 +944,9 @@ resetSolidTensors(
       g[i][j] = g[j][i] = sij;
     }
 
-  // Robust determinant and spherical replacement.
-  // det(g) = J^{-1} should be O(1) for any physically reasonable
-  // deformation. If it is not finite or falls far outside a plausible
-  // range, the input g itself is corrupted (e.g. from advection/flux
-  // noise) and cube-rooting it -- even after floor-clamping to avoid NaNs
-  // -- would just manufacture another unphysical g (such as gii ~ 1e-6,
-  // implying the solid collapsed to ~1e-18 of its volume). In that case,
-  // discard g entirely and fall back to the undeformed reference state.
-  auto detg = tk::determinant(g);
-  tk::real new_gii;
-  if (!std::isfinite(detg) || detg < 1e-3 || detg > 1e3)
-    new_gii = 1.0;
-  else
-    new_gii = std::pow(detg, 1.0/3.0); // = J^{-1/3} > 0
+  // Robust spherical replacement target -- see isotropicTarget().
+  auto gtarget_mat = isotropicTarget(g);
+  tk::real new_gii = gtarget_mat[0][0];
 
   // Blend g/stress/eps_p toward their target (spherical g / zero stress /
   // zero eps_p) instead of snapping to it in one step. A hard snap makes the
