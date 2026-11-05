@@ -1555,13 +1555,39 @@ class MultiMat {
             // cells with no real physics (alpha~8e-7) and broke Newton there
             // instead -- those cells already have resetSolidTensors() via
             // cleanTraceMultiMat(); this term is only for "bulk" cells.
+            //
+            // The physical Lp above is bounded by construction: it is a
+            // stress-scale quantity (sigma_dev, capped near yield_stress)
+            // divided by 2*mu, so its contribution to g's rate never exceeds
+            // roughly yield_stress/(2*mu)/rel_time regardless of how far g
+            // has drifted. (g_target-g) has no such bound -- it is a raw
+            // tensor difference that grows with however degenerate g has
+            // become, so feeding it through the same 1/rel_time unscaled
+            // let this term dominate the residual in exactly the cases
+            // where correction_weight is large (observed: Newton's final
+            // relative error rose to 13-19% at full/near-full
+            // correction_weight, worse than any case without this term).
+            // Cap its magnitude to that same elastic-strain-at-yield scale,
+            // preserving direction, so the numerical backstop can never
+            // out-muscle the physical term's own self-limiting behavior.
             auto g_target = isotropicTarget(g);
             tk::real correction_weight = w_alpha * (1.0 - w_g);
+            std::array< std::array< tk::real, 3 >, 3 > gdiff;
+            tk::real gdiff_norm = 0.0;
+            for (std::size_t i=0; i<3; ++i)
+              for (std::size_t j=0; j<3; ++j) {
+                gdiff[i][j] = g_target[i][j] - g[i][j];
+                gdiff_norm += gdiff[i][j]*gdiff[i][j];
+              }
+            gdiff_norm = std::sqrt(gdiff_norm);
+            tk::real eps_cap = yield_stress/(2.0*mu);
+            tk::real cap_factor =
+              (gdiff_norm > eps_cap) ? eps_cap/gdiff_norm : 1.0;
             std::array< std::array< tk::real, 3 >, 3 > Lp_total;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
                 Lp_total[i][j] = Lp[i][j] +
-                  correction_weight * (g_target[i][j] - g[i][j]) / rel_time;
+                  correction_weight * cap_factor * gdiff[i][j] / rel_time;
 
             // Compute the source terms
             for (std::size_t i=0; i<3; ++i)
