@@ -1538,21 +1538,25 @@ class MultiMat {
             }
 
             // Numerical g-relaxation term: Lp is the only force pulling g
-            // back toward isotropic, but gTensorTrustWeight() fades it to
-            // zero before anisotropy reaches degenerateDeformGrad()'s 650
-            // cutoff, leaving g to drift via advection alone until Newton's
-            // FD Jacobian saturates (every observed crash sat at anisotropy
-            // 380-650). Relax toward the same target resetSolidTensors()
-            // uses, at the plasticity_reltime timescale, ramped on by
-            // exactly the anisotropy weight that faded the physical force.
+            // back toward isotropic, but gTensorTrustWeight() (w_g above)
+            // fades it to zero as g goes degenerate -- either anisotropy
+            // approaching degenerateDeformGrad()'s 650 cutoff, OR det(g)
+            // leaving [1e-3,1e3] (including going negative). Relax toward
+            // the same target resetSolidTensors() uses, at the
+            // plasticity_reltime timescale, ramped on by the complement of
+            // w_g itself -- the same full trust weight the physical force
+            // lost, not just its anisotropy component. (A version keyed only
+            // to anisotropy missed det(g)-driven fade: a crash was observed
+            // with det(g) negative but anisotropy only ~245, well under 650,
+            // where that narrower weight left both the physical and
+            // numerical forces nearly off.)
             //
             // Gated by w_alpha too: ungated, this fired on near-void trace
             // cells with no real physics (alpha~8e-7) and broke Newton there
             // instead -- those cells already have resetSolidTensors() via
             // cleanTraceMultiMat(); this term is only for "bulk" cells.
             auto g_target = isotropicTarget(g);
-            tk::real correction_weight =
-              w_alpha * (1.0 - anisotropyWeight(gAnisotropyRatio(g)));
+            tk::real correction_weight = w_alpha * (1.0 - w_g);
             std::array< std::array< tk::real, 3 >, 3 > Lp_total;
             for (std::size_t i=0; i<3; ++i)
               for (std::size_t j=0; j<3; ++j)
