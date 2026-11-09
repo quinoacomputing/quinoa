@@ -169,13 +169,6 @@ ALECG::queryBnd()
                    /* increment = */ false );
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
-  // Query boundary faces for face-based operators. These sets must remain
-  // face-based: a chare may contain a shared physical-boundary node without
-  // owning a complete boundary face at that node.
-  auto sym = d->bcnodes< tag::symmetry >( m_bface, m_triinpoel );
-  auto far = d->bcnodes< tag::farfield >( m_bface, m_triinpoel );
-  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
-
   // Prepare node-based strong BC sets from the distributed side-set node
   // lists. In parallel, m_bnode contains all side-set nodes present in this
   // chare's volume mesh, including nodes for which this chare owns no complete
@@ -214,10 +207,14 @@ ALECG::queryBnd()
     m_slipwallbcnodes.erase(fn);
   }
 
-  // Prepare boundary nodes contiguously accessible from a triangle-face loop,
-  // which contain both symmetry and no slip walls. Use the face-derived sets
-  // here, since these flags describe boundary-face flux treatment rather than
-  // strong nodal BC enforcement.
+  // Prepare boundary nodes contiguously accessible from a triangle-face loop
+  // for face-based operators, which contain both symmetry and no slip walls.
+  // Use the face-derived sets here, since these flags describe boundary-face
+  // flux treatment rather than strong nodal BC enforcement. Using m_bnode can
+  // (incorrectly) include nodes in this set when the chare does not contain a
+  // complete physical boundary face.
+  auto sym = d->bcnodes< tag::symmetry >( m_bface, m_triinpoel );
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
   std::unordered_set< std::size_t > symfacenodes, slipfacenodes;
   for (const auto& [s,nodes] : sym)
     symfacenodes.insert( begin(nodes), end(nodes) );
