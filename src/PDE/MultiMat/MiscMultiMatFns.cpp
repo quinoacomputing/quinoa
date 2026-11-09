@@ -236,7 +236,15 @@ cleanTraceMultiMat(
           // solidPhysicsWeight() ramp in updatePrimitives()/stiff_rhs():
           // there is no longer a discontinuous activation event for a
           // stale g to be caught at.)
-          if (solidTensorUnphysical(nmat, k, e, U)) {
+          // Trace solids (alk < volfracPRelaxLim(), condition 1) are
+          // hard-snapped to a spherical g with zero stress on every stage,
+          // exactly as in develop, so degraded g cannot persist in the thin
+          // interface band and advect into bulk cells. Other cells (reached
+          // only through condition 3) get the blended repair.
+          if (alk < volfracPRelaxLim()) {
+            resetSolidTensors(nmat, k, e, U, P, true);
+          }
+          else if (solidTensorUnphysical(nmat, k, e, U)) {
             printf("cleanTraceMaterial: resetting unphysical g-tensor: "
                    "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
                    t, e, k, solidx[k], alk);
@@ -909,7 +917,8 @@ resetSolidTensors(
   std::size_t k,
   std::size_t e,
   tk::Fields& U,
-  tk::Fields& P )
+  tk::Fields& P,
+  bool hard )
 // *****************************************************************************
 //  Reset the solid tensors
 //! \param[in] nmat Number of materials in this PDE system
@@ -917,7 +926,9 @@ resetSolidTensors(
 //! \param[in] e Id of element whose solution is to be limited
 //! \param[in/out] U High-order solution vector which gets modified
 //! \param[in/out] P High-order vector of primitives which gets modified
-//! \details Always blends toward the clean target by solidResetRelaxFactor()
+//! \param[in] hard If true, snap g/stress/eps_p to the spherical target in one
+//!   step (develop's behavior, used for trace cells); otherwise blend
+//! \details If not hard, always blends toward the clean target by solidResetRelaxFactor()
 //!   rather than snapping to it in one step: a hard snap makes the face flux
 //!   at the very next stage jump by the full error, large enough to blow up
 //!   a neighboring element's Newton solve or collapse dt. This is only
@@ -943,6 +954,26 @@ resetSolidTensors(
       tk::real sij = 0.5*(g[i][j] + g[j][i]);
       g[i][j] = g[j][i] = sij;
     }
+
+  if (hard) {
+    // Same recipe as develop: clamp det, spherical replacement, zero
+    // deviatoric stress (not pressure) and higher DOFs, plus zero eps_p.
+    auto detg = std::max(1e-18, tk::determinant(g));
+    const tk::real new_gii = std::pow(detg, 1.0/3.0);
+    for (size_t i=0;i<3;++i)
+      for (size_t j=0;j<3;++j) {
+        U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, 0)) =
+          (i==j) ? new_gii : 0.0;
+        P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, 0)) = 0.0;
+        for (size_t l=1; l<rdof; ++l) {
+          U(e, deformDofIdx(nmat, solidx[k], i, j, rdof, l)) = 0.0;
+          P(e, stressDofIdx(nmat, solidx[k], stressCmp[i][j], rdof, l)) = 0.0;
+        }
+      }
+    for (size_t l=0; l<rdof; ++l)
+      U(e, epsPDofIdx(nmat, solidx[k], rdof, l)) = 0.0;
+    return;
+  }
 
   // Robust spherical replacement target -- see isotropicTarget().
   auto gtarget_mat = isotropicTarget(g);
