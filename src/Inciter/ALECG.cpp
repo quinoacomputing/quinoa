@@ -1403,54 +1403,59 @@ ALECG::resizePostAMR(
       m_u(n.first,c) = (m_u(n.second[0],c) + m_u(n.second[1],c))/2.0;
     }
 
-  // Update IC-box node memberships from old local ids to new local ids,
-  // dropping nodes that were removed by derefinement.
-  for (auto& boxnodes : m_boxnodes) {
-    std::unordered_set< std::size_t > updated;
-    for (auto p : boxnodes) {
-      auto it = amrNodeMap.find( p );
-      if (it != end(amrNodeMap)) updated.insert( it->second );
-    }
-    boxnodes = std::move( updated );
-  }
+  // Update IC-box node memberships only if AMR has modified the mesh
+  if (!addedNodes.empty() || !removedNodes.empty()) {
 
-  // Add newly created AMR nodes to IC boxes if their coordinates lie inside.
-  const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
-  if (!icbox.empty()) {
-    Assert( m_boxnodes.size() == icbox.size(),
-      "Incorrect number of IC box node sets" );
-    const auto& x = d->Coord()[0];
-    const auto& y = d->Coord()[1];
-    const auto& z = d->Coord()[2];
-    std::size_t bcnt = 0;
-    for (const auto& b : icbox) {
-      std::vector< tk::real > box
-        { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
-          b.template get< tag::ymin >(), b.template get< tag::ymax >(),
-          b.template get< tag::zmin >(), b.template get< tag::zmax >() };
-
-      std::array< tk::real, 3 > b_orientn{{
-        b.template get< tag::orientation >()[0],
-        b.template get< tag::orientation >()[1],
-        b.template get< tag::orientation >()[2] }};
-      std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
-        0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
-      std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
-      std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
-      tk::movePoint( b_centroid, b_min );
-      tk::movePoint( b_centroid, b_max );
-
-      for (const auto& [p,parent] : addedNodes) {
-        (void)parent;
-        std::array< tk::real, 3 > node{{ x[p], y[p], z[p] }};
-        tk::movePoint( b_centroid, node );
-        tk::rotatePoint( {{-b_orientn[0], -b_orientn[1], -b_orientn[2]}}, node );
-        if (node[0] > b_min[0] && node[0] < b_max[0] &&
-            node[1] > b_min[1] && node[1] < b_max[1] &&
-            node[2] > b_min[2] && node[2] < b_max[2])
-          m_boxnodes[bcnt].insert( p );
+    // Update IC-box node memberships from old local ids to new local ids,
+    // dropping nodes that were removed by derefinement.
+    for (auto& boxnodes : m_boxnodes) {
+      std::unordered_set< std::size_t > updated;
+      for (auto p : boxnodes) {
+        auto it = amrNodeMap.find( p );
+        if (it != end(amrNodeMap)) updated.insert( it->second );
       }
-      ++bcnt;
+      boxnodes = std::move( updated );
+    }
+
+    // Add newly created AMR nodes to IC boxes if their coordinates lie inside.
+    const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
+    if (!icbox.empty()) {
+      Assert( m_boxnodes.size() == icbox.size(),
+        "Incorrect number of IC box node sets" );
+      const auto& x = d->Coord()[0];
+      const auto& y = d->Coord()[1];
+      const auto& z = d->Coord()[2];
+      std::size_t bcnt = 0;
+      for (const auto& b : icbox) {
+        std::vector< tk::real > box
+          { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+            b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+            b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+
+        std::array< tk::real, 3 > b_orientn{{
+          b.template get< tag::orientation >()[0],
+          b.template get< tag::orientation >()[1],
+          b.template get< tag::orientation >()[2] }};
+        std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
+          0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
+        std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
+        std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
+        tk::movePoint( b_centroid, b_min );
+        tk::movePoint( b_centroid, b_max );
+
+        for (const auto& [p,parent] : addedNodes) {
+          (void)parent;
+          std::array< tk::real, 3 > node{{ x[p], y[p], z[p] }};
+          tk::movePoint( b_centroid, node );
+          tk::rotatePoint( {{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+            node );
+          if (node[0] > b_min[0] && node[0] < b_max[0] &&
+              node[1] > b_min[1] && node[1] < b_max[1] &&
+              node[2] > b_min[2] && node[2] < b_max[2])
+            m_boxnodes[bcnt].insert( p );
+        }
+        ++bcnt;
+      }
     }
   }
 
