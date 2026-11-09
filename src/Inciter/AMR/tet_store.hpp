@@ -691,7 +691,7 @@ namespace AMR {
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)
                 {
                     edge_t edge = edge_list[k];
-                    edge_store.mark_for_refinement(edge);
+                    edge_store.mark_for_refinement(edge_store.get(edge));
                     trace_out << "Marking edge " << edge << " for refine " << std::endl;
                 }
             }

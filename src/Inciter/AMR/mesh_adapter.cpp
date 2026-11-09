@@ -409,18 +409,20 @@ namespace AMR {
                     {
 
                         trace_out << "Edge " << key << std::endl;
+                        const auto& edge = tet_store.edge_store.get(key);
 
                         //Count locked edges and edges in need of
                         // refinement
                         // Count Locked Edges
-                        if(tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::locked)
+                        if(edge.lock_case == AMR::Edge_Lock_Case::locked)
                         {
                             trace_out << "Found locked edge " << key << std::endl;
-                            trace_out << "Locked :" << tet_store.edge_store.get(key).lock_case << std::endl;
+                            trace_out << "Locked :" << edge.lock_case << std::endl;
                             num_locked_edges++;
                         }
-                        else if(tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate
-                          || tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::temporary)
+                        else if(
+                          edge.lock_case == AMR::Edge_Lock_Case::intermediate ||
+                          edge.lock_case == AMR::Edge_Lock_Case::temporary)
                         {
                             trace_out << "Found intermediate edge " << key << std::endl;
                             num_intermediate_edges++;
@@ -430,7 +432,7 @@ namespace AMR {
                             // Count edges which need refining
                             //  We check in here as we won't refine a
                             //  locked edge and will thus ignore it
-                            if (tet_store.edge_store.get(key).needs_refining == 1)
+                            if (edge.needs_refining == 1)
                             {
                                 num_to_refine++;
                                 trace_out << "key needs ref " << key << std::endl;
@@ -729,7 +731,8 @@ namespace AMR {
                 for (size_t k = 0; k < NUM_FACE_NODES; k++)
                 {
                     edge_t key = face_edge_list[k];
-                    tet_store.edge_store.mark_for_refinement(key);
+                    tet_store.edge_store.mark_for_refinement(
+                      tet_store.edge_store.get(key));
                 }
 
                 //refiner.refine_one_to_four(tet_id, face_list[face_refine_id],
@@ -764,10 +767,11 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
+            auto& edge = tet_store.edge_store.get(key);
+            if (edge.lock_case == AMR::Edge_Lock_Case::unlocked)
             {
                 trace_out << "LOCKING! " << key << std::endl;
-                tet_store.edge_store.get(key).lock_case = AMR::Edge_Lock_Case::locked;
+                edge.lock_case = AMR::Edge_Lock_Case::locked;
             }
         }
     }
@@ -779,10 +783,11 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
+            auto& edge = tet_store.edge_store.get(key);
 
-            tet_store.edge_store.unmark_for_refinement(key);
+            tet_store.edge_store.unmark_for_refinement(edge);
             trace_out << "Deactivating " << key << std::endl;
-            tet_store.edge_store.get(key).needs_derefining = false;
+            edge.needs_derefining = false;
         }
     }
 
@@ -820,12 +825,13 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
-            if (tet_store.edge_store.get(key).lock_case != AMR::Edge_Lock_Case::unlocked)
+            auto& edge = tet_store.edge_store.get(key);
+            if (edge.lock_case != AMR::Edge_Lock_Case::unlocked)
             {
-                tet_store.edge_store.unmark_for_refinement(key);
+                tet_store.edge_store.unmark_for_refinement(edge);
             }
             // "Count number of active edges"
-            if (tet_store.edge_store.get(key).needs_refining == 1) {
+            if (edge.needs_refining == 1) {
                 num_active_edges++;
             }
         }
@@ -849,7 +855,8 @@ namespace AMR {
             {
                 edge_t key = face_edge_list[k];
                 trace_out << "Checking " << key << std::endl;
-                if (tet_store.edge_store.get(key).needs_refining == 1)
+                const auto& edge = tet_store.edge_store.get(key);
+                if (edge.needs_refining == 1)
                 {
                     num_face_refine_edges++;
                     trace_out << "ref! " << key << std::endl;
@@ -857,7 +864,7 @@ namespace AMR {
 
                 // Check for locked edges
                 // This case only cares about faces with no locks
-                if (tet_store.edge_store.get(key).lock_case != AMR::Edge_Lock_Case::unlocked)
+                if (edge.lock_case != AMR::Edge_Lock_Case::unlocked)
                 {
                     num_face_locked_edges++;
                     trace_out << "locked! " << key << std::endl;
@@ -905,7 +912,8 @@ namespace AMR {
             for (size_t k = 0; k < NUM_FACE_NODES; k++)
             {
                 edge_t key = face_edge_list[k];
-                tet_store.edge_store.mark_for_refinement(key);
+                tet_store.edge_store.mark_for_refinement(
+                  tet_store.edge_store.get(key));
             }
 
             //refiner.refine_one_to_four(tet_id, face_list[face_refine_id], opposite_id);
@@ -950,29 +958,30 @@ namespace AMR {
         {
             edge_t key = edge_list[k];
             trace_out << "Key " << key << std::endl;
+            const auto& edge = tet_store.edge_store.get(key);
 
             // Count intermediate edges
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate
-              || tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::temporary)
+            if (edge.lock_case == AMR::Edge_Lock_Case::intermediate
+              || edge.lock_case == AMR::Edge_Lock_Case::temporary)
             {
                 trace_out << "found intermediate" << std::endl;
                 num_intermediate++;
             }
 
             // Count number of marked for refinement
-            if (tet_store.edge_store.get(key).needs_refining == 1)
+            if (edge.needs_refining == 1)
             {
                 trace_out << "found refine" << std::endl;
                 num_to_refine++;
             }
 
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
+            if (edge.lock_case == AMR::Edge_Lock_Case::unlocked)
             {
                 trace_out << "found unlocked" << std::endl;
                 unlocked++;
             }
 
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::locked)
+            if (edge.lock_case == AMR::Edge_Lock_Case::locked)
             {
                 trace_out << "found locked" << std::endl;
                 locked++;
@@ -1069,13 +1078,14 @@ namespace AMR {
             {
                 edge_t key = edge_list[k];
                 trace_out << "Compat 3 " << key << std::endl;
-                if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
+                auto& edge = tet_store.edge_store.get(key);
+                if (edge.lock_case == AMR::Edge_Lock_Case::unlocked)
                 {
                     trace_out << "Compat 3 marking edge " << key << std::endl;
-                    tet_store.edge_store.mark_for_refinement(key);
+                    edge.needs_refining = 1;
                 }
                 else {
-                    tet_store.edge_store.unmark_for_refinement(key);
+                    tet_store.edge_store.unmark_for_refinement(edge);
                 }
             }
         }
@@ -1191,9 +1201,10 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
-            if (tet_store.edge_store.get(key).lock_case == check)
+            auto& edge = tet_store.edge_store.get(key);
+            if (edge.lock_case == check)
             {
-                tet_store.edge_store.get(key).lock_case = new_case;
+                edge.lock_case = new_case;
             }
         }
     }

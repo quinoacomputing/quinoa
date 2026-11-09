@@ -1260,11 +1260,13 @@ namespace AMR {
                       size_t A = edge.first();
                       size_t B = edge.second();
                       trace_out << "checking edge for deref " << A << " - " << B << std::endl;
+                      bool deref =
+                        tet_store.edge_store.get(edge).needs_derefining;
 
                       //if (tet_store.is_intermediate(A))
                       if (non_parent_nodes.count(A) )
                       {
-                        if (tet_store.edge_store.get(edge).needs_derefining) {
+                        if (deref) {
                           trace_out << "Adding " << A << std::endl;
                           derefine_node_set.insert(A);
                         }
@@ -1277,7 +1279,7 @@ namespace AMR {
                       //if (tet_store.is_intermediate(B))
                       if (non_parent_nodes.count(B))
                       {
-                        if (tet_store.edge_store.get(edge).needs_derefining) {
+                        if (deref) {
                           trace_out << "Adding " << B << std::endl;
                           derefine_node_set.insert(B);
                         }
