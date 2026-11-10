@@ -626,6 +626,7 @@ Refiner::addRefBndEdges(
   // Add intermediates to mesh refiner lib
   // needs to be done only when mesh has been actually updated, i.e. first iter
   if (m_ncit == 0) {
+    bool relock = false;
     auto esup = tk::genEsup( m_inpoel, 4 );
     auto psup = tk::genPsup( m_inpoel, 4, esup );
     for (const auto g : intermediates) {
@@ -637,12 +638,17 @@ Refiner::addRefBndEdges(
           AMR::edge_t e(m_rid[p], m_rid[q]);
           auto& refedge = m_refiner.tet_store.edge_store.get(e);
           if (refedge.lock_case == AMR::Edge_Lock_Case::unlocked) {
+            if (refedge.needs_refining) relock = true;
             refedge.lock_case = AMR::Edge_Lock_Case::temporary; //intermediate;
             refedge.needs_refining = 0;
           }
         }
       }
     }
+    // Redo refinement marking if temp-locks removed edges from refinement.
+    // This is necessary since the temp-locks should affect refinement
+    // decisions that are made at the element-level.
+    if (relock) m_refiner.mark_refinement();
   }
 
   // Heard from every worker we share at least a single edge with
@@ -1319,8 +1325,16 @@ Refiner::errorsInEdges(
 //!   to edges (2 local node IDs)
 // *****************************************************************************
 {
-  // Get the PDE-selected refinement variables and error indicator configured
-  const auto refvars = g_cgpde[m_meshid].amrErrorComponents();
+  // Get the PDE-selected refinement variables and error indicator configured.
+  // DG/FV PDEs do not select components, so use all of them.
+  std::vector< tk::ncomp_t > refvars;
+  const auto scheme = g_inputdeck.get< tag::scheme >();
+  if (ctr::Scheme().centering( scheme ) == tk::Centering::NODE) {
+    refvars = g_cgpde[m_meshid].amrErrorComponents();
+  } else {
+    refvars.resize( g_inputdeck.get< tag::ncomp >() );
+    std::iota( begin(refvars), end(refvars), 0 );
+  }
   Assert( !refvars.empty(), "PDE must select an AMR error component" );
   auto errtype = g_inputdeck.get< tag::amr, tag::error >();
 

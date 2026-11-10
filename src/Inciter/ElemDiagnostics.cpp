@@ -94,6 +94,9 @@ ElemDiagnostics::compute( Discretization& d,
     // Inciter/Diagnostics.h.
     std::vector< std::vector< tk::real > >
       diag( NUMDIAG, std::vector< tk::real >( u.nprop()/rdof, 0.0 ) );
+    // Rigid body motion qtys are 3d vectors
+    for (auto i : {RESFORCE, RESTORQUE, DISPLACEMNT, ROTATION})
+      diag[i].assign( 3, 0.0 );
 
     // Compute diagnostics for DG
     compute_diag(d, rdof, nchGhost, geoElem, ndofel, u, un, diag);

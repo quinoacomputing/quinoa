@@ -1552,8 +1552,9 @@ Transporter::diagnostics( CkReductionMsg* msg )
   Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
-     Assert( d[i].size() == ncomp, "Size mismatch at final stage of "
-             "diagnostics aggregation for mesh " + id );
+     Assert( d[i].size() == (i >= RESFORCE && i <= ROTATION ? 3 : ncomp),
+             "Size mismatch at final stage of diagnostics aggregation for "
+             "mesh " + id );
 
   // Allocate storage for those diagnostics that are always computed
   std::vector< tk::real > diag( ncomp, 0.0 );
