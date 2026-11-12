@@ -2275,9 +2275,10 @@ void PositivityBoundsMultiMat(
       std::min(phic_bound[energyIdx(nmat, k)], phi_rhoe);
     // Evaluate the limiting coefficient for material pressure
     rho = std::max(min, rho);
-    auto min_pre = std::max(min, state[volfracIdx(nmat, k)] *
+    auto min_pre = state[volfracIdx(nmat, k)] *
       mat_blk[k].compute< EOS::min_eff_pressure >(min, rho,
-      state[volfracIdx(nmat, k)]));
+      state[volfracIdx(nmat, k)]);
+    if (!mat_blk[k].allowsTension()) min_pre = std::max(min, min_pre);
     auto pre = sprim[pressureIdx(nmat, k)];
     auto pre_avg = P(e, pressureDofIdx(nmat, k, rdof, 0));
     phi_pre = PositivityFunction(min_pre, pre, pre_avg);
@@ -2419,9 +2420,10 @@ void PositivityPreservingMultiMat_FV(
           + B[1]*U(e,densityDofIdx(nmat,i,rdof,1))
           + B[2]*U(e,densityDofIdx(nmat,i,rdof,2))
           + B[3]*U(e,densityDofIdx(nmat,i,rdof,3));
-        auto min_pre = std::max(min, U(e,volfracDofIdx(nmat,i,rdof,0)) *
+        auto min_pre = U(e,volfracDofIdx(nmat,i,rdof,0)) *
           mat_blk[i].compute< EOS::min_eff_pressure >(min, rho,
-          U(e,volfracDofIdx(nmat,i,rdof,0))));
+          U(e,volfracDofIdx(nmat,i,rdof,0)));
+        if (!mat_blk[i].allowsTension()) min_pre = std::max(min, min_pre);
         auto pre = B[0]*P(e,pressureDofIdx(nmat,i,rdof,0))
           + B[1]*P(e,pressureDofIdx(nmat,i,rdof,1))
           + B[2]*P(e,pressureDofIdx(nmat,i,rdof,2))

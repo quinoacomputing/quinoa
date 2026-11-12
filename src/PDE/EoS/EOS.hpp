@@ -53,6 +53,10 @@ class EOS {
     //! Constructor
     explicit EOS( ctr::MaterialType mattype, EqType eq, std::size_t k );
 
+    //! Whether the material can sustain negative pressure (tension)
+    bool allowsTension() const
+    { return std::holds_alternative< GodunovRomenski >( m_material ); }
+
     //! Entry method tags for specific EOS classes to use with compute()
     struct density {};
     struct pressure {};

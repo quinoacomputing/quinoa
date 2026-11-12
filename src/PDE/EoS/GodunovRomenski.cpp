@@ -118,7 +118,8 @@ GodunovRomenski::pressure(
   // use Mie-Gruneisen form of Godunov-Romenski for pressure
   auto partpressure = pressure_coldcompr(arho,alpha) + m_gamma*arhoEt;
 
-  partpressure = std::max(min_eff_pressure(1e-10, arho, alpha), partpressure);
+  partpressure = std::max(alpha*min_eff_pressure(1e-10, arho, alpha),
+    partpressure);
 
   //// check partial pressure divergence
   //if (!std::isfinite(partpressure)) {
@@ -343,23 +344,24 @@ GodunovRomenski::temperature(
 tk::real
 GodunovRomenski::min_eff_pressure(
   tk::real min,
-  tk::real /*arho*/,
-  tk::real /*alpha*/ ) const
+  tk::real arho,
+  tk::real alpha ) const
 // *************************************************************************
 //! Compute the minimum allowed pressure
-//! \param[in] min Numerical threshold above which pressure needs to be limited
+//! \param[in] min Numerical margin kept above the zero-soundspeed bound
 //! \param[in] arho Material partial density (alpha_k * rho_k)
-//! \param[in] alpha Material volume fraction. Default is 1.0, so that for
-//! \return Minimum pressure allowed by physical constraints
+//! \param[in] alpha Material volume fraction
+//! \return Minimum material pressure (not partial pressure) allowed by the
+//!   zero-soundspeed condition. Negative (tension) for solids.
+//! \details Setting the hydrodynamic part of the sound speed squared,
+//!   dpcc/drho + (gamma+1)*(p - pcc)/rho, to zero gives
+//!   p_min = pcc(rho) - rho*dpcc/drho/(gamma+1).
 // *************************************************************************
 {
-  // // minimum pressure is constrained by zero soundspeed.
-  // auto rho = arho/alpha;
-  // auto aeff = std::max(alpha, g_inputdeck.get< tag::multimat, tag::min_volumefrac >());
-  // auto arhoeff = std::max(arho, aeff*rho);
-  return min;
-    // - rho/(m_gamma+1) * DpccDrho(rho)
-    // + pressure_coldcompr(arhoeff, aeff)/aeff;
+  auto al_eff = std::max( 1e-14, alpha );
+  auto rho = std::max( 1e-14, arho/al_eff );
+  return min + pressure_coldcompr(rho*al_eff, al_eff)/al_eff
+    - rho/(m_gamma+1.0) * DpccDrho(rho);
 }
 
 tk::real
