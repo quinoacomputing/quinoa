@@ -70,3 +70,52 @@ add_regression_test(multimat_fv_restart ${INCITER_EXECUTABLE}
                     TEXT_DIFF_PROG_CONF fv_diag.ndiff.cfg
                     CHECKPOINT multimat_fv_checkpoint
                     LABELS fv restart)
+
+add_regression_test(overset_checkpoint ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES sphereflow_overset.lua freestream_BGmesh_15k.exo sphere_OSmesh_12k.exo
+                    ARGS -c sphereflow_overset.lua -v
+                    BIN_BASELINE background_checkpoint_pe4.std.exo.0
+                                 background_checkpoint_pe4.std.exo.1
+                                 background_checkpoint_pe4.std.exo.2
+                                 background_checkpoint_pe4.std.exo.3
+                                 overset_checkpoint_pe4.std.exo.0
+                                 overset_checkpoint_pe4.std.exo.1
+                                 overset_checkpoint_pe4.std.exo.2
+                                 overset_checkpoint_pe4.std.exo.3
+                    BIN_RESULT out.0.e-s.0.4.0
+                               out.0.e-s.0.4.1
+                               out.0.e-s.0.4.2
+                               out.0.e-s.0.4.3
+                               out.1.e-s.0.4.0
+                               out.1.e-s.0.4.1
+                               out.1.e-s.0.4.2
+                               out.1.e-s.0.4.3
+                    BIN_DIFF_PROG_CONF exodiff_overset.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    LABELS oversetfe restart)
+
+add_regression_test(overset_restart ${INCITER_EXECUTABLE}
+                    NUMPES 4
+                    INPUTFILES sphereflow_overset_restart.lua freestream_BGmesh_15k.exo sphere_OSmesh_12k.exo
+                    ARGS -c sphereflow_overset_restart.lua -v +restart restart
+                    BIN_BASELINE background_pe4.std.exo.0
+                                 background_pe4.std.exo.1
+                                 background_pe4.std.exo.2
+                                 background_pe4.std.exo.3
+                                 overset_pe4.std.exo.0
+                                 overset_pe4.std.exo.1
+                                 overset_pe4.std.exo.2
+                                 overset_pe4.std.exo.3
+                    BIN_RESULT out.0.e-s.0.4.0
+                               out.0.e-s.0.4.1
+                               out.0.e-s.0.4.2
+                               out.0.e-s.0.4.3
+                               out.1.e-s.0.4.0
+                               out.1.e-s.0.4.1
+                               out.1.e-s.0.4.2
+                               out.1.e-s.0.4.3
+                    BIN_DIFF_PROG_CONF exodiff_overset.cfg
+                    BIN_DIFF_PROG_ARGS -m
+                    CHECKPOINT overset_checkpoint
+                    LABELS oversetfe restart)
