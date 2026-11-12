@@ -971,6 +971,9 @@ class CompFlow {
     std::vector< std::string > names() const
     { return m_problem.names( m_ncomp ); }
 
+    //! Return state component indices used to compute AMR errors
+    std::vector< ncomp_t > amrErrorComponents() const { return { 0 }; }
+
   private:
     const Physics m_physics;            //!< Physics policy
     const Problem m_problem;            //!< Problem policy

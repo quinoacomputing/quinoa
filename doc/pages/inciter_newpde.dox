@@ -883,8 +883,6 @@ Control/Inciter/InputDeck/Grammar.hpp.
 -         pegtl::sor< transport, compflow > {};
 +         pegtl::sor< transport, compflow, multimat > {};
  
-   //! refinement variable(s) (refvar) ... end block
-   struct refvars :
 @endcode
 
 We finally include (above) the new `multimat` grammar block among the

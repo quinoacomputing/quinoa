@@ -32,7 +32,9 @@ class ElemDiagnostics {
                   const tk::Fields& geoElem,
                   const std::vector< std::size_t >& ndofel,
                   const tk::Fields& u,
-                  const tk::Fields& un ) const;
+                  const tk::Fields& un,
+                  const std::size_t imex_maxiter = 0,
+                  const std::size_t imex_activeElem = 0 ) const;
 
     /** @name Charm++ pack/unpack serializer member functions */
     ///@{

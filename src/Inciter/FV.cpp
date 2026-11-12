@@ -613,9 +613,6 @@ FV::solve( tk::real newdt )
   // Set new time step size
   if (m_stage == 0) d->setdt( newdt );
 
-  // Update Un
-  if (m_stage == 0) m_un = m_u;
-
   // physical time at time-stage for computing exact source terms for
   // unsteady problems
   tk::real physT(d->T());
@@ -639,6 +636,9 @@ FV::solve( tk::real newdt )
   g_fvpde[d->MeshId()].rhs( physT, myGhosts()->m_geoFace, myGhosts()->m_geoElem,
     myGhosts()->m_fd, myGhosts()->m_inpoel, myGhosts()->m_coord,
     d->ElemBlockId(), m_u, m_p, m_rhs, m_srcFlag );
+
+  // Update Un
+  if (m_stage == 0) m_un = m_u;
 
   // Explicit time-stepping using RK3 to discretize time-derivative
   const auto steady = g_inputdeck.get< tag::steady_state >();
@@ -738,11 +738,12 @@ FV::resizePostAMR(
   const std::vector< std::size_t >& /*ginpoel*/,
   const tk::UnsMesh::Chunk& chunk,
   const tk::UnsMesh::Coords& coord,
-  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& /*addedNodes*/,
+  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::size_t >& addedTets,
   const std::set< std::size_t >& removedNodes,
   const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap,
+  const tk::EdgeCommMap& edgeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& /* bnode */,
   const std::vector< std::size_t >& triinpoel,
@@ -751,10 +752,12 @@ FV::resizePostAMR(
 //  Receive new mesh from Refiner
 //! \param[in] chunk New mesh chunk (connectivity and global<->local id maps)
 //! \param[in] coord New mesh node coordinates
+//! \param[in] addedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] addedTets Newly added mesh cells and their parents (local ids)
 //! \param[in] removedNodes Newly removed mesh node local ids
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
+//! \param[in] edgeCommMap New edge communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
 //! \param[in] elemblockid Local tet ids associated with mesh block ids
@@ -775,8 +778,8 @@ FV::resizePostAMR(
   [[maybe_unused]] auto old_nelem = myGhosts()->m_inpoel.size()/4;
 
   // Resize mesh data structures
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
-    elemblockid );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, edgeCommMap,
+    removedNodes, addedNodes, elemblockid );
 
   // Update state
   myGhosts()->m_inpoel = d->Inpoel();

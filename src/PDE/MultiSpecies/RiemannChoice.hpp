@@ -17,6 +17,7 @@
 #include "FunctionPrototypes.hpp"
 #include "Inciter/Options/Flux.hpp"
 #include "Riemann/AUSMMultiSpecies.hpp"
+#include "Riemann/HLLMultiSpecies.hpp"
 #include "Riemann/LDFSS.hpp"
 
 namespace inciter {
@@ -32,6 +33,9 @@ namespace inciter {
     if (flux == ctr::FluxType::AUSM) {
       fluxfn = AUSMMultiSpecies::flux;
     }
+    else if (flux == ctr::FluxType::HLL) {
+      fluxfn = HLLMultiSpecies::flux;
+    }
     else if (flux == ctr::FluxType::LDFSS) {
       fluxfn = LDFSS::flux;
     }
@@ -40,6 +44,24 @@ namespace inciter {
     }
 
     return fluxfn;
+  };
+
+  //! Get the Riemann solver Jacobian function according to control file setup
+  //! \param[in] flux Riemann solver from input deck
+  //! \return Function pointer to the Riemann solver, must be of type
+  //!   tk::RiemannFluxJacFn
+  const static tk::RiemannFluxJacFn multispeciesRiemannJac(ctr::FluxType flux)
+  {
+    tk::RiemannFluxJacFn fluxJacfn;
+
+    if (flux == ctr::FluxType::AUSM) {
+      fluxJacfn = AUSMMultiSpecies::fluxJac;
+    }
+    else {
+      Throw("Riemann solver not set up for multi-material PDEs.");
+    }
+
+    return fluxJacfn;
   }
 
 } // inciter::

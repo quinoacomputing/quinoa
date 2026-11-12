@@ -77,6 +77,7 @@ Refiner::Refiner( std::size_t meshid,
   m_refiner( g_inputdeck.get< tag::amr, tag::maxlevels >(), m_inpoel ),
   m_nref( 0 ),
   m_nbnd( 0 ),
+  m_nchedge( 0 ),
   m_extra( 0 ),
   m_ch(),
   m_edgech(),
@@ -84,6 +85,9 @@ Refiner::Refiner( std::size_t meshid,
   m_localEdgeData(),
   m_remoteEdgeData(),
   m_nodeCommMap(),
+  m_edgeCommMap(),
+  m_addedChBndEdges(),
+  m_removedChBndEdges(),
   m_oldTets(),
   m_addedNodes(),
   m_addedTets(),
@@ -214,8 +218,9 @@ Refiner::coarseMesh()
   m_coarseBlkElems.clear();
   for (const auto& [blid, elids] : m_elemblockid) {
     for (auto ie : elids) {
-      m_coarseBlkElems[blid].insert( {{{m_inpoel[ie*4+0], m_inpoel[ie*4+1],
-        m_inpoel[ie*4+2], m_inpoel[ie*4+3]}}} );
+      m_coarseBlkElems[blid].insert(
+        {{{ m_gid[m_inpoel[ie*4+0]], m_gid[m_inpoel[ie*4+1]],
+            m_gid[m_inpoel[ie*4+2]], m_gid[m_inpoel[ie*4+3]] }}} );
     }
   }
 }
@@ -400,13 +405,13 @@ Refiner::bndEdges()
         Assert( m_lid.find( C ) != end(m_lid), "Local node ID not found" );
         // assign edges to bins a single chare will respond to when computing
         // shared edges
-        auto bin = A / chunksize;
+        auto bin = std::min(A,B) / chunksize;
         Assert( bin < N, "Will index out of number of chares" );
         chbedges[ static_cast<int>(bin) ].insert( {A,B} );
-        bin = B / chunksize;
+        bin = std::min(B,C) / chunksize;
         Assert( bin < N, "Will index out of number of chares" );
         chbedges[ static_cast<int>(bin) ].insert( {B,C} );
-        bin = C / chunksize;
+        bin = std::min(C,A) / chunksize;
         Assert( bin < N, "Will index out of number of chares" );
         chbedges[ static_cast<int>(bin) ].insert( {C,A} );
       }
@@ -621,6 +626,7 @@ Refiner::addRefBndEdges(
   // Add intermediates to mesh refiner lib
   // needs to be done only when mesh has been actually updated, i.e. first iter
   if (m_ncit == 0) {
+    bool relock = false;
     auto esup = tk::genEsup( m_inpoel, 4 );
     auto psup = tk::genPsup( m_inpoel, 4, esup );
     for (const auto g : intermediates) {
@@ -632,12 +638,17 @@ Refiner::addRefBndEdges(
           AMR::edge_t e(m_rid[p], m_rid[q]);
           auto& refedge = m_refiner.tet_store.edge_store.get(e);
           if (refedge.lock_case == AMR::Edge_Lock_Case::unlocked) {
+            if (refedge.needs_refining) relock = true;
             refedge.lock_case = AMR::Edge_Lock_Case::temporary; //intermediate;
             refedge.needs_refining = 0;
           }
         }
       }
     }
+    // Redo refinement marking if temp-locks removed edges from refinement.
+    // This is necessary since the temp-locks should affect refinement
+    // decisions that are made at the element-level.
+    if (relock) m_refiner.mark_refinement();
   }
 
   // Heard from every worker we share at least a single edge with
@@ -945,11 +956,12 @@ Refiner::refinementFields() const
 
   // Prepare element fields with mesh refinement data
   std::vector< std::string >
-    elemfieldnames{ "refinement level", "cell type", "error" };
+    elemfieldnames{ "refinement level", "cell type", "normal cell", "error" };
   auto& tet_store = m_refiner.tet_store;
   std::vector< std::vector< tk::real > > elemfields{
     tet_store.get_refinement_level_list(),
     tet_store.get_cell_type_list(),
+    tet_store.get_normal_cell_list(),
     error };
 
   using tuple_t = std::tuple< std::vector< std::string >,
@@ -1093,7 +1105,6 @@ Refiner::perform()
   }
 
   // Remove temporary edge-locks resulting from the parallel compatibility
-  m_refiner.remove_edge_locks(1);
   m_refiner.remove_edge_temp_locks();
 
   //auto& tet_store = m_refiner.tet_store;
@@ -1104,9 +1115,24 @@ Refiner::perform()
   // Update volume and boundary mesh
   updateMesh();
 
-  // Save mesh at every initial refinement step (mainly for debugging). Will
-  // replace with just a 'next()' in production.
-  if (m_mode == RefMode::T0REF) {
+  if (m_mode == RefMode::DTREF) {
+    // Wait for local preparation and all edge-neighbor map updates.
+    thisProxy[ thisIndex ].wait4edgemap();
+    if (m_edgeCommMap.empty()) {
+      comedgemap_complete();
+    } else {
+      m_nchedge = m_edgeCommMap.size();
+      for (const auto& [ neighborchare, edges ] : m_edgeCommMap) {
+        const auto& removed =
+          tk::cref_find( m_removedChBndEdges, neighborchare );
+        thisProxy[ neighborchare ].comEdgeCommMap(
+          thisIndex, m_addedChBndEdges, removed );
+      }
+    }
+    ownedgemap_complete();
+  } else if (m_mode == RefMode::T0REF) {
+    // Save mesh at every initial refinement step (mainly for debugging). Will
+    // replace with just a 'next()' in production.
 
     auto l = m_ninitref - m_initref.size() + 1;  // num initref steps completed
     auto t0 = g_inputdeck.get< tag::t0 >();
@@ -1123,6 +1149,31 @@ Refiner::perform()
     next();
 
   }
+}
+
+void
+Refiner::comEdgeCommMap( int fromch,
+                         const EdgeSet& addededges,
+                         const EdgeSet& removededges )
+// *****************************************************************************
+// Validate removed and add new chare-boundary edges from a fellow chare
+// *****************************************************************************
+{
+  // A shared pre-AMR edge must disappear from both sides of the interface.
+  const auto& localremoved = tk::cref_find( m_removedChBndEdges, fromch );
+  Assert( localremoved.size() == removededges.size() &&
+          std::all_of( begin(removededges), end(removededges),
+            [&localremoved]( const auto& edge ) {
+              return localremoved.find(edge) != end(localremoved);
+            } ),
+          "Asymmetric removal of chare-boundary edges after AMR" );
+
+  auto& edges = tk::ref_find( m_edgeCommMap, fromch );
+  for (const auto& edge : addededges)
+    if (m_addedChBndEdges.find(edge) != end(m_addedChBndEdges))
+      edges.insert(edge);
+
+  if (--m_nchedge == 0) comedgemap_complete();
 }
 
 void
@@ -1143,7 +1194,7 @@ Refiner::next()
     // Send new mesh, solution, and communication data back to PDE worker
     m_scheme[m_meshid].ckLocal< Scheme::resizePostAMR >( thisIndex,  m_ginpoel,
       m_el, m_coord, m_addedNodes, m_addedTets, m_removedNodes, m_amrNodeMap,
-      m_nodeCommMap, m_bface, m_bnode, m_triinpoel, m_elemblockid );
+      m_nodeCommMap, m_edgeCommMap, m_bface, m_bnode, m_triinpoel, m_elemblockid );
 
   } else if (m_mode == RefMode::OUTREF) {
 
@@ -1183,6 +1234,8 @@ Refiner::endt0ref()
 //!   total number of elements across the whole problem.
 // *****************************************************************************
 {
+  m_mode = RefMode::DTREF;
+
   // create sorter Charm++ chare array elements using dynamic insertion
   m_sorter[ thisIndex ].insert( m_meshid, m_host, m_meshwriter, m_cbs, m_scheme,
     CkCallback(CkIndex_Refiner::reorder(), thisProxy[thisIndex]), m_ginpoel,
@@ -1211,6 +1264,7 @@ Refiner::endt0ref()
   //   tk::destroy( m_remoteEdges );
   //   tk::destroy( m_intermediates );
   //   tk::destroy( m_nodeCommMap );
+  //   tk::destroy( m_edgeCommMap );
   //   tk::destroy( m_oldTets );
   //   tk::destroy( m_addedNodes );
   //   tk::destroy( m_addedTets );
@@ -1271,9 +1325,17 @@ Refiner::errorsInEdges(
 //!   to edges (2 local node IDs)
 // *****************************************************************************
 {
-  // Get the indices (in the system of systems) of refinement variables and the
-  // error indicator configured
-  auto ncomp = g_inputdeck.get< tag::ncomp >();
+  // Get the PDE-selected refinement variables and error indicator configured.
+  // DG/FV PDEs do not select components, so use all of them.
+  std::vector< tk::ncomp_t > refvars;
+  const auto scheme = g_inputdeck.get< tag::scheme >();
+  if (ctr::Scheme().centering( scheme ) == tk::Centering::NODE) {
+    refvars = g_cgpde[m_meshid].amrErrorComponents();
+  } else {
+    refvars.resize( g_inputdeck.get< tag::ncomp >() );
+    std::iota( begin(refvars), end(refvars), 0 );
+  }
+  Assert( !refvars.empty(), "PDE must select an AMR error component" );
   auto errtype = g_inputdeck.get< tag::amr, tag::error >();
 
   // Compute points surrounding points
@@ -1287,7 +1349,8 @@ Refiner::errorsInEdges(
     for (auto q : tk::Around(psup,p)) { // for all nodes surrounding p
       tk::real cmax = 0.0;
       AMR::edge_t e(p,q);
-      for (std::size_t i=0; i<ncomp; ++i) { // for all refinement variables
+      for (auto i : refvars) { // for all PDE-selected refinement variables
+        Assert( i < u.nprop(), "AMR error component index out of bounds" );
         auto c = error.scalar( u, e, i, m_coord, m_inpoel, esup, errtype );
         if (c > cmax) cmax = c;        // find max error at edge
       }
@@ -1605,12 +1668,14 @@ Refiner::updateMesh()
   std::size_t l = m_lref.size();
   for (auto r : ref) if (old.find(r) == end(old)) m_lref[r] = l++;
 
-  // Get nodal communication map from Discretization worker
+  // Get nodal and edge communication map from Discretization worker
   if ( m_mode == RefMode::DTREF ||
        m_mode == RefMode::OUTREF ||
        m_mode == RefMode::OUTDEREF ) {
     m_nodeCommMap =
       m_scheme[m_meshid].disc()[thisIndex].ckLocal()->NodeCommMap();
+    m_edgeCommMap =
+      m_scheme[m_meshid].disc()[thisIndex].ckLocal()->EdgeCommMap();
   }
 
   // Update mesh and solution after refinement
@@ -1626,10 +1691,16 @@ Refiner::updateMesh()
           "Size mismatch" );
   tk::remap( m_ginpoel, m_gid );
 
+  // Update element block ids for the refined mesh
+  updateElemBlockId();
+
   // Update boundary face and node information
   newBndMesh( ref );
 
-  // Augment node communication map with newly added nodes on chare-boundary
+  // Update local edge communication-map delta from final AMR topology.
+  if (m_mode == RefMode::DTREF) updateEdgeCommMap();
+
+  // Augment node communication map with newly added nodes on chare boundary
   if (m_mode == RefMode::DTREF || m_mode == RefMode::OUTREF) {
     for (const auto& [ neighborchare, edges ] : m_remoteEdges) {
       auto& nodes = tk::ref_find( m_nodeCommMap, neighborchare );
@@ -1657,6 +1728,55 @@ Refiner::updateMesh()
             tk::genEsuelTet( m_inpoel, tk::genEsup(m_inpoel,4) ),
             m_inpoel, m_coord ),
           "Refined mesh partition leaky" );
+}
+
+void
+Refiner::updateEdgeCommMap()
+// *****************************************************************************
+// Update local edge communication map from post-AMR boundary topology
+// *****************************************************************************
+{
+  // Flatten the pre-AMR edge map to identify edges newly created by AMR.
+  EdgeSet oldedges;
+  for (const auto& [ neighborchare, edges ] : m_edgeCommMap)
+    oldedges.insert( begin(edges), end(edges) );
+
+  // Enumerate every edge on the post-AMR boundary of this chare.
+  EdgeSet postedges;
+  auto esup = tk::genEsup( m_inpoel, 4 );
+  auto esuel = tk::genEsuelTet( m_inpoel, esup );
+  for (std::size_t e=0; e<esuel.size()/4; ++e) {
+    auto mark = e*4;
+    for (std::size_t f=0; f<4; ++f) {
+      if (esuel[mark+f] == -1) {
+        auto A = m_ginpoel[ mark+tk::lpofa[f][0] ];
+        auto B = m_ginpoel[ mark+tk::lpofa[f][1] ];
+        auto C = m_ginpoel[ mark+tk::lpofa[f][2] ];
+        postedges.insert( {std::min(A,B), std::max(A,B)} );
+        postedges.insert( {std::min(B,C), std::max(B,C)} );
+        postedges.insert( {std::min(C,A), std::max(C,A)} );
+      }
+    }
+  }
+
+  // Retain new chare-boundary edges for the later neighbor-delta exchange.
+  m_addedChBndEdges.clear();
+  for (const auto& e : postedges)
+    if (oldedges.find(e) == end(oldedges))
+      m_addedChBndEdges.insert(e);
+
+  // Remove edges that disappeared through refinement or derefinement.
+  m_removedChBndEdges.clear();
+  for (auto& [ neighborchare, edges ] : m_edgeCommMap) {
+    auto& removed = m_removedChBndEdges[ neighborchare ];
+    for (auto e=begin(edges); e!=end(edges); ) {
+      if (postedges.find(*e) == end(postedges)) {
+        removed.insert(*e);
+        e = edges.erase(e);
+      } else
+        ++e;
+    }
+  }
 }
 
 void
@@ -1974,6 +2094,45 @@ Refiner::boundary()
   //}
 
   return pcFaceTets;
+}
+
+void
+Refiner::updateElemBlockId()
+// *****************************************************************************
+// Update mesh block ids after mesh refinement
+// *****************************************************************************
+{
+  // Clear block memberships from the previous mesh.
+  tk::destroy( m_elemblockid );
+
+  // Match each active refined tet to its coarse ancestor tet.
+  for (std::size_t e=0; e<m_inpoel.size()/4; ++e) {
+    std::unordered_set< std::size_t > ans;
+    for (std::size_t i=0; i<4; ++i) {
+      auto ai = ancestors( m_inpoel[e*4+i] );
+      ans.insert( begin(ai), end(ai) );
+    }
+
+    Assert( ans.size() == 4,
+      "Incorrect number of ancestors in refined element" );
+
+    // Convert ancestor local node ids to a global-id coarse tet.
+    Tet ct;
+    std::size_t i = 0;
+    for (auto a : ans) ct[i++] = m_gid[a];
+
+    // Assign the refined tet to the block containing its coarse ancestor.
+    auto found = false;
+    for (const auto& [blid,tets] : m_coarseBlkElems) {
+      if (tets.find(ct) != end(tets)) {
+        m_elemblockid[blid].insert( e );
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) Throw( "Cannot determine mesh block id for refined element" );
+  }
 }
 
 void

@@ -33,6 +33,16 @@ static CkReduction::reducerType PDFMerger;
 extern ctr::InputDeck g_inputdeck;
 extern ctr::InputDeck g_inputdeck_defaults;
 
+//! \brief Generate solution transfer (coupling) list for overset meshes
+//! \param[in] nmesh Total number of meshes
+//! \return Transfer list, pairing mesh 0 (background) with every other mesh
+static std::vector< Transfer >
+genTransfer( std::size_t nmesh ) {
+  std::vector< Transfer > transfer;
+  for (std::size_t i=1; i<nmesh; ++i) transfer.emplace_back( 0, i );
+  return transfer;
+}
+
 } // inciter::
 
 namespace exam2m {
@@ -59,7 +69,7 @@ Discretization::Discretization(
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid,
   int nc ) :
   m_meshid( meshid ),
-  m_transfer( g_inputdeck.get< tag::transfer >() ),
+  m_transfer( genTransfer( g_inputdeck.get< tag::mesh >().size() ) ),
   m_disc( disc ),
   m_nchare( nc ),
   m_it( 0 ),
@@ -498,7 +508,9 @@ Discretization::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, std::size_t >& /*amrNodeMap*/,
   const tk::NodeCommMap& nodeCommMap,
+  const tk::EdgeCommMap& edgeCommMap,
   const std::set< std::size_t >& /*removedNodes*/,
+  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Resize mesh data structures after mesh refinement
@@ -506,19 +518,39 @@ Discretization::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
+//! \param[in] edgeCommMap New edge communication map
 //! \param[in] removedNodes Newly removed mesh node local ids
+//! \param[in] removedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] elemblockid New local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
   m_nodeCommMap.clear();
   m_nodeCommMap = nodeCommMap;        // update node communication map
+  m_edgeCommMap.clear();
+  m_edgeCommMap = edgeCommMap;        // update edge communication map
   m_elemblockid.clear();
   m_elemblockid = elemblockid;
 
   // Update mesh volume container size
   m_vol.resize( m_gid.size(), 0.0 );
   if (!m_voln.empty()) m_voln.resize( m_gid.size(), 0.0 );
+
+  // Resize mesh velocity
+  if (!g_inputdeck.get< tag::ale, tag::ale >())
+    m_meshvel.resize( coord[0].size() );
+
+  for (const auto& n : addedNodes) {
+    for (std::size_t i=0; i<3; ++i) {
+      Assert(n.first < m_meshvel.nunk(),
+        "Added node index out of bounds post-AMR");
+      Assert(n.second[0] < m_meshvel.nunk() && n.second[1] < m_meshvel.nunk(),
+        "Indices of parent-edge nodes out of bounds post-AMR");
+
+      m_meshvel(n.first,i) = (m_meshvel(n.second[0],i) +
+        m_meshvel(n.second[1],i))/2.0;
+    }
+  }
 
   // Regenerate bid data
   tk::destroy(m_bid);

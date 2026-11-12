@@ -23,6 +23,7 @@
 #include "UnsMesh.hpp"
 #include "CommMap.hpp"
 #include "History.hpp"
+#include "Transfer.hpp"
 #include "Inciter/InputDeck/InputDeck.hpp"
 
 #include "NoWarning/discretization.decl.h"
@@ -152,7 +153,9 @@ class Discretization : public CBase_Discretization {
       const tk::UnsMesh::Coords& coord,
       const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
       const tk::NodeCommMap& nodeCommMap,
+      const tk::EdgeCommMap& edgeCommMap,
       const std::set< std::size_t >& removedNodes,
+      const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
       const std::unordered_map< std::size_t, std::set< std::size_t > >&
         elemblockid );
 

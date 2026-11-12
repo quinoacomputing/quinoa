@@ -1,16 +1,16 @@
 // *****************************************************************************
 /*!
-  \file      src/PDE/EoS/SmallShearSolid.hpp
+  \file      src/PDE/EoS/NeoHookeanSolid.hpp
   \copyright 2012-2015 J. Bakosi,
              2016-2018 Los Alamos National Security, LLC.,
              2019-2021 Triad National Security, LLC.
              All rights reserved. See the LICENSE file for details.
-  \brief     Small shear strain equation of state for solids
-  \details   This file defines functions for the SmallShearSolid equation of
+  \brief     Neo-Hookean equation of state for solids
+  \details   This file defines functions for the NeoHookeanSolid equation of
              state for the compressible flow equations. These functions are
              taken from Plohr, J. N., & Plohr, B. J. (2005). Linearized analysis
              of Richtmyer–Meshkov flow for elastic materials. Journal of Fluid
-             Mechanics, 537, 55-89. The SmallShearSolid EOS uses a small-shear
+             Mechanics, 537, 55-89. The NeoHookeanSolid EOS uses a small-shear
              approximation for the elastic contribution, and a stiffened gas EOS
              for the hydrodynamic contribution of the internal energy.
 */
@@ -19,7 +19,7 @@
 #include <cmath>
 #include <iostream>
 #include "Vector.hpp"
-#include "EoS/SmallShearSolid.hpp"
+#include "EoS/NeoHookeanSolid.hpp"
 
 // // Lapacke forward declarations
 // extern "C" {
@@ -33,9 +33,9 @@
 
 // }
 
-using inciter::SmallShearSolid;
+using inciter::NeoHookeanSolid;
 
-SmallShearSolid::SmallShearSolid(
+NeoHookeanSolid::NeoHookeanSolid(
   tk::real gamma,
   tk::real pstiff,
   tk::real cv,
@@ -54,7 +54,7 @@ SmallShearSolid::SmallShearSolid(
 { }
 
 void
-SmallShearSolid::setRho0( tk::real rho0 )
+NeoHookeanSolid::setRho0( tk::real rho0 )
 // *************************************************************************
 //  Set rho0 EOS parameter; i.e. the initial density
 //! \param[in] rho0 Initial material density that needs to be stored
@@ -64,15 +64,15 @@ SmallShearSolid::setRho0( tk::real rho0 )
 }
 
 tk::real
-SmallShearSolid::density(
+NeoHookeanSolid::density(
   tk::real pr,
   tk::real temp ) const
 // *************************************************************************
 //! \brief Calculate density from the material pressure and temperature 
-//!   using the SmallShearSolid equation of state
+//!   using the NeoHookeanSolid equation of state
 //! \param[in] pr Material pressure
 //! \param[in] temp Material temperature
-//! \return Material density calculated using the SmallShearSolid EoS
+//! \return Material density calculated using the NeoHookeanSolid EoS
 // *************************************************************************
 {
   tk::real g = m_gamma;
@@ -84,7 +84,7 @@ SmallShearSolid::density(
 }
 
 tk::real
-SmallShearSolid::pressure(
+NeoHookeanSolid::pressure(
   tk::real arho,
   tk::real u,
   tk::real v,
@@ -95,7 +95,7 @@ SmallShearSolid::pressure(
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate pressure from the material density, momentum, total energy
-//!   and the inverse deformation gradient tensor using the SmallShearSolid
+//!   and the inverse deformation gradient tensor using the NeoHookeanSolid
 //!   equation of state
 //! \param[in] arho Material partial density (alpha_k * rho_k)
 //! \param[in] u X-velocity
@@ -112,7 +112,7 @@ SmallShearSolid::pressure(
 //!   (g_k). Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
 //! \return Material partial pressure (alpha_k * p_k) calculated using the
-//!   SmallShearSolid EoS
+//!   NeoHookeanSolid EoS
 // *************************************************************************
 {
   // obtain elastic contribution to energy
@@ -150,13 +150,13 @@ SmallShearSolid::pressure(
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
-SmallShearSolid::CauchyStress(
+NeoHookeanSolid::CauchyStress(
   tk::real alpha,
   std::size_t /*imat*/,
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad ) const
 // *************************************************************************
 //! \brief Calculate the elastic Cauchy stress tensor from the material
-//!   inverse deformation gradient tensor using the SmallShearSolid EOS
+//!   inverse deformation gradient tensor using the NeoHookeanSolid EOS
 //! \param[in] alpha Material volume fraction. Default is 1.0, so that for
 //!   the single-material system, this argument can be left unspecified by
 //!   the calling code
@@ -165,7 +165,7 @@ SmallShearSolid::CauchyStress(
 // //!   by the calling code
 //! \param[in] defgrad Material inverse deformation gradient tensor (g_k).
 //! \return Material Cauchy stress tensor (alpha_k * sigma_k) calculated using
-//!   the SmallShearSolid EoS
+//!   the NeoHookeanSolid EoS
 // *************************************************************************
 {
   std::array< std::array< tk::real, 3 >, 3 > asig{{{0,0,0}, {0,0,0}, {0,0,0}}};
@@ -204,7 +204,7 @@ SmallShearSolid::CauchyStress(
 }
 
 tk::real
-SmallShearSolid::soundspeed(
+NeoHookeanSolid::soundspeed(
   tk::real arho,
   tk::real apr,
   tk::real alpha,
@@ -227,7 +227,7 @@ SmallShearSolid::soundspeed(
 //  //!   (g_k) with the first dimension aligned to direction in which
 //  //!   wave speeds are required. Default is 0, so that for the single-material
 //  //!   system, this argument can be left unspecified by the calling code
-//! \return Material speed of sound using the SmallShearSolid EoS
+//! \return Material speed of sound using the NeoHookeanSolid EoS
 // *************************************************************************
 {
   /* Rigorous approach: Eigenvalues of full elastic tensor
@@ -568,7 +568,7 @@ SmallShearSolid::soundspeed(
 }
 
 tk::real
-SmallShearSolid::shearspeed(
+NeoHookeanSolid::shearspeed(
   tk::real arho,
   tk::real alpha,
   std::size_t imat ) const
@@ -581,7 +581,7 @@ SmallShearSolid::shearspeed(
 //! \param[in] imat Material-id who's EoS is required. Default is 0, so that
 //!   for the single-material system, this argument can be left unspecified
 //!   by the calling code
-//! \return Material shear-wave speed speed using the SmallShearSolid EoS
+//! \return Material shear-wave speed speed using the NeoHookeanSolid EoS
 // *************************************************************************
 {
   // Approximate shear-wave speed. Ref. Barton, P. T. (2019).
@@ -604,7 +604,7 @@ SmallShearSolid::shearspeed(
 }
 
 tk::real
-SmallShearSolid::totalenergy(
+NeoHookeanSolid::totalenergy(
   tk::real arho,
   tk::real u,
   tk::real v,
@@ -626,7 +626,7 @@ SmallShearSolid::totalenergy(
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   g_k. Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
-//! \return Material specific total energy using the SmallShearSolid EoS
+//! \return Material specific total energy using the NeoHookeanSolid EoS
 // *************************************************************************
 {
   // obtain hydro contribution to energy
@@ -640,7 +640,7 @@ SmallShearSolid::totalenergy(
 }
 
 tk::real
-SmallShearSolid::temperature(
+NeoHookeanSolid::temperature(
   tk::real arho,
   tk::real u,
   tk::real v,
@@ -662,7 +662,7 @@ SmallShearSolid::temperature(
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //!   (g_k). Default is 0, so that for the single-material system,
 //!   this argument can be left unspecified by the calling code
-//! \return Material temperature using the SmallShearSolid EoS
+//! \return Material temperature using the NeoHookeanSolid EoS
 // *************************************************************************
 {
   // obtain elastic contribution to energy
@@ -677,7 +677,7 @@ SmallShearSolid::temperature(
 }
 
 tk::real
-SmallShearSolid::min_eff_pressure(
+NeoHookeanSolid::min_eff_pressure(
   tk::real min,
   tk::real,
   tk::real ) const
@@ -692,7 +692,7 @@ SmallShearSolid::min_eff_pressure(
 }
 
 tk::real
-SmallShearSolid::elasticEnergy(
+NeoHookeanSolid::elasticEnergy(
   const std::array< std::array< tk::real, 3 >, 3 >& defgrad,
   tk::real& eps2 ) const
 // *************************************************************************
@@ -700,7 +700,7 @@ SmallShearSolid::elasticEnergy(
 //!   density, and deformation gradient tensor
 //! \param[in] defgrad Material inverse deformation gradient tensor
 //! \param[in/out] eps2 Elastic shear distortion
-//! \return Material elastic energy using the SmallShearSolid EoS
+//! \return Material elastic energy using the NeoHookeanSolid EoS
 //! \details This function returns the material elastic energy, and also stores
 //!   the elastic shear distortion for further use
 // *************************************************************************

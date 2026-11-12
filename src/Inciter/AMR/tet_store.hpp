@@ -30,6 +30,9 @@ namespace AMR {
                 // wanted a quick-fix so I could move on :(
             std::set<size_t> center_tets; // Store for 1:4 centers
 
+            // TODO: this seems useless, tet_store_t::delete_list is never
+            // populated, and therefore never used. Do not confuse with
+            // refinement_t::delete_list which is populated and used.
             std::set<size_t> delete_list; // For marking deletions in deref
 
             AMR::active_element_store_t active_elements;
@@ -109,16 +112,6 @@ namespace AMR {
             }
 
             /**
-             * @brief set a tet as normal
-             *
-             * @param id id to set
-             */
-            void mark_normal(size_t id)
-            {
-                set_normal(id, true);
-            }
-
-            /**
              * @brief get data for a tet from master element
              *
              * @param id id of tet to get
@@ -133,21 +126,6 @@ namespace AMR {
             const Refinement_State& data(size_t id) const
             {
                 return master_elements.get(id);
-            }
-
-            /**
-             * @brief Method to insert tet into the tet store, so the
-             * underlying data structure doesn't have to be interfaced with
-             * directly
-             *
-             * @param id Id of the added tet
-             * @param t The tet element
-             */
-            void insert(size_t id, tet_t t)
-            {
-                // cppcheck-suppress assertWithSideEffect
-                assert( !exists(id) );
-                tets.insert( std::pair<size_t, tet_t>(id, t));
             }
 
             /**
@@ -192,7 +170,11 @@ namespace AMR {
              */
             void store_tet(size_t id, tet_t nodes) {
 
-                insert(id, nodes);
+                // Insert tet into the tet store, without directly interfacing
+                // underlying data structure
+                // cppcheck-suppress assertWithSideEffect
+                assert( !exists(id) );
+                tets.insert( std::pair<size_t, tet_t>(id, nodes));
 
                 // Sanity check the storage ids
                 // (this is probably better in a function/2d loop)
@@ -202,27 +184,6 @@ namespace AMR {
                 assert( nodes[1] != nodes[2] );
                 assert( nodes[1] != nodes[3] );
                 assert( nodes[2] != nodes[3] );
-            }
-
-            /**
-             * @brief Convenience function to store a tet without first building
-             * a list
-             *
-             * @param id The ID of the tetrahedron to store
-             * @param first First Node
-             * @param second Second Node
-             * @param third Third Node
-             * @param forth Forth Node
-             */
-            void store_tet(
-                    size_t id,
-                    size_t first,
-                    size_t second,
-                    size_t third,
-                    size_t forth
-                    )
-            {
-                store_tet( id, { {first, second, third, forth} } );
             }
 
             void add(
@@ -235,10 +196,11 @@ namespace AMR {
 
                 //std::cout << "id " << id << " parent " << parent_id << std::endl;
 
-                add_to_master(id, nodes, refinement_case, parent_id, true);
-
-                master_elements.get(id).refinement_level =
+                size_t ref_level =
                     master_elements.get(parent_id).refinement_level+1;
+
+                add_to_master(id, nodes, refinement_case, parent_id, ref_level,
+                  true);
 
                 // Deal with updating parent
                 master_elements.add_child(parent_id, id);
@@ -255,15 +217,14 @@ namespace AMR {
              * @param refinement_case The refinement case which caused this tet
              * to be generated
              * @param parent_id The ID of the parent tetrahedron
+             * @param refinement_level The level of refinement
              * @param has_parent True if element has a parent
             */
             void add_to_master(size_t id, const tet_t& nodes,
               Refinement_Case refinement_case, size_t parent_id=0,
-              bool has_parent=false)
+              size_t refinement_level=0, bool has_parent=false)
             {
                 store_tet(id, nodes);
-
-                size_t refinement_level = 0;
 
                 // Add to master list
                 master_elements.add(id, refinement_case, refinement_level, parent_id, has_parent);
@@ -418,6 +379,36 @@ namespace AMR {
                 }
 
                 trace_out << "Made cell type list of len " << cell_type_list.size() << std::endl;
+                return cell_type_list;
+            }
+
+            /**
+             * @brief Function to return a list of normal cell flags, useful
+             * when invoking the vis to do coloring by cell type
+             *
+             * @return Vector listing the types of cells
+             */
+            std::vector< real_t > get_normal_cell_list() const
+            {
+                std::vector<real_t> cell_type_list;
+
+                for (const auto& kv : tets)
+                {
+                    size_t element_id = kv.first;
+
+                    if (active_elements.exists( element_id  )) {
+
+                        real_t val = 0.0;
+
+                        if (master_elements.get(element_id).normal)
+                        {
+                          val = 1.0;
+                        }
+                        cell_type_list.push_back(val);
+                    }
+                }
+
+                trace_out << "Made normal cell list of len " << cell_type_list.size() << std::endl;
                 return cell_type_list;
             }
 
@@ -700,7 +691,7 @@ namespace AMR {
                 for (size_t k = 0; k < NUM_TET_EDGES; k++)
                 {
                     edge_t edge = edge_list[k];
-                    edge_store.mark_for_refinement(edge);
+                    edge_store.mark_for_refinement(edge_store.get(edge));
                     trace_out << "Marking edge " << edge << " for refine " << std::endl;
                 }
             }
@@ -747,6 +738,7 @@ namespace AMR {
             }
 
             // Deref
+            // TODO: this seems useless (see comment at decl)
             void process_delete_list()
             {
                 trace_out << "process_delete_list " << delete_list.size() << std::endl;

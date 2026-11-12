@@ -659,7 +659,19 @@ THINCFunction( std::size_t rdof,
       + dBdx[i][2] * alSol[kmax*rdof+2]
       + dBdx[i][3] * alSol[kmax*rdof+3];
 
-  auto nMag = std::sqrt(tk::dot(nInt, nInt)) + 1e-14;
+  auto nMag = std::sqrt(tk::dot(nInt, nInt));
+
+  // If the majority material has no resolved gradient in this cell, the
+  // interface normal is undefined. Proceeding would form exp(0)/... = 0/0 in
+  // the tanh profile inversion below. In this degenerate case there is no
+  // interface to sharpen, so revert to first-order (since TVD limiter has not
+  // been applied, alSol is potentially non-monotone).
+  if (!std::isfinite(nMag) || nMag < 1.0e-8) {
+    for (std::size_t k=0; k<nmat; ++k) {
+      alReco[k] = alSol[k*rdof];
+    }
+    return;
+  }
 
   for (std::size_t i=0; i<3; ++i)
     nInt[i] /= nMag;
@@ -863,7 +875,8 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
                    const std::vector< real >& B,
                    const Fields& U,
                    const Fields& P,
-                   std::vector< tk::real >& state )
+                   std::vector< tk::real >& state,
+                   int srcFlag )
 // *****************************************************************************
 //  Evaluate polynomial solution at quadrature point
 //! \param[in] mat_blk EOS material block
@@ -881,6 +894,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
 //! \param[in] B Basis function at given quadrature point
 //! \param[in] U Solution vector
 //! \param[in] P Vector of primitives
+//! \param[in] srcFlag Whether the energy source was added to element e
 //! \param[in,out] state Vector of solution states at quadrature point
 // *****************************************************************************
 {
@@ -897,7 +911,7 @@ evalPolynomialSol( const std::vector< inciter::EOS >& mat_blk,
     intInd = inciter::interfaceIndicator(nmat, alAvg, matInt);
   }
 
-  if (intsharp > 0)
+  if (intsharp > 0 && srcFlag == 0)
   {
     std::vector< tk::real > vfmax(nmat, 0.0), vfmin(nmat, 0.0);
 

@@ -49,6 +49,7 @@
   #pragma clang diagnostic ignored "-Wunused-template"
   #pragma clang diagnostic ignored "-Wsuggest-override"
   #pragma clang diagnostic ignored "-Wsuggest-destructor-override"
+  #pragma clang diagnostic ignored "-Wtemplate-id-cdtor"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wredundant-decls"
@@ -66,6 +67,7 @@
   #pragma GCC diagnostic ignored "-Wparentheses"
   #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
   #pragma GCC diagnostic ignored "-Warray-bounds"
+  #pragma GCC diagnostic ignored "-Wtemplate-id-cdtor"
 #elif defined(__INTEL_COMPILER)
   #pragma warning( push )
   #pragma warning( disable: 181 )

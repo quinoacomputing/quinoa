@@ -249,6 +249,8 @@ Transporter::info( const InciterPrint& print )
   print.item( "Local time stepping", steady );
   auto implicitts = g_inputdeck.get< tag::implicit_timestepping >();
   print.item( "Implicit time stepping", implicitts );
+  auto point_implicit = g_inputdeck.get< tag::point_implicit >();
+  print.item( "Point-implicit time stepping", point_implicit );
   if (steady || implicitts) {
     print.item( "L2-norm residual convergence criterion",
                 g_inputdeck.get< tag::residual >() );
@@ -372,6 +374,8 @@ Transporter::info( const InciterPrint& print )
     print.item( "Mesh velocity force coefficients", tk::parameters(meshforce) );
     print.item( "Vorticity multiplier",
                 g_inputdeck.get< tag::ale, tag::vortmult >() );
+    print.item( "Vorticity scale",
+                g_inputdeck.get< tag::ale, tag::vortscale >() );
     print.item( "Mesh velocity linear solver tolerance",
                 g_inputdeck.get< tag::ale, tag::tolerance >() );
     print.item( "Mesh velocity linear solver maxit",
@@ -1179,6 +1183,11 @@ Transporter::diagHeader()
       for (std::size_t i=0; i<3; ++i) d.push_back( "R" + std::to_string(i+1) );
     }
 
+    if (g_inputdeck.get< tag::imex_runge_kutta >()) {
+      d.push_back( "IMEX_ACTIVE" );
+      d.push_back( "IMEX_MAXITER" );
+    }
+
     // Write diagnostics header
     dw.header( d );
 
@@ -1543,8 +1552,9 @@ Transporter::diagnostics( CkReductionMsg* msg )
   Assert( d.size() == NUMDIAG, "Diagnostics vector size mismatch" );
 
   for (std::size_t i=0; i<d.size(); ++i)
-     Assert( d[i].size() == ncomp, "Size mismatch at final stage of "
-             "diagnostics aggregation for mesh " + id );
+     Assert( d[i].size() == (i >= RESFORCE && i <= ROTATION ? 3 : ncomp),
+             "Size mismatch at final stage of diagnostics aggregation for "
+             "mesh " + id );
 
   // Allocate storage for those diagnostics that are always computed
   std::vector< tk::real > diag( ncomp, 0.0 );
@@ -1614,6 +1624,12 @@ Transporter::diagnostics( CkReductionMsg* msg )
       diag.push_back( d[DISPLACEMNT][i] );
     for (std::size_t i=0; i<3; ++i)
       diag.push_back( d[ROTATION][i] );
+  }
+
+  // Append IMEX diagnostics
+  if (g_inputdeck.get< tag::imex_runge_kutta >()) {
+    diag.push_back( d[IMEXACTIVE][0]*100.0/m_nelem[0] );
+    diag.push_back( static_cast<uint64_t>(d[IMEXMAXITER][0]) );
   }
 
   // Append diagnostics file at selected times

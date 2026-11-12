@@ -116,14 +116,6 @@ This code is under `src/Particles/` and parallel particle file output is under
 be great to hook these pieces of code back into Inciter so additional physics
 capability can use it, e.g., a particle-in-cell solver.
 
-@subsection roadmap_inciter_root Incorporate RootWriter into MeshConv
-
-Inciter can save meshes and field output data in files that can be analyzed by
-[ROOT](https://root.cern.ch). To exercise and test this functionality @ref
-fileconv_main is currently used to convert data between ROOT and ExodusII
-formats. However, a better way to do this is to incorporate the functionality
-in FileConv to @ref meshconv_main.
-
 @subsection roadmap_inciter_eos Equations of state (EOS)
 
 Currently, equations of state for ideal gases are implemented. It would be

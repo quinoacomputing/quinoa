@@ -119,11 +119,17 @@ MeshConvDriver::execute() const
       times.push_back( {} );
       auto mesh = tk::readUnsMesh( m_print, name, times.back() );
       const auto& triinpoel = mesh.triinpoel();
-      // Skip meshes with a single triange cell
-      if (triinpoel.size() == 3) continue;
       const auto& x = mesh.x();
       const auto& y = mesh.y();
       const auto& z = mesh.z();
+      // Skip meshes with a single triangle cell if that cell is degenerate
+      if (triinpoel.size()==3 && //check if triangle is real or not
+           std::abs(x[0]) < eps && std::abs(x[1]) < eps && std::abs(x[2]) < eps &&
+           std::abs(y[0]) < eps && std::abs(y[1]) < eps && std::abs(y[2]) < eps &&
+           std::abs(z[0]) < eps && std::abs(z[1]) < eps && std::abs(z[2]) < eps){ //degenerate triangle, empty container
+          continue;
+      };
+      
       nodevarnames = mesh.nodevarnames();
       elemvarnames = mesh.elemvarnames();
       vartimes = mesh.vartimes();

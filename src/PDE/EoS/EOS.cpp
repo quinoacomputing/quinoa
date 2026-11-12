@@ -51,13 +51,13 @@ EOS::EOS( ctr::MaterialType mattype, EqType eq, std::size_t k )
     m_material = JWL(w, c_v, rho0_jwl, de_jwl, rhor_jwl, Tr_jwl, Pr_jwl, A_jwl,
       B_jwl, R1_jwl, R2_jwl);
   }
-  else if (mattype == ctr::MaterialType::SMALLSHEARSOLID) {
-    // query input deck for SmallShearSolid parameters
+  else if (mattype == ctr::MaterialType::NEOHOOKEANSOLID) {
+    // query input deck for NeoHookeanSolid parameters
     auto g = getmatprop< tag::gamma >(k);
     auto ps = getmatprop< tag::pstiff >(k);
     auto c_v = getmatprop< tag::cv >(k);
     auto mu = getmatprop< tag::mu >(k);
-    m_material = SmallShearSolid(g, ps, c_v, mu);
+    m_material = NeoHookeanSolid(g, ps, c_v, mu);
   }
   else if (mattype == ctr::MaterialType::LINEARMIEGRUNEISEN) {
     // query input deck for LinearMieGruneisen parameters

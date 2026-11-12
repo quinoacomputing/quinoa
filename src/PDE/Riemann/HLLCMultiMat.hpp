@@ -326,12 +326,6 @@ struct HLLCMultiMat {
           ) / (Sm-Sr);
       rhorStar += uStar[1][densityIdx(nmat, k)];
     }
-    for (std::size_t idir=0; idir<3; ++idir) {
-      uStar[0][momentumIdx(nmat, idir)] = w_l*u[0][momentumIdx(nmat, idir)]
-        - (TnlStar[idir] - Tnl[idir])/(Sl-Sm);
-      uStar[1][momentumIdx(nmat, idir)] = w_r*u[1][momentumIdx(nmat, idir)]
-        - (TnrStar[idir] - Tnr[idir])/(Sr-Sm);
-    }
 
     // Numerical fluxes
     // -------------------------------------------------------------------------
@@ -391,7 +385,7 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
        flx[momentumIdx(nmat, idir)] =
-         uStar[0][momentumIdx(nmat, idir)] * Sm - TnlStar[idir];
+         vlStar[idir] * rholStar * Sm - TnlStar[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[0][volfracIdx(nmat, k)] * Sm;
@@ -445,7 +439,7 @@ struct HLLCMultiMat {
 
       for (std::size_t idir=0; idir<3; ++idir)
         flx[momentumIdx(nmat, idir)] =
-          uStar[1][momentumIdx(nmat, idir)] * Sm - TnrStar[idir];
+          vrStar[idir] * rhorStar * Sm - TnrStar[idir];
 
       for (std::size_t k=0; k<nmat; ++k) {
         flx[volfracIdx(nmat, k)] = uStar[1][volfracIdx(nmat, k)] * Sm;

@@ -41,7 +41,7 @@ namespace AMR {
                  Refinement_Case refinement_case,
                  size_t refinement_level,
                  size_t parent_id,
-                 bool has_parent=true
+                 bool has_parent
             )
             {
                 Refinement_State d = Refinement_State(

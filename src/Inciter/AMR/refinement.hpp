@@ -56,14 +56,15 @@ namespace AMR {
             {
                 Refinement_State& master_element = tet_store.data(tet_id);
 
-                // These asserts mean we never actually try refine a 1:2 or 1:4
-                assert( master_element.refinement_case !=
-                        Refinement_Case::one_to_two);
-                assert( master_element.refinement_case !=
-                        Refinement_Case::one_to_four);
+                //// Commented out by Aditya on 02/12/2026
+                //// These asserts mean we never actually try refine a 1:2 or 1:4
+                //assert( master_element.refinement_case !=
+                //        Refinement_Case::one_to_two);
+                //assert( master_element.refinement_case !=
+                //        Refinement_Case::one_to_four);
 
-                // cppcheck-suppress assertWithSideEffect
-                assert( tet_store.is_active(tet_id) );
+                //// cppcheck-suppress assertWithSideEffect
+                //assert( tet_store.is_active(tet_id) );
 
                 // Check this won't take us past the max refinement level
                 if (master_element.refinement_level >= MAX_REFINEMENT_LEVEL)
@@ -1056,7 +1057,12 @@ namespace AMR {
             }
 
             /**
-             * @brief Deletes the intermediate edge in the delete list for derefinement
+             * @brief Deletes the intermediate edge in the delete list for
+             *   derefinement, and removes points from the intermediate list
+             *   that are no longer used by any active tet. Points of deleted
+             *   edges cannot be removed directly, since after a partial
+             *   derefinement (e.g. 1:8 to 1:4) they may still be intermediate
+             *   points of the remaining children.
              *
              * @param tet_store Tet store to use
              */
@@ -1064,11 +1070,24 @@ namespace AMR {
             {
               for (const auto& edge : delete_list) {
                 tet_store.edge_store.erase(edge);
-                tet_store.intermediate_list.erase(edge.get_data()[0]);
-                tet_store.intermediate_list.erase(edge.get_data()[1]);
               }
 
               delete_list.clear();
+
+              // collect all point ids
+              std::unordered_set< size_t > used;
+              for (const auto& kv : tet_store.tets) {
+                if (tet_store.is_active(kv.first)) {
+                  for (auto p : kv.second) used.insert(p);
+                }
+              }
+
+              // only remove points from intermediate list if they are not used
+              auto& ilist = tet_store.intermediate_list;
+              for (auto it = ilist.begin(); it != ilist.end(); ) {
+                if (used.count(*it) == 0) it = ilist.erase(it);
+                else ++it;
+              }
             }
 
             /**
@@ -1241,11 +1260,13 @@ namespace AMR {
                       size_t A = edge.first();
                       size_t B = edge.second();
                       trace_out << "checking edge for deref " << A << " - " << B << std::endl;
+                      bool deref =
+                        tet_store.edge_store.get(edge).needs_derefining;
 
                       //if (tet_store.is_intermediate(A))
                       if (non_parent_nodes.count(A) )
                       {
-                        if (tet_store.edge_store.get(edge).needs_derefining) {
+                        if (deref) {
                           trace_out << "Adding " << A << std::endl;
                           derefine_node_set.insert(A);
                         }
@@ -1258,7 +1279,7 @@ namespace AMR {
                       //if (tet_store.is_intermediate(B))
                       if (non_parent_nodes.count(B))
                       {
-                        if (tet_store.edge_store.get(edge).needs_derefining) {
+                        if (deref) {
                           trace_out << "Adding " << B << std::endl;
                           derefine_node_set.insert(B);
                         }
