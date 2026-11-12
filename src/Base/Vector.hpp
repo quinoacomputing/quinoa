@@ -784,46 +784,25 @@ rotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   if (is_matrix_empty(mat))
     return {{}};
 
-  // define rotation matrix
-  std::array< std::array< tk::real, 3 >, 3 > rotMatrix = getRotationMatrix(r);
-  double rotMat[9];
+  const auto R = getRotationMatrix(r);
 
-  // define matrices
-  double matAuxIn[9], matAuxOut[9];
+  // tmp = mat * R^T
+  std::array< std::array< tk::real, 3 >, 3 > tmp;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
-    {
-      matAuxIn[i*3+j] = mat[i][j];
-      rotMat[i*3+j] = rotMatrix[i][j];
-    }
+      tmp[i][j] = mat[i][0]*R[j][0] + mat[i][1]*R[j][1] + mat[i][2]*R[j][2];
 
-  // compute matAuxIn*rotMat and store it into matAuxOut
-  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans,
-    3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
+  // out = R * tmp
+  std::array< std::array< tk::real, 3 >, 3 > out;
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      out[i][j] = R[i][0]*tmp[0][j] + R[i][1]*tmp[1][j] + R[i][2]*tmp[2][j];
 
-  // matAuxOut -> matAuxIn
-  for (std::size_t i=0; i<9; i++)
-  {
-    matAuxIn[i]  = matAuxOut[i];
-    matAuxOut[i] = 0.0;
-  }
-
-  // compute rotMat^T*matAuxIn and store it into matAuxOut
-  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-    3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
-
-  // return matAuxOut as a 2D array
-  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
-            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
-            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+  return out;
 }
 
-//! \brief Rotate a second order tensor (e.g. a Strain/Stress matrix) from
-//! the (x,y,z) to a new (r,s,t) coordinate system.
-//! The directions are given by section 5.3.1 of
-//! Miller, G. H., and P. Colella. "A conservative three-dimensional
-//! Eulerian method for coupled solid–fluid shock capturing."
-//! Journal of Computational Physics 183.1 (2002): 26-82.
+//! \brief Inverse of rotateTensor: rotate a second order tensor from the
+//! (r,s,t) back to the (x,y,z) coordinate system, i.e. R^T * mat * R.
 //! \param[in] mat matrix to be rotated.
 //! \param[in] r Coordinates of the first basis vector r = (rx,ry,rz).
 //! \return rotated tensor
@@ -835,34 +814,21 @@ unrotateTensor(const std::array< std::array< tk::real, 3 >, 3 >& mat,
   if (is_matrix_empty(mat))
     return {{}};
 
-  // define rotation matrix
-  std::array< std::array< tk::real, 3 >, 3 > rotMatrix = getRotationMatrix(r);
-  double rotMat[9];
+  const auto R = getRotationMatrix(r);
 
-  // define matrices
-  double matAuxIn[9], matAuxOut[9];
+  // tmp = mat * R
+  std::array< std::array< tk::real, 3 >, 3 > tmp;
   for (std::size_t i=0; i<3; ++i)
     for (std::size_t j=0; j<3; ++j)
-    {
-      matAuxIn[i*3+j] = mat[i][j];
-      rotMat[i*3+j] = rotMatrix[i][j];
-    }
-  // compute matAuxIn*rotMat and store it into matAuxOut
-  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-    3, 3, 3, 1.0, matAuxIn, 3, rotMat, 3, 0.0, matAuxOut, 3);
-  // matAuxOut -> matAuxIn
-  for (std::size_t i=0; i<9; i++)
-  {
-    matAuxIn[i]  = matAuxOut[i];
-    matAuxOut[i] = 0.0;
-  }
-  // compute rotMat^T*matAuxIn and store it into matAuxOut
-  nowarn_cblas::cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans,
-    3, 3, 3, 1.0, rotMat, 3, matAuxIn, 3, 0.0, matAuxOut, 3);
-  // return matAuxOut as a 2D array
-  return {{ {matAuxOut[0], matAuxOut[1], matAuxOut[2]},
-            {matAuxOut[3], matAuxOut[4], matAuxOut[5]},
-            {matAuxOut[6], matAuxOut[7], matAuxOut[8]} }};
+      tmp[i][j] = mat[i][0]*R[0][j] + mat[i][1]*R[1][j] + mat[i][2]*R[2][j];
+
+  // out = R^T * tmp
+  std::array< std::array< tk::real, 3 >, 3 > out;
+  for (std::size_t i=0; i<3; ++i)
+    for (std::size_t j=0; j<3; ++j)
+      out[i][j] = R[0][i]*tmp[0][j] + R[1][i]*tmp[1][j] + R[2][i]*tmp[2][j];
+
+  return out;
 }
 
 //! \brief Rotate a vector (e.g. a velocity) from
