@@ -57,6 +57,20 @@ find_package(Zoltan2)
 #### NumDiff executable
 find_package(NumDiff)
 
+#### AMReX
+set(AMREX_ROOT ${TPL_DIR})
+find_path(AMREX_INCLUDE_DIR NAMES AMReX.H
+          HINTS ${AMREX_ROOT}/include
+          NO_DEFAULT_PATH)
+find_library(AMREX_LIBRARY NAMES amrex amrex_3d
+             HINTS ${AMREX_ROOT}/lib ${AMREX_ROOT}/lib64
+             NO_DEFAULT_PATH)
+if (AMREX_INCLUDE_DIR AND AMREX_LIBRARY)
+  set(AMREX_FOUND true)
+  set(AMREX_INCLUDE_DIRS ${AMREX_INCLUDE_DIR})
+  set(AMREX_LIBRARIES ${AMREX_LIBRARY})
+endif()
+
 #### ExodusII library
 find_package(SEACASExodus)
 set(EXODUS_ROOT ${TPL_DIR}) # prefer ours
@@ -157,6 +171,17 @@ if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND
   endif()
 else()
   PrintMissing(inciter "CHARM_FOUND;SEACASExodus_FOUND;EXODIFF_FOUND;Zoltan2_FOUND;BRIGAND_FOUND;PEGTL_FOUND;LAPACKE_FOUND;Boost_FOUND")
+endif()
+
+if (AMREX_FOUND AND BRIGAND_FOUND AND PEGTL_FOUND AND LAPACKE_FOUND AND
+    Boost_FOUND)
+  set(INCITERHEX_EXECUTABLE inciterhex)
+  set(ENABLE_INCITERHEX true CACHE BOOL "Enable ${INCITERHEX_EXECUTABLE}")
+  if (NOT ENABLE_INCITERHEX)
+    message(STATUS "Target '${INCITERHEX_EXECUTABLE}' disabled")
+  endif()
+else()
+  PrintMissing(inciterhex "AMREX_FOUND;BRIGAND_FOUND;PEGTL_FOUND;LAPACKE_FOUND;Boost_FOUND")
 endif()
 
 if (CHARM_FOUND AND SEACASExodus_FOUND AND EXODIFF_FOUND AND PEGTL_FOUND AND
