@@ -270,38 +270,37 @@ namespace AMR {
      */
     int mesh_adapter_t::detect_compatibility(
             int num_locked_edges,
-            int num_intermediate_edges,
-            AMR::Refinement_Case refinement_case,
+            [[maybe_unused]] int num_intermediate_edges,
+            [[maybe_unused]] AMR::Refinement_Case refinement_case,
             int normal
     )
     {
         int compatibility = 0;
-        num_locked_edges += num_intermediate_edges;
+        //// Commented-out by Aditya on 02/02/2026
+        //num_locked_edges += num_intermediate_edges;
 
-        /*
+        // Uncommented by Aditya on 02/02/2026
         // Split this into three categories
-        // 1. Normal elements without locked edges. => 1
-        //if (normal) {
+        if (normal) {
 
-            // 3. Intermediate elements with at least one edge marked for refinement => 3
-            if (num_intermediate_edges > 0)
-            {
-                compatibility = 3;
-            }
-            else if (num_locked_edges == 0) {
+            // 1. Normal elements without locked edges. => 1
+            if (num_locked_edges == 0) {
                 compatibility = 1;
             }
-        // 2. Normal elements with locked edges. => 2
+            // 2. Normal elements with locked edges. => 2
             else {
                 compatibility = 2;
             }
-        //}
-        */
+        }
 
-        //else {
-            //if (num_intermediate_edges > 0) { compatibility = 3; }
-        //}
-
+        else {
+            // 3. Intermediate elements with at least one edge marked for refinement => 3
+            //// Commented-out on 02/17/2026: Not sure why this trips, needs
+            //// further investigation.
+            //Assert(num_intermediate_edges > 0, "Intermediate (non-normal) "
+            //  "element has no intermediate edges");
+            compatibility = 3;
+        }
 
 
         // Only 1:2 and 1:4 are intermediates and eligible for class3 // NOT TRUE!
@@ -331,6 +330,7 @@ namespace AMR {
         */
 
 
+        /* // Commented-out by Aditya on 02/02/2026
         // Old implementation
         // Only 1:2 and 1:4 are intermediates and eligible for class3 // NOT TRUE!
         if (
@@ -358,6 +358,7 @@ namespace AMR {
                 compatibility = 2;
             }
         }
+        */
 
         assert(compatibility > 0);
         assert(compatibility < 4);
@@ -408,18 +409,20 @@ namespace AMR {
                     {
 
                         trace_out << "Edge " << key << std::endl;
+                        const auto& edge = tet_store.edge_store.get(key);
 
                         //Count locked edges and edges in need of
                         // refinement
                         // Count Locked Edges
-                        if(tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::locked)
+                        if(edge.lock_case == AMR::Edge_Lock_Case::locked)
                         {
                             trace_out << "Found locked edge " << key << std::endl;
-                            trace_out << "Locked :" << tet_store.edge_store.get(key).lock_case << std::endl;
+                            trace_out << "Locked :" << edge.lock_case << std::endl;
                             num_locked_edges++;
                         }
-                        else if(tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate
-                          || tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::temporary)
+                        else if(
+                          edge.lock_case == AMR::Edge_Lock_Case::intermediate ||
+                          edge.lock_case == AMR::Edge_Lock_Case::temporary)
                         {
                             trace_out << "Found intermediate edge " << key << std::endl;
                             num_intermediate_edges++;
@@ -429,7 +432,7 @@ namespace AMR {
                             // Count edges which need refining
                             //  We check in here as we won't refine a
                             //  locked edge and will thus ignore it
-                            if (tet_store.edge_store.get(key).needs_refining == 1)
+                            if (edge.needs_refining == 1)
                             {
                                 num_to_refine++;
                                 trace_out << "key needs ref " << key << std::endl;
@@ -607,7 +610,6 @@ namespace AMR {
             //refiner.overwrite_children(tet_store, former_children, current_children);
 
             tet_store.unset_marked_children(i); // FIXME: This will not work well in parallel
-            element.refinement_case = AMR::Refinement_Case::one_to_eight;
         }
 
         // Clean up dead edges
@@ -729,7 +731,8 @@ namespace AMR {
                 for (size_t k = 0; k < NUM_FACE_NODES; k++)
                 {
                     edge_t key = face_edge_list[k];
-                    tet_store.edge_store.mark_for_refinement(key);
+                    tet_store.edge_store.mark_for_refinement(
+                      tet_store.edge_store.get(key));
                 }
 
                 //refiner.refine_one_to_four(tet_id, face_list[face_refine_id],
@@ -764,10 +767,11 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
+            auto& edge = tet_store.edge_store.get(key);
+            if (edge.lock_case == AMR::Edge_Lock_Case::unlocked)
             {
                 trace_out << "LOCKING! " << key << std::endl;
-                tet_store.edge_store.get(key).lock_case = AMR::Edge_Lock_Case::locked;
+                edge.lock_case = AMR::Edge_Lock_Case::locked;
             }
         }
     }
@@ -779,10 +783,11 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
+            auto& edge = tet_store.edge_store.get(key);
 
-            tet_store.edge_store.unmark_for_refinement(key);
+            tet_store.edge_store.unmark_for_refinement(edge);
             trace_out << "Deactivating " << key << std::endl;
-            tet_store.edge_store.get(key).needs_derefining = false;
+            edge.needs_derefining = false;
         }
     }
 
@@ -820,12 +825,13 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
-            if (tet_store.edge_store.get(key).lock_case != AMR::Edge_Lock_Case::unlocked)
+            auto& edge = tet_store.edge_store.get(key);
+            if (edge.lock_case != AMR::Edge_Lock_Case::unlocked)
             {
-                tet_store.edge_store.unmark_for_refinement(key);
+                tet_store.edge_store.unmark_for_refinement(edge);
             }
             // "Count number of active edges"
-            if (tet_store.edge_store.get(key).needs_refining == 1) {
+            if (edge.needs_refining == 1) {
                 num_active_edges++;
             }
         }
@@ -849,7 +855,8 @@ namespace AMR {
             {
                 edge_t key = face_edge_list[k];
                 trace_out << "Checking " << key << std::endl;
-                if (tet_store.edge_store.get(key).needs_refining == 1)
+                const auto& edge = tet_store.edge_store.get(key);
+                if (edge.needs_refining == 1)
                 {
                     num_face_refine_edges++;
                     trace_out << "ref! " << key << std::endl;
@@ -857,7 +864,7 @@ namespace AMR {
 
                 // Check for locked edges
                 // This case only cares about faces with no locks
-                if (tet_store.edge_store.get(key).lock_case != AMR::Edge_Lock_Case::unlocked)
+                if (edge.lock_case != AMR::Edge_Lock_Case::unlocked)
                 {
                     num_face_locked_edges++;
                     trace_out << "locked! " << key << std::endl;
@@ -905,7 +912,8 @@ namespace AMR {
             for (size_t k = 0; k < NUM_FACE_NODES; k++)
             {
                 edge_t key = face_edge_list[k];
-                tet_store.edge_store.mark_for_refinement(key);
+                tet_store.edge_store.mark_for_refinement(
+                  tet_store.edge_store.get(key));
             }
 
             //refiner.refine_one_to_four(tet_id, face_list[face_refine_id], opposite_id);
@@ -950,29 +958,30 @@ namespace AMR {
         {
             edge_t key = edge_list[k];
             trace_out << "Key " << key << std::endl;
+            const auto& edge = tet_store.edge_store.get(key);
 
             // Count intermediate edges
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::intermediate
-              || tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::temporary)
+            if (edge.lock_case == AMR::Edge_Lock_Case::intermediate
+              || edge.lock_case == AMR::Edge_Lock_Case::temporary)
             {
                 trace_out << "found intermediate" << std::endl;
                 num_intermediate++;
             }
 
             // Count number of marked for refinement
-            if (tet_store.edge_store.get(key).needs_refining == 1)
+            if (edge.needs_refining == 1)
             {
                 trace_out << "found refine" << std::endl;
                 num_to_refine++;
             }
 
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
+            if (edge.lock_case == AMR::Edge_Lock_Case::unlocked)
             {
                 trace_out << "found unlocked" << std::endl;
                 unlocked++;
             }
 
-            if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::locked)
+            if (edge.lock_case == AMR::Edge_Lock_Case::locked)
             {
                 trace_out << "found locked" << std::endl;
                 locked++;
@@ -1069,13 +1078,14 @@ namespace AMR {
             {
                 edge_t key = edge_list[k];
                 trace_out << "Compat 3 " << key << std::endl;
-                if (tet_store.edge_store.get(key).lock_case == AMR::Edge_Lock_Case::unlocked)
-		{
+                auto& edge = tet_store.edge_store.get(key);
+                if (edge.lock_case == AMR::Edge_Lock_Case::unlocked)
+                {
                     trace_out << "Compat 3 marking edge " << key << std::endl;
-                    tet_store.edge_store.mark_for_refinement(key);
+                    edge.needs_refining = 1;
                 }
                 else {
-                    tet_store.edge_store.unmark_for_refinement(key);
+                    tet_store.edge_store.unmark_for_refinement(edge);
                 }
             }
         }
@@ -1114,7 +1124,7 @@ namespace AMR {
                 lock_tet_edges(child);
                 trace_out << "Compat 3 locking edges of " << child << std::endl;
                 // Here we interpret normal to mean "don't treat it like it has intermediates"
-                tet_store.mark_normal(child);
+                tet_store.set_normal(child, true);
                 trace_out << "Compat 3 " << child << std::endl;
             }
         }
@@ -1142,11 +1152,16 @@ namespace AMR {
         for (const auto& kv : tet_store.tets)
         {
             size_t tet_id = kv.first;
-            tet_store.set_normal(tet_id, 0);
+            AMR::Refinement_Case refinement_case =
+              tet_store.get_refinement_case(tet_id);
+            // only remove 'normal' status if element is not on initial grid
+            if (refinement_case != AMR::Refinement_Case::initial_grid &&
+                refinement_case != AMR::Refinement_Case::one_to_eight)
+              tet_store.set_normal(tet_id, 0);
         }
     }
 
-    void mesh_adapter_t::remove_edge_locks(int intermediate)
+    void mesh_adapter_t::remove_edge_locks(int inter_edge)
     {
         for (const auto& kv : tet_store.tets)
         {
@@ -1158,7 +1173,7 @@ namespace AMR {
             if (tet_store.is_active(tet_id)) {
                 // change it from intermediate to locked
                 update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::locked, AMR::Edge_Lock_Case::unlocked);
-                if (intermediate) {
+                if (inter_edge) {
                     update_tet_edges_lock_type(tet_id, AMR::Edge_Lock_Case::intermediate, AMR::Edge_Lock_Case::unlocked);
                 }
             }
@@ -1186,9 +1201,10 @@ namespace AMR {
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
         {
             edge_t key = edge_list[k];
-            if (tet_store.edge_store.get(key).lock_case == check)
+            auto& edge = tet_store.edge_store.get(key);
+            if (edge.lock_case == check)
             {
-                tet_store.edge_store.get(key).lock_case = new_case;
+                edge.lock_case = new_case;
             }
         }
     }
@@ -1218,12 +1234,47 @@ namespace AMR {
     {
         const size_t max_num_rounds = AMR_MAX_ROUNDS;
 
+        // flag tracking if a kept point deactivated any edge during a round
+        bool kept_deactivated(false);
+
+        // When a family accepts a partial derefinement (4:2, 8:4, 8:2),
+        // it has decided to keep a non-parent point (as opposed to *:1 deref).
+        // When this happens, the following lambda make its neighbours also
+        // keep those same points. For each kept (non-parent) point, unmark
+        // from deref the two child-edges joining it to the parent nodes, i.e.
+        // the two halves of the parent edge that point splits. This addresses
+        // the comment in the paper "for derefinement compatibilty, consistency
+        // with the allowed derefinement cases must be enforced at the
+        // neighboring parent elements".
+        auto deactivate_kept_points = [&]( const child_id_list_t& children,
+          const std::unordered_set< size_t >& non_parent_nodes,
+          const std::unordered_set< size_t >& removed_nodes )
+        {
+          for (auto child_id : children) {
+            for (const auto& edge : tet_store.generate_edge_keys(child_id)) {
+              auto A = edge.first();
+              auto B = edge.second();
+              bool keptA = non_parent_nodes.count(A) && !removed_nodes.count(A);
+              bool keptB = non_parent_nodes.count(B) && !removed_nodes.count(B);
+              if ((keptA && !non_parent_nodes.count(B)) ||
+                  (keptB && !non_parent_nodes.count(A))) {
+                auto& ed = tet_store.edge_store.get(edge);
+                if (ed.needs_derefining) {
+                  ed.needs_derefining = false;
+                  kept_deactivated = true;
+                }
+              }
+            }
+          }
+        };
+
         // Mark refinements
         size_t iter;
         //Iterate until convergence
         for (iter = 0; iter < max_num_rounds; iter++)
         {
             tet_store.marked_derefinements.get_state_changed() = false;
+            kept_deactivated = false;
 
             // set of elements which have been considered for derefinement
             std::unordered_set< size_t > done_deref_marking;
@@ -1362,6 +1413,8 @@ namespace AMR {
                         trace_out << "Accept as 4:2" << std::endl;
                         //refiner.derefine_four_to_two(tet_store,  node_connectivity, tet_id);
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::four_to_two);
+                        deactivate_kept_points(children, non_parent_nodes,
+                          derefine_node_set);
                     }
                     // "Else
                     else {
@@ -1421,6 +1474,8 @@ namespace AMR {
                             tet_store.edge_store.mark_edges_for_deref_ref(ref_edges);
                             //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
                             tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
+                            deactivate_kept_points(children, non_parent_nodes,
+                              derefine_node_set);
                         }
                         // "Else
                         else {
@@ -1432,6 +1487,15 @@ namespace AMR {
                             trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
                         }
 
+                    }
+                    // This is not in paper
+                    else {
+                        // Deactivate all points
+                        for (auto child_id : children) {
+                          deactivate_deref_tet_edges(child_id);
+                        }
+                        tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::skip);
+                        trace_out << "giving up on deref decision. deactivate near 8:4 ntd = 3" << std::endl;
                     }
                 }
 
@@ -1456,7 +1520,22 @@ namespace AMR {
 
                     if (same_face.first == true)
                     {
-                        // deactivate the edges associated with same_face.second
+                        // deactivate the edges connecting same_face.second to
+                        // the parent nodes, i.e. the two halves of the parent
+                        // edge split by same_face.second. This keeps
+                        // same_face.second, since a non-parent node is only
+                        // derefined if all child-edges connected to it are
+                        // marked for derefinement.
+                        // The edges connecting same_face.second to other
+                        // non-parent nodes must not be deactivated: that would
+                        // also keep those non-parent nodes, which are supposed
+                        // to be removed. Then this family would no longer have
+                        // the intended 8:4 node set. Moreover, such edges on a
+                        // parent face are shared with the neighbouring family
+                        // across that face, whose nodes would then also be
+                        // kept. The outcome would then depend on the order in
+                        // which families are visited, and thus differ between
+                        // serial and parallel runs.
                         for (size_t i = 0; i < children.size(); i++)
                         {
                           edge_list_t edge_list = tet_store.generate_edge_keys(children[i]);
@@ -1465,7 +1544,10 @@ namespace AMR {
                             edge_t edge = edge_list[k];
                             size_t A = edge.first();
                             size_t B = edge.second();
-                            if (A == same_face.second || B == same_face.second)
+                            if ((A == same_face.second &&
+                                 !non_parent_nodes.count(B)) ||
+                                (B == same_face.second &&
+                                 !non_parent_nodes.count(A)))
                               tet_store.edge_store.get(edge).needs_derefining = false;
                           }
                         }
@@ -1484,6 +1566,14 @@ namespace AMR {
                         trace_out << "Accept as 8:4" << std::endl;
                         //refiner.derefine_eight_to_four(tet_store,  node_connectivity, tet_id);
                         tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_four);
+                        // same_face.second is kept by this 8:4, so it could be
+                        // erased from derefine_node_set to make the set hold
+                        // only the removed points. This is not needed, since
+                        // the edges deactivate_kept_points() would deactivate
+                        // for same_face.second are already deactivated above.
+                        //derefine_node_set.erase(same_face.second);
+                        deactivate_kept_points(children, non_parent_nodes,
+                          derefine_node_set);
                     }
                     // "Else
                     else {
@@ -1503,6 +1593,8 @@ namespace AMR {
                     trace_out << "Accept as 8:2 " << std::endl;
                     //refiner.derefine_eight_to_two(tet_store,  node_connectivity, tet_id);
                     tet_store.mark_derefinement_decision(tet_id, AMR::Derefinement_Case::eight_to_two);
+                    deactivate_kept_points(children, non_parent_nodes,
+                      derefine_node_set);
                 }
 
                 // "If nderefine = 6
@@ -1526,7 +1618,8 @@ namespace AMR {
             }
 
             // If nothing changed during that round, break
-            if (!tet_store.marked_derefinements.get_state_changed())
+            if (!tet_store.marked_derefinements.get_state_changed() &&
+                !kept_deactivated)
             {
                 trace_out << "Terminating loop at iter " << iter << std::endl;
                 break;

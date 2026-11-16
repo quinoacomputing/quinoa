@@ -100,6 +100,9 @@ ElemDiagnostics::compute( Discretization& d,
       diag( NUMDIAG, std::vector< tk::real >( ncomp, 0.0 ) );
     if (diag[TOTALSOL].size() < 3) diag[TOTALSOL].resize( 3, 0.0 );
     diag[TOTALSOL][2] = std::numeric_limits< tk::real >::max();
+    // Rigid body motion qtys are 3d vectors
+    for (auto i : {RESFORCE, RESTORQUE, DISPLACEMNT, ROTATION})
+      diag[i].assign( 3, 0.0 );
 
     // Compute diagnostics for DG
     compute_diag(d, rdof, nchGhost, geoElem, ndofel, u, un, diag);

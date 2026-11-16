@@ -16,6 +16,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wtemplate-id-cdtor"
   #pragma clang diagnostic ignored "-Wundef"
   #pragma clang diagnostic ignored "-Wheader-hygiene"
   #pragma clang diagnostic ignored "-Wdocumentation"
@@ -52,6 +53,7 @@
   #pragma clang diagnostic ignored "-Wsuggest-destructor-override"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wtemplate-id-cdtor"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wunused-parameter"
   #pragma GCC diagnostic ignored "-Wfloat-equal"

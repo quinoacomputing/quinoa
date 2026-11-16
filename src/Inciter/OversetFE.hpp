@@ -157,6 +157,9 @@ class OversetFE : public CBase_OversetFE {
     // Evaluate whether to do load balancing
     void evalLB( int nrestart );
 
+    // Continue evaluating whether to do load balancing and proceed to next step
+    void continueEvalLB();
+
     //! Evaluate whether to continue with next time step stage
     void stage();
 
@@ -179,6 +182,7 @@ class OversetFE : public CBase_OversetFE {
       const std::set< std::size_t >&,
       const std::unordered_map< std::size_t, std::size_t >&,
       const tk::NodeCommMap&,
+      const tk::EdgeCommMap&,
       const std::map< int, std::vector< std::size_t > >&,
       const std::map< int, std::vector< std::size_t > >&,
       const std::vector< std::size_t >&,

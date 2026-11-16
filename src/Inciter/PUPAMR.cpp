@@ -24,7 +24,6 @@ void PUP::pup( PUP::er &p, AMR::Refinement_State& s )
   p | s.refinement_case;
   p | s.children;
   p | s.refinement_level;
-  p | s.child_number;
   p | s.parent_id;
   p | s.normal;
 }

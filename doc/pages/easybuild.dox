@@ -33,4 +33,6 @@ All executables will be under `build/Main/`.
 If all of the above steps finished without error, Quinoa has successfully been built.
 For other advanced build options, see the page on @ref build "Advanced builds".
 
+For MacOS build instructions, see @ref build_macos.
+
 */

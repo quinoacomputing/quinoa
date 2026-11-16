@@ -169,20 +169,32 @@ ALECG::queryBnd()
                    /* increment = */ false );
   if (steady) for (auto& deltat : m_dtp) deltat /= rkcoef[m_stage];
 
-  // Prepare unique set of symmetry BC nodes
-  auto sym = d->bcnodes< tag::symmetry >( m_bface, m_triinpoel );
-  for (const auto& [s,nodes] : sym)
-    m_symbcnodes.insert( begin(nodes), end(nodes) );
+  // Prepare node-based strong BC sets from the distributed side-set node
+  // lists. In parallel, m_bnode contains all side-set nodes present in this
+  // chare's volume mesh, including nodes for which this chare owns no complete
+  // physical-boundary face. Querying m_bface alone therefore misses strong BCs
+  // on partitioned boundary nodes.
+  m_symbcnodes.clear();
+  m_farfieldbcnodes.clear();
+  m_slipwallbcnodes.clear();
+  for (const auto& bci : g_inputdeck.get< tag::bc >()) {
+    const auto& meshes = bci.get< tag::mesh >();
+    if (std::none_of( begin(meshes), end(meshes),
+                      [d]( auto m ) { return m > 0 && m-1 == d->MeshId(); } ))
+      continue;
 
-  // Prepare unique set of farfield BC nodes
-  auto far = d->bcnodes< tag::farfield >( m_bface, m_triinpoel );
-  for (const auto& [s,nodes] : far)
-    m_farfieldbcnodes.insert( begin(nodes), end(nodes) );
-
-  // Prepare unique set of slip wall BC nodes
-  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
-  for (const auto& [s,nodes] : slip)
-    m_slipwallbcnodes.insert( begin(nodes), end(nodes) );
+    auto add = [this, d]( const auto& sidesets, auto& nodes ) {
+      for (auto s : sidesets) {
+        auto k = m_bnode.find( static_cast<int>(s) );
+        if (k != end(m_bnode))
+          for (auto g : k->second)
+            nodes.insert( tk::cref_find( d->Lid(), g ) );
+      }
+    };
+    add( bci.template get< tag::symmetry >(), m_symbcnodes );
+    add( bci.template get< tag::farfield >(), m_farfieldbcnodes );
+    add( bci.template get< tag::slipwall >(), m_slipwallbcnodes );
+  }
 
   // If farfield BC is set on a node, will not also set symmetry and slip BC
   for (auto fn : m_farfieldbcnodes) {
@@ -195,20 +207,32 @@ ALECG::queryBnd()
     m_slipwallbcnodes.erase(fn);
   }
 
-  // Prepare boundary nodes contiguously accessible from a triangle-face loop,
-  // which contain both symmetry and no slip walls
-  m_symbctri.resize( m_triinpoel.size()/3, 0 );
+  // Prepare boundary nodes contiguously accessible from a triangle-face loop
+  // for face-based operators, which contain both symmetry and no slip walls.
+  // Use the face-derived sets here, since these flags describe boundary-face
+  // flux treatment rather than strong nodal BC enforcement. Using m_bnode can
+  // (incorrectly) include nodes in this set when the chare does not contain a
+  // complete physical boundary face.
+  auto sym = d->bcnodes< tag::symmetry >( m_bface, m_triinpoel );
+  auto slip = d->bcnodes< tag::slipwall >( m_bface, m_triinpoel );
+  std::unordered_set< std::size_t > symfacenodes, slipfacenodes;
+  for (const auto& [s,nodes] : sym)
+    symfacenodes.insert( begin(nodes), end(nodes) );
+  for (const auto& [s,nodes] : slip)
+    slipfacenodes.insert( begin(nodes), end(nodes) );
+
+  m_symbctri.assign( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_symbcnodes.find(m_triinpoel[e*3+0]) != end(m_symbcnodes))
+    if (symfacenodes.find(m_triinpoel[e*3+0]) != end(symfacenodes))
       m_symbctri[e] = 1;
 
   // Prepare the above for slip walls, which are needed for pressure integrals
   // to obtain force on overset walls
-  m_slipwallbctri.resize( m_triinpoel.size()/3, 0 );
+  m_slipwallbctri.assign( m_triinpoel.size()/3, 0 );
   for (std::size_t e=0; e<m_triinpoel.size()/3; ++e)
-    if (m_slipwallbcnodes.find(m_triinpoel[e*3+0]) != end(m_slipwallbcnodes) ||
-        m_slipwallbcnodes.find(m_triinpoel[e*3+1]) != end(m_slipwallbcnodes) ||
-        m_slipwallbcnodes.find(m_triinpoel[e*3+2]) != end(m_slipwallbcnodes)){
+    if (slipfacenodes.find(m_triinpoel[e*3+0]) != end(slipfacenodes) ||
+        slipfacenodes.find(m_triinpoel[e*3+1]) != end(slipfacenodes) ||
+        slipfacenodes.find(m_triinpoel[e*3+2]) != end(slipfacenodes)){
       m_slipwallbctri[e] = 1;
     }
 
@@ -1320,6 +1344,7 @@ ALECG::resizePostAMR(
   const std::set< std::size_t >& removedNodes,
   const std::unordered_map< std::size_t, std::size_t >& amrNodeMap,
   const tk::NodeCommMap& nodeCommMap,
+  const tk::EdgeCommMap& edgeCommMap,
   const std::map< int, std::vector< std::size_t > >& bface,
   const std::map< int, std::vector< std::size_t > >& bnode,
   const std::vector< std::size_t >& triinpoel,
@@ -1334,6 +1359,7 @@ ALECG::resizePostAMR(
 //! \param[in] removedNodes Newly removed mesh node local ids
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
+//! \param[in] edgeCommMap New edge communication map
 //! \param[in] bface Boundary-faces mapped to side set ids
 //! \param[in] bnode Boundary-node lists mapped to side set ids
 //! \param[in] triinpoel Boundary-face connectivity
@@ -1346,8 +1372,8 @@ ALECG::resizePostAMR(
   ++d->Itr();    // Increase number of iterations with a change in the mesh
 
   // Resize mesh data structures after mesh refinement
-  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, removedNodes,
-    elemblockid );
+  d->resizePostAMR( chunk, coord, amrNodeMap, nodeCommMap, edgeCommMap,
+    removedNodes, addedNodes, elemblockid );
 
   // Remove newly removed nodes from solution vectors
   m_u.rm(removedNodes);
@@ -1362,6 +1388,7 @@ ALECG::resizePostAMR(
   m_srcFlag.resize( npoin );
   m_rhs.resize( npoin );
   m_chBndGrad.resize( d->Bid().size() );
+  m_bndel = d->bndel();
   tk::destroy(m_esup);
   tk::destroy(m_psup);
   m_esup = tk::genEsup( d->Inpoel(), 4 );
@@ -1375,6 +1402,65 @@ ALECG::resizePostAMR(
         "Indices of parent-edge nodes out of bounds post-AMR");
       m_u(n.first,c) = (m_u(n.second[0],c) + m_u(n.second[1],c))/2.0;
     }
+
+  // Update IC-box node memberships only if AMR has modified the mesh
+  if (!addedNodes.empty() || !removedNodes.empty()) {
+
+    // Update IC-box node memberships from old local ids to new local ids,
+    // dropping nodes that were removed by derefinement.
+    for (auto& boxnodes : m_boxnodes) {
+      std::unordered_set< std::size_t > updated;
+      for (auto p : boxnodes) {
+        auto it = amrNodeMap.find( p );
+        if (it != end(amrNodeMap)) updated.insert( it->second );
+      }
+      boxnodes = std::move( updated );
+    }
+
+    // Add newly created AMR nodes to IC boxes if their coordinates lie inside.
+    const auto& icbox = g_inputdeck.get< tag::ic, tag::box >();
+    if (!icbox.empty()) {
+      Assert( m_boxnodes.size() == icbox.size(),
+        "Incorrect number of IC box node sets" );
+      const auto& x = d->Coord()[0];
+      const auto& y = d->Coord()[1];
+      const auto& z = d->Coord()[2];
+      std::size_t bcnt = 0;
+      for (const auto& b : icbox) {
+        std::vector< tk::real > box
+          { b.template get< tag::xmin >(), b.template get< tag::xmax >(),
+            b.template get< tag::ymin >(), b.template get< tag::ymax >(),
+            b.template get< tag::zmin >(), b.template get< tag::zmax >() };
+
+        std::array< tk::real, 3 > b_orientn{{
+          b.template get< tag::orientation >()[0],
+          b.template get< tag::orientation >()[1],
+          b.template get< tag::orientation >()[2] }};
+        std::array< tk::real, 3 > b_centroid{{ 0.5*(box[0]+box[1]),
+          0.5*(box[2]+box[3]), 0.5*(box[4]+box[5]) }};
+        std::array< tk::real, 3 > b_min{{box[0], box[2], box[4]}};
+        std::array< tk::real, 3 > b_max{{box[1], box[3], box[5]}};
+        tk::movePoint( b_centroid, b_min );
+        tk::movePoint( b_centroid, b_max );
+
+        for (const auto& [p,parent] : addedNodes) {
+          (void)parent;
+          std::array< tk::real, 3 > node{{ x[p], y[p], z[p] }};
+          tk::movePoint( b_centroid, node );
+          tk::rotatePoint( {{-b_orientn[0], -b_orientn[1], -b_orientn[2]}},
+            node );
+          if (node[0] > b_min[0] && node[0] < b_max[0] &&
+              node[1] > b_min[1] && node[1] < b_max[1] &&
+              node[2] > b_min[2] && node[2] < b_max[2])
+            m_boxnodes[bcnt].insert( p );
+        }
+        ++bcnt;
+      }
+    }
+  }
+
+  // TODO: m_nodeblockid is stale after AMR. Updating it correctly requires
+  // post-AMR communication of mesh-block membership for shared nodes.
 
   // Update physical-boundary node-, face-, and element lists
   m_bnode = bnode;

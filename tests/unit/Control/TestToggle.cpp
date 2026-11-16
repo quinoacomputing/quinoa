@@ -96,7 +96,7 @@ void Toggle_object::test< 3 >() {
   ensure( "cannot find keyword", p.value("2nd option keyword") == Enum::F2 );
 }
 
-//! Test that member function value() throws in DEBUG mode if can't find keyword
+//! Test that member function value() throws if can't find keyword
 template<> template<>
 void Toggle_object::test< 4 >() {
   set_test_name( "value() throws if can't find keyword" );
@@ -104,15 +104,13 @@ void Toggle_object::test< 4 >() {
   try {
 
     p.value("bogus keyword");
-    #ifndef NDEBUG
-    fail( "should throw exception in DEBUG mode" );
-    #endif
+    fail( "should throw exception" );
 
   } catch ( tk::Exception& e ) {
-    // exception thrown in DEBUG mode, test ok, Assert skipped in RELEASE mode
+    // exception thrown (ErrChk, i.e. in DEBUG and RELEASE mode), test ok
     // if any other type of exception is thrown, test fails with except
     ensure( std::string("wrong exception thrown: ") + e.what(),
-            std::string( e.what() ).find( "Cannot find value for keyword" ) !=
+            std::string( e.what() ).find( "Unknown switch name keyword" ) !=
               std::string::npos );
 
   }

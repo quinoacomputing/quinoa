@@ -49,6 +49,7 @@ void setDestPoints(CkArrayID p, int index, tk::UnsMesh::Coords* coords, tk::Fiel
 }
 
 LibMain::LibMain(CkArgMsg* msg) {
+  //std::cout << "LibMain() called..." << std::endl;
   delete msg;
   m2mtransferProxy = CProxy_M2MTransfer::ckNew();
 
@@ -56,11 +57,22 @@ LibMain::LibMain(CkArgMsg* msg) {
   CollideGrid3d gridMap(CkVector3d(0, 0, 0),CkVector3d(2, 100, 2));
   collideHandle = CollideCreate(gridMap,
       CollideSerialClient(collisionHandler, 0));
+  //std::cout << "LibMain() cmplt." << std::endl;
 }
+
 
 M2MTransfer::M2MTransfer() : current_chunk(0) {}
 
-void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb) {
+void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb)
+// *****************************************************************************
+//  Register mesh with the mesh-to-mesh transfer library
+//! \param[in] p Proxy from which this function call originated
+//! \param[in] elem Total number of chares in the application
+//! \param[in] cb Callback to inform application that the library is ready
+//! \details This function registers a mesh with M2MTransfer. This needs to
+//!   be called during normal execution and when restarting from checkpoint.
+// *****************************************************************************
+{
   auto id = static_cast<std::size_t>(CkGroupID(p).idx);
   if (proxyMap.count(id) == 0) {
     CkArrayOptions opts;
@@ -72,6 +84,7 @@ void M2MTransfer::addMesh(CkArrayID p, int elem, CkCallback cb) {
     mesh.m_proxy = CProxy_TransferDetails::ckNew(p, mesh, cb, opts);
     proxyMap[id] = mesh;
     current_chunk += elem;
+    //std::cout << "M2MTransfer::addMesh() cmplt. " << thisIndex << std::endl;
   } else {
     CkAbort("Uhoh...\n");
   }

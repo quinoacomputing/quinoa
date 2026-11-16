@@ -184,9 +184,10 @@ namespace AMR {
                 for (const auto& id : ids)
             {
                     edge_t key = nodes_to_key(id[0], id[1]);
+                    auto& edge = get(key);
 
-                    mark_for_refinement(key);
-                    trace_out << get(key).needs_refining << std::endl;
+                    mark_for_refinement(edge);
+                    trace_out << edge.needs_refining << std::endl;
                 }
             }
 
@@ -196,13 +197,11 @@ namespace AMR {
              * refinement (provides a nice abstraction from messing with the
              * struct directly).
              *
-             * @param key The edge key to mark as refinement
+             * @param edge The edge to mark as refinement
              */
-            void mark_for_refinement(const edge_t& key)
+            static void mark_for_refinement(Edge_Refinement& edge)
             {
-                // cppcheck-suppress assertWithSideEffect
-                assert( exists(key) );
-                get(key).needs_refining = 1;
+                edge.needs_refining = 1;
             }
 
             /**
@@ -231,13 +230,11 @@ namespace AMR {
             /**
              * @brief Function to unmark and edge as needing refinement
              *
-             * @param key The key representing the edge to unmark
+             * @param edge The edge to unmark
              */
-            void unmark_for_refinement(const edge_t& key)
+            static void unmark_for_refinement(Edge_Refinement& edge)
             {
-                // cppcheck-suppress assertWithSideEffect
-                assert( exists(key) );
-                get(key).needs_refining = 0;
+                edge.needs_refining = 0;
             }
 
             /**

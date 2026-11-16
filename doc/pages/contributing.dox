@@ -36,6 +36,18 @@ A few styling guidelines to keep in mind when contributing to Quinoa:
   add a continuing line, with an indentation to indicate continuity with
   previous line.
 
+@section ai_coding AI Coding Guidelines
+
+A few things to check before creating a pull request with AI-generated code:
+
+- Content: Understand all the code that is being pushed.
+- Diff: Keep the change-set limited to what the features require.
+- Test: Test the code adequately (see sections below for
+  @ref contributing_members "Pull request guidelines").
+- Design: Look out for over-engineered code.
+- Defensive code: Look out for excessively defensive code (excessive throws,
+  asserts, etc).
+
 @section contributing_seek Types of contributions we are looking for
 
 There are many ways to contribute, from writing tutorials and HOWTOs, adding

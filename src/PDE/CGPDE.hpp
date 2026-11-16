@@ -274,6 +274,10 @@ class CGPDE {
     //! Public interface to returning variable names
     std::vector< std::string > names() const { return self->names(); }
 
+    //! Public interface to returning state components used for AMR errors
+    std::vector< tk::ncomp_t > amrErrorComponents() const
+    { return self->amrErrorComponents(); }
+
     //! Public interface to returning nodal surface field output
     std::vector< std::vector< real > >
     surfOutput( const std::map< int, std::vector< std::size_t > >& bnd,
@@ -432,6 +436,7 @@ class CGPDE {
       virtual std::vector< std::string > surfNames() const = 0;
       virtual std::vector< std::string > histNames() const = 0;
       virtual std::vector< std::string > names() const = 0;
+      virtual std::vector< ncomp_t > amrErrorComponents() const = 0;
       virtual std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >&,
         const tk::Fields& ) const = 0;
@@ -588,6 +593,8 @@ class CGPDE {
       { return data.histNames(); }
       std::vector< std::string > names() const override
       { return data.names(); }
+      std::vector< ncomp_t > amrErrorComponents() const override
+      { return data.amrErrorComponents(); }
       std::vector< std::vector< real > > surfOutput(
         const std::map< int, std::vector< std::size_t > >& bnd,
         const tk::Fields& U ) const override

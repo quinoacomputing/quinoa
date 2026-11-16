@@ -45,6 +45,12 @@ genTransfer( std::size_t nmesh ) {
 
 } // inciter::
 
+namespace exam2m {
+
+extern CollideHandle collideHandle;
+
+} // exam2m::
+
 using inciter::Discretization;
 
 Discretization::Discretization(
@@ -185,11 +191,48 @@ Discretization::Discretization(
     if (thisIndex == 0) {
       exam2m::addMesh( thisProxy, m_nchare,
         CkCallback( CkIndex_Discretization::transferInit(), thisProxy ) );
-      //std::cout << "Disc: " << m_meshid << " m2m::addMesh()\n";
+      //std::cout << "Disc: " << m_meshid << " called addMesh(). \n";
     }
+  }
+}
+
+void
+Discretization::addRestartedMesh( CkCallback cb )
+// *****************************************************************************
+// Register mesh with mesh-transfer lib on restart
+//! \param[in] cb Callback to call when mesh-registration is complete.
+// *****************************************************************************
+{
+  if (m_disc.size() == 1 || m_transfer.empty()) {
+    // skip transfer if single mesh or if not involved in coupling
+    cb.send();
+  } else {
+    // Store the callback so collideRestartDone() (element 0) can forward it
+    // to addMesh once all PEs have finished reinitClient.
+    m_restartcb = cb;
+    // Reinitialize the collision client on this PE's collideMgr branch.
+    // Contribute to a barrier so ALL PEs finish reinitClient before element 0
+    // calls addMesh.  Without this, collideMgr on some PEs may not yet be
+    // restored from checkpoint when the first collision messages arrive,
+    // causing "group proxy not initialized" (CmiAbort / SIGSEGV on restart).
+    CollideSerialClientRestart(exam2m::collideHandle, exam2m::collisionHandler,
+      0);
+    contribute( CkCallback(CkIndex_Discretization::collideRestartDone(), thisProxy) );
   }
   // Array elements must not use the chare_objs table
   chareIdx = -1;
+}
+
+void
+Discretization::collideRestartDone()
+// *****************************************************************************
+// Called on element 0 once every chare has finished CollideSerialClientRestart
+// *****************************************************************************
+{
+  if (thisIndex == 0) {
+    //std::cout << "Disc: on restart " << m_meshid << " called addMesh(). \n";
+    exam2m::addMesh( thisProxy, m_nchare, m_restartcb );
+  }
 }
 
 std::unordered_map< std::size_t, std::size_t >
@@ -214,6 +257,7 @@ Discretization::transferInit()
 // coupled to other solver)
 // *****************************************************************************
 {
+  //std::cout << "Disc: " << m_meshid << " completed addMesh(). \n";
   // Compute number of mesh points owned
   std::size_t npoin = m_gid.size();
   for (auto g : m_gid) if (tk::slave(m_nodeCommMap,g,thisIndex)) --npoin;
@@ -355,6 +399,7 @@ Discretization::transfer(
     // Pass source and destination meshes to mesh transfer lib (if coupled)
     Assert( m_nsrc < m_mytransfer.size(), "Indexing out of mytransfer[src]" );
     if (fromMesh == m_meshid) {
+      //std::cout << "Disc: " << m_meshid << " setting source tets. \n";
       exam2m::setSourceTets( thisProxy, thisIndex, &m_inpoel, &m_coord, u );
       ++m_nsrc;
     } else {
@@ -362,6 +407,7 @@ Discretization::transfer(
     }
     Assert( m_ndst < m_mytransfer.size(), "Indexing out of mytransfer[dst]" );
     if (toMesh == m_meshid) {
+      //std::cout << "Disc: " << m_meshid << " setting destination pts. \n";
       exam2m::setDestPoints( thisProxy, thisIndex, &m_coord, u,
         cb_xfer );
       ++m_ndst;
@@ -462,7 +508,9 @@ Discretization::resizePostAMR(
   const tk::UnsMesh::Coords& coord,
   const std::unordered_map< std::size_t, std::size_t >& /*amrNodeMap*/,
   const tk::NodeCommMap& nodeCommMap,
+  const tk::EdgeCommMap& edgeCommMap,
   const std::set< std::size_t >& /*removedNodes*/,
+  const std::unordered_map< std::size_t, tk::UnsMesh::Edge >& addedNodes,
   const std::unordered_map< std::size_t, std::set< std::size_t > >& elemblockid )
 // *****************************************************************************
 //  Resize mesh data structures after mesh refinement
@@ -470,19 +518,39 @@ Discretization::resizePostAMR(
 //! \param[in] coord New mesh node coordinates
 //! \param[in] amrNodeMap Node id map after amr (local ids)
 //! \param[in] nodeCommMap New node communication map
+//! \param[in] edgeCommMap New edge communication map
 //! \param[in] removedNodes Newly removed mesh node local ids
+//! \param[in] removedNodes Newly added mesh nodes and their parents (local ids)
 //! \param[in] elemblockid New local tet ids associated with mesh block ids
 // *****************************************************************************
 {
   m_el = chunk;         // updates m_inpoel, m_gid, m_lid
   m_nodeCommMap.clear();
   m_nodeCommMap = nodeCommMap;        // update node communication map
+  m_edgeCommMap.clear();
+  m_edgeCommMap = edgeCommMap;        // update edge communication map
   m_elemblockid.clear();
   m_elemblockid = elemblockid;
 
   // Update mesh volume container size
   m_vol.resize( m_gid.size(), 0.0 );
   if (!m_voln.empty()) m_voln.resize( m_gid.size(), 0.0 );
+
+  // Resize mesh velocity
+  if (!g_inputdeck.get< tag::ale, tag::ale >())
+    m_meshvel.resize( coord[0].size() );
+
+  for (const auto& n : addedNodes) {
+    for (std::size_t i=0; i<3; ++i) {
+      Assert(n.first < m_meshvel.nunk(),
+        "Added node index out of bounds post-AMR");
+      Assert(n.second[0] < m_meshvel.nunk() && n.second[1] < m_meshvel.nunk(),
+        "Indices of parent-edge nodes out of bounds post-AMR");
+
+      m_meshvel(n.first,i) = (m_meshvel(n.second[0],i) +
+        m_meshvel(n.second[1],i))/2.0;
+    }
+  }
 
   // Regenerate bid data
   tk::destroy(m_bid);

@@ -16,6 +16,7 @@
 
 #if defined(__clang__)
   #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wtemplate-id-cdtor"
   #pragma clang diagnostic ignored "-Wunused-parameter"
   #pragma clang diagnostic ignored "-Wold-style-cast"
   #pragma clang diagnostic ignored "-Wextra-semi"
@@ -23,6 +24,7 @@
   #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #elif defined(STRICT_GNUC)
   #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wtemplate-id-cdtor"
   #pragma GCC diagnostic ignored "-Wcast-qual"
   #pragma GCC diagnostic ignored "-Wshadow"
   #pragma GCC diagnostic ignored "-Wdeprecated-declarations"

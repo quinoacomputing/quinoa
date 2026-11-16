@@ -93,8 +93,8 @@ CmdLineParser::CmdLineParser( int argc, char** argv,
       tk::inciter_executable(),
       "charmrun +p4 " + tk::inciter_executable() + " -" +
         *kw::verbose().alias() + " -" + *kw::control().alias() +
-        " vort.q -" + *kw::input().alias() + " unitcube.exo",
-      "will execute the simulation configured in the control file 'vort.q' "
+        " vort.lua -" + *kw::input().alias() + " unitcube.exo",
+      "will execute the simulation configured in the control file 'vort.lua' "
       "using the mesh in 'unitcube.exo' on 4 CPUs producing verbose screen "
       "output" );
   }
