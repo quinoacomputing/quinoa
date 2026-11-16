@@ -2296,6 +2296,13 @@ class InputDeck : public tk::TaggedTuple< ConfigMembers > {
         y=0.1. The same profile is imposed on surfaces configured with a
         Dirichlet boundary condition.)"});
 
+      keywords.insert({"mms",
+        "Select the 3D manufactured traveling-wave problem",
+        R"(This keyword selects a single-species manufactured solution based on
+        Danis and Yan. It requires viscous flow, constant viscosity mu=1e-3,
+        and a calorically perfect gas with R=0.4, cp=1.4, and zero internal-energy
+        offset. The source uses Pr=0.71 to match the viscous discretization.)"});
+
       // -----------------------------------------------------------------------
 
       // Initialize help: fill own keywords

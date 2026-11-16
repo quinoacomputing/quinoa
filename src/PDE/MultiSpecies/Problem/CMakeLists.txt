@@ -2,7 +2,8 @@ add_library(MultiSpeciesProblem
             UserDefined.cpp
             FieldOutput.cpp
             MixingLayer.cpp
-            CouetteFlow.cpp)
+            CouetteFlow.cpp
+            MMS.cpp)
 
 target_include_directories(MultiSpeciesProblem PUBLIC
                            ${QUINOA_SOURCE_DIR}
