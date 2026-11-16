@@ -572,7 +572,7 @@ namespace inciter {
   //! \brief Boundary state function providing the left and right state of a
   //!   face at free surface boundaries (solid-vacuum interface)
   //! \param[in] ncomp Number of scalar components in this PDE system
-  //! \param[in] mat_blk EOS material block
+//  //! \param[in] mat_blk EOS material block
   //! \param[in] ul Left (domain-internal) state
   //! \param[in] fn Unit face normal
   //! \return Left and right states for all scalar components in this PDE
@@ -586,7 +586,7 @@ namespace inciter {
   //!   velocity, and deformation gradient from the interior.
   static tk::StateFn::result_type
   freesurface( ncomp_t ncomp,
-               const std::vector< EOS >& mat_blk,
+               const std::vector< EOS >& /*mat_blk*/,
                const std::vector< tk::real >& ul,
                tk::real, tk::real, tk::real, tk::real,
                const std::array< tk::real, 3 >& fn )
