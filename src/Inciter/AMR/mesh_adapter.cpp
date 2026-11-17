@@ -232,6 +232,57 @@ namespace AMR {
          }
        }
 
+       // A tagged intermediate edge cannot be refined directly. Instead,
+       // activate the unlocked edges of the intermediate (non-normal)
+       // families adjacent to it, so that class 3 upgrades them to 1:8.
+
+       // 1. Collect all tagged intermediate edges
+       std::set< edge_t > tagged_inter;
+       for (const auto& r : remote) {
+         if (r.second == edge_tag::REFINE &&
+             tet_store.edge_store.get(r.first).lock_case ==
+               Edge_Lock_Case::intermediate)
+           tagged_inter.insert(r.first);
+       }
+       // 2. Collect all edges of tets that include a tagged intermediate edge
+       std::set< edge_t > tagged_intertet_edges;
+       if (!tagged_inter.empty()) {
+         for (const auto& kv : tet_store.tets) {
+           if (tet_store.is_active(kv.first)) {
+             auto edge_list = tet_store.generate_edge_keys(kv.first);
+             bool tagged = false;
+             for (const auto& key : edge_list)
+               if (tagged_inter.count(key)) tagged = true;
+             if (tagged)
+               tagged_intertet_edges.insert(edge_list.begin(), edge_list.end());
+           }
+         }
+       }
+       // 3. Mark edges for ref/deref accordingly
+       if (!tagged_intertet_edges.empty()) {
+         for (const auto& kv : tet_store.tets) {
+           auto tet_id = kv.first;
+           if (tet_store.is_active(tet_id) && !tet_store.is_normal(tet_id)) {
+             bool tagged = false;
+             for (const auto& key : tet_store.generate_edge_keys(tet_id))
+               if (tagged_intertet_edges.count(key)) tagged = true;
+             // If tagged by algorithm above, mark all siblings
+             if (tagged) {
+               auto parent_id = tet_store.get_parent_id(tet_id);
+               for (auto child : tet_store.data(parent_id).children) {
+                 for (const auto& key : tet_store.generate_edge_keys(child)) {
+                   auto& edge = tet_store.edge_store.get(key);
+                   if (edge.lock_case == Edge_Lock_Case::unlocked) {
+                     edge.needs_refining = 1;
+                     edge.needs_derefining = 0;
+                   }
+                 }
+               }
+             }
+           }
+         }
+       }
+
        mark_refinement();
        mark_derefinement();
     }
@@ -776,8 +827,11 @@ namespace AMR {
         }
     }
 
-    // TODO: Document this
-    // TODO: This has too similar a name to deactivate_tet
+    /**
+     * @brief Unmarks edges of given tet for refinement only
+     *
+     * @param tet_id The id of the given tet
+     */
     void mesh_adapter_t::deactivate_tet_edges(size_t tet_id) {
         edge_list_t edge_list = tet_store.generate_edge_keys(tet_id);
         for (size_t k = 0; k < NUM_TET_EDGES; k++)
@@ -787,7 +841,9 @@ namespace AMR {
 
             tet_store.edge_store.unmark_for_refinement(edge);
             trace_out << "Deactivating " << key << std::endl;
-            edge.needs_derefining = false;
+            // Following line comment so that only refinement is deactivated.
+            // derefinement marks are kept so that the family can still derefine
+            //edge.needs_derefining = false;
         }
     }
 

@@ -327,15 +327,8 @@ namespace AMR {
                             trace_out << "Ref " << edge << " Num face => " << num_face_refine_edges << std::endl;
                         }
 
-                        // Check for locked edges
-                            // This case only cares about faces with no locks
-                        if (tet_store.edge_store.lock_case(edge) != Edge_Lock_Case::unlocked)
-                        {
-                            // Abort this face
-                            trace_out << "Face has lock it's not this one " << face << std::endl;
-                            num_face_refine_edges = 0;
-                            break;
-                        }
+                        // Edge locks are not checked here: the points on the
+                        // edges of the kept face already exist
                         trace_out << "Num face => " << num_face_refine_edges << std::endl;
                     }
                     if (num_face_refine_edges >= 2)
@@ -1074,11 +1067,21 @@ namespace AMR {
 
               delete_list.clear();
 
-              // collect all point ids
+              // collect point ids that are intermediate points of active 1:2
+              // and 1:4 children, i.e., not points of their parent, or points
+              // resulting from a 1:8.
               std::unordered_set< size_t > used;
               for (const auto& kv : tet_store.tets) {
-                if (tet_store.is_active(kv.first)) {
-                  for (auto p : kv.second) used.insert(p);
+                auto rc = tet_store.get_refinement_case(kv.first);
+                if (tet_store.is_active(kv.first) &&
+                    (rc == Refinement_Case::one_to_two ||
+                     rc == Refinement_Case::one_to_four)) {
+                  const auto& parent =
+                    tet_store.get(tet_store.get_parent_id(kv.first));
+                  for (auto p : kv.second) {
+                    if (std::find(parent.begin(), parent.end(), p) ==
+                        parent.end()) used.insert(p);
+                  }
                 }
               }
 
