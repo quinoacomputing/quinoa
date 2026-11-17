@@ -107,7 +107,6 @@ cleanTraceMultiMat(
   std::size_t nelem,
   const std::vector< EOS >& mat_blk,
   const tk::Fields& geoElem,
-  [[maybe_unused]] const tk::Fields& Un,
   std::size_t nmat,
   tk::Fields& U,
   tk::Fields& P )
@@ -117,10 +116,6 @@ cleanTraceMultiMat(
 //! \param[in] nelem Number of elements
 //! \param[in] mat_blk EOS material block
 //! \param[in] geoElem Element geometry array
-//! \param[in] Un Solution vector at the start of the current time step
-//!   (currently unused -- kept for call-site compatibility; was previously
-//!   used by a now-removed alpha-crossing reset condition, see
-//!   MultiMatIndexing.hpp's solidPhysicsWeight())
 //! \param[in] nmat Number of materials in this PDE system
 //! \param[in/out] U High-order solution vector which gets modified
 //! \param[in/out] P High-order vector of primitives which gets modified
@@ -229,13 +224,7 @@ cleanTraceMultiMat(
           // even though condition 3 above already screens for it --
           // otherwise every solid cell below that fluid-oriented 1% cutoff
           // gets its (possibly perfectly fine) tensor state stomped every
-          // stage. (A former condition 4 here reset on sight whenever alpha
-          // crossed the bulk-physics activation boundary, to discard a
-          // stale g before full-strength physics trusted it for the first
-          // time -- made unnecessary once that boundary became the smooth
-          // solidPhysicsWeight() ramp in updatePrimitives()/stiff_rhs():
-          // there is no longer a discontinuous activation event for a
-          // stale g to be caught at.)
+          // stage.
           // Trace solids (alk < volfracPRelaxLim(), condition 1) are
           // hard-snapped to a spherical g with zero stress on every stage,
           // exactly as in develop, so degraded g cannot persist in the thin
@@ -245,9 +234,6 @@ cleanTraceMultiMat(
             resetSolidTensors(nmat, k, e, U, P, true);
           }
           else if (solidTensorUnphysical(nmat, k, e, U)) {
-            printf("cleanTraceMaterial: resetting unphysical g-tensor: "
-                   "t=%.6e e=%lu mat=%lu solidx=%lu alpha=%.6e\n",
-                   t, e, k, solidx[k], alk);
             resetSolidTensors(nmat, k, e, U, P);
           }
           for (std::size_t i=0; i<3; ++i)
@@ -796,9 +782,7 @@ gAnisotropyRatio(
 //  Anisotropy ratio of a deformation gradient tensor
 //! \param[in] g Inverse deformation gradient tensor
 //! \return ||g||_F^3 / (3^1.5 * |det(g)|): 1 for g proportional to a
-//!   rotation, growing rapidly with anisotropy. Shared by
-//!   degenerateDeformGrad(), gTensorTrustWeight(), and stiff_rhs()'s
-//!   g-relaxation source so all three agree on what "degenerate" means.
+//!   rotation, growing rapidly with anisotropy.
 // *****************************************************************************
 {
   auto detg = tk::determinant(g);
@@ -807,64 +791,6 @@ gAnisotropyRatio(
     for (std::size_t j=0; j<3; ++j)
       froNorm2 += g[i][j]*g[i][j];
   return std::pow(froNorm2/3.0, 1.5) / std::abs(detg);
-}
-
-tk::real
-anisotropyWeight( tk::real anisotropy )
-// *****************************************************************************
-//  Smooth [0,1] weight fading to 0 as an anisotropy ratio approaches the
-//  degenerateDeformGrad() cutoff
-//! \param[in] anisotropy Anisotropy ratio, see gAnisotropyRatio()
-//! \return 1 for a well-behaved (low-anisotropy) g, smoothstepped down to 0
-//!   at degenerateDeformGrad()'s hard cutoff (650) instead of jumping there
-//!   -- margin taken in log-space (half a decade), since this ratio spans
-//!   orders of magnitude the same way det(g) does.
-// *****************************************************************************
-{
-  if (!std::isfinite(anisotropy) || anisotropy <= 0.0) return 0.0;
-  constexpr tk::real aniso_hi = 650.0;
-  constexpr tk::real log_aniso_margin = 0.5;
-  tk::real log_aniso_hi = std::log10(aniso_hi);
-  tk::real loga = std::log10(anisotropy);
-  tk::real t_aniso = std::clamp(
-    (log_aniso_hi-loga)/log_aniso_margin, 0.0, 1.0);
-  return t_aniso*t_aniso*(3.0-2.0*t_aniso);
-}
-
-tk::real
-gTensorTrustWeight(
-  const std::array< std::array< tk::real, 3 >, 3 >& g )
-// *****************************************************************************
-//  Smooth [0,1] trust weight for a deformation gradient tensor's sanity
-//! \param[in] g Inverse deformation gradient tensor
-//! \return 1 for a well-behaved g, fading smoothly to 0 as either det(g) or
-//!   the anisotropy ratio approaches the hard cutoffs used by
-//!   degenerateDeformGrad()
-//! \details degenerateDeformGrad()'s hard true/false switch makes the
-//!   Newton residual/Jacobian discontinuous right at its cutoffs, which has
-//!   repeatedly stalled convergence in production runs. This ramps both the
-//!   det(g) and anisotropy components to zero smoothly at those same
-//!   cutoffs instead, so stress/Lp fade out continuously as g degrades.
-// *****************************************************************************
-{
-  auto detg = tk::determinant(g);
-  if (!std::isfinite(detg) || detg <= 0.0) return 0.0;
-
-  // det(g)-based component: unchanged from the ramp already used by
-  // stiff_rhs()/balance_plastic_energy() -- full trust more than half a
-  // decade inside [1e-3,1e3], fading to zero exactly at those edges.
-  constexpr tk::real log_lo = -3.0, log_hi = 3.0;
-  constexpr tk::real log_margin = 0.5;
-  tk::real logd = std::log10(detg);
-  tk::real dist_det = std::min(logd-log_lo, log_hi-logd);
-  tk::real t_det = std::clamp(dist_det/log_margin, 0.0, 1.0);
-  tk::real w_det = t_det*t_det*(3.0-2.0*t_det);
-
-  // Anisotropy-based component: same ratio as degenerateDeformGrad(),
-  // smoothstepped down to zero at that function's hard cutoff.
-  tk::real w_aniso = anisotropyWeight(gAnisotropyRatio(g));
-
-  return w_det * w_aniso;
 }
 
 std::array< std::array< tk::real, 3 >, 3 >
@@ -876,15 +802,9 @@ isotropicTarget(
 //! \param[in] g Inverse deformation gradient tensor
 //! \return det(g)^(1/3) * I, smoothly blended toward I as det(g) approaches
 //!   or falls outside a plausible range
-//! \details Blends with the same smoothstep as gTensorTrustWeight()'s
-//!   w_det, rather than a hard switch at the 1e-3/1e3 edges: this target
-//!   now also feeds the Newton-solved g-relaxation source in stiff_rhs(),
-//!   where a discontinuous target poisons the FD Jacobian the same way a
-//!   hard g-sanity switch did before gTensorTrustWeight() replaced it --
-//!   confirmed in practice, a cell at det(g)=0.0009990 (just inside the old
-//!   hard edge) failed to converge until this was smoothed. Shared by
-//!   resetSolidTensors() and stiff_rhs() so both relax toward the same
-//!   target.
+//! \details Used by resetSolidTensors()'s blended repair. The det(g) blend
+//!   (full trust more than half a decade inside [1e-3,1e3], smoothstepped
+//!   to zero at those edges) avoids a discontinuous target there.
 // *****************************************************************************
 {
   auto detg = tk::determinant(g);
@@ -892,9 +812,6 @@ isotropicTarget(
   if (!std::isfinite(detg) || detg <= 0.0) {
     gii = 1.0;
   } else {
-    // Same det(g) ramp as gTensorTrustWeight()'s w_det: full trust more
-    // than half a decade inside [1e-3,1e3], smoothstepped to zero trust
-    // exactly at those edges.
     constexpr tk::real log_lo = -3.0, log_hi = 3.0;
     constexpr tk::real log_margin = 0.5;
     tk::real logd = std::log10(detg);
@@ -984,10 +901,9 @@ resetSolidTensors(
   // face flux at the very next stage jump by the FULL error (which can be
   // O(1e3) for a badly-diverged g), large enough to blow up a neighboring
   // element's Newton solve or collapse dt. Damping bounds that per-stage
-  // jump; since this element keeps re-triggering either solidTensorUnphysical()
-  // (condition 3) or the alpha-crossing check (condition 4) on subsequent
-  // stages until it actually converges, the state still relaxes fully to
-  // the target over a few stages.
+  // jump; since this element keeps re-triggering solidTensorUnphysical() on
+  // subsequent stages until it actually converges, the state still relaxes
+  // fully to the target over a few stages.
   const auto relax = solidResetRelaxFactor();
 
   // Blend g and zero elastic (deviatoric) Cauchy stress DOFs ONLY (not

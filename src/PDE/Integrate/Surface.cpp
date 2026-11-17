@@ -918,32 +918,6 @@ surfInt_constP(
       // compute flux
       auto fl = flux( mat_blk, fn, state, v, wn_igp );
 
-      // Bounded diagnostic: flag an anomalously large Riemann flux at this
-      // internal face, which is what would inject a nonphysical jump into
-      // the density/momentum/energy of the neighboring elements (el, er) on
-      // this stage. Legitimate Taylor-impact fluxes (GPa-scale pressures,
-      // few-hundred m/s velocities) stay many orders of magnitude below this
-      // threshold, so in a healthy run this never fires. But once the sim
-      // actually goes unstable, EVERY face can cross threshold EVERY stage,
-      // so the physical threshold alone no longer bounds the output -- cap
-      // the total number of prints (per PE) explicitly so a full blowup
-      // still leaves a readable log instead of a multi-GB dump.
-      {
-        static std::size_t nFluxWarnings = 0;
-        constexpr std::size_t maxFluxWarnings = 200;
-        tk::real flmax = 0.0;
-        for (auto v_fl : fl) flmax = std::max(flmax, std::abs(v_fl));
-        if (flmax > 1.0e13 && nFluxWarnings < maxFluxWarnings) {
-          ++nFluxWarnings;
-          printf("Flux warning: t=%e face el=%lu er=%lu |fl|max=%e fl=",
-                 t, el, er, flmax);
-          for (auto v_fl : fl) printf(" %e", v_fl);
-          printf("\n");
-          if (nFluxWarnings == maxFluxWarnings)
-            printf("Flux warning: further warnings suppressed on this PE\n");
-        }
-      }
-
       // Add the surface integration term to the rhs
       update_rhs_fa( ncomp, nmat, ndof, ndof, ndof, wt, fn,
                      el, er, fl, B_l, B_r, R, riemannDeriv );

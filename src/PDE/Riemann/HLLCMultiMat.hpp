@@ -106,11 +106,7 @@ struct HLLCMultiMat {
       // extraction, so every downstream use in this function (star-state
       // blending, this material's own deformation-gradient flux, and the
       // riemannDeriv g-push below) inherits the clean value instead of
-      // needing separate guards at each use site. No alpha-based guard
-      // here: g's own advection/transport is independent of whether its
-      // stress contribution is currently trusted (that trust fade is
-      // applied to the stress tensor itself, via solidPhysicsWeight() in
-      // updatePrimitives(), which asigl below already reflects).
+      // needing separate guards at each use site.
       if (solidx[k] > 0 && degenerateG(gl[k]))
         gl[k] = idT;
       asigl = getCauchyStress(nmat, k, ncomp, u[0]);

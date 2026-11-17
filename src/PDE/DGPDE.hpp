@@ -225,11 +225,10 @@ class DGPDE {
     //! Public interface to cleaning up trace materials for the diff eq
     void cleanTraceMaterial( tk::real t,
                              const tk::Fields& geoElem,
-                             const tk::Fields& unk_un,
                              tk::Fields& unk,
                              tk::Fields& prim,
                              std::size_t nielem ) const
-    { self->cleanTraceMaterial( t, geoElem, unk_un, unk, prim, nielem ); }
+    { self->cleanTraceMaterial( t, geoElem, unk, prim, nielem ); }
 
     //! Public interface to applying the physics source term
     void physSrc( tk::real t,
@@ -529,7 +528,6 @@ class DGPDE {
                                      const std::vector< std::size_t >& ) const = 0;
       virtual void cleanTraceMaterial( tk::real,
                                        const tk::Fields&,
-                                       const tk::Fields&,
                                        tk::Fields&,
                                        tk::Fields&,
                                        std::size_t ) const = 0;
@@ -750,11 +748,10 @@ class DGPDE {
       }
       void cleanTraceMaterial( tk::real t,
                                const tk::Fields& geoElem,
-                               const tk::Fields& unk_un,
                                tk::Fields& unk,
                                tk::Fields& prim,
                                std::size_t nielem )
-      const override { data.cleanTraceMaterial( t, geoElem, unk_un, unk, prim,
+      const override { data.cleanTraceMaterial( t, geoElem, unk, prim,
         nielem ); }
       void physSrc( tk::real t,
                     const tk::Fields& geoElem,

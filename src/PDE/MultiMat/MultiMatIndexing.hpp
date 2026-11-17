@@ -247,27 +247,6 @@ inline tk::real volfracPRelaxLim()
 inline tk::real volfracSolidResetLim()
 { return 2.0e-02; }
 
-//! \brief Upper edge of a buffer zone above volfracSolidResetLim(), used to
-//!   tell a genuine, lasting trace-to-bulk transition apart from alpha
-//!   merely wobbling back and forth across volfracSolidResetLim() itself.
-//! \details Observed in practice: some cells' alpha does not cross
-//!   volfracSolidResetLim() once and stay above it (the behavior the
-//!   trace-crossing reset below was originally designed around) -- it
-//!   oscillates repeatedly in a thin band straddling the limit (e.g.
-//!   2.00e-02, then 1e-8, then 2.02e-02, ...) for the entire run. Gating
-//!   bulk-physics eligibility and reset triggering on the bare limit meant
-//!   every upward wobble (mis-)read as a permanent transition. Widening the
-//!   band this far above the limit before either treating the cell as truly
-//!   bulk (solidPhysicsAlphaMax(), see solidPhysicsWeight()) or declaring a
-//!   crossing final (the alpha-crossing condition in cleanTraceMultiMat())
-//!   means pure noise
-//!   wobbling inside [volfracSolidResetLim(), volfracSolidResetBuffer())
-//!   never reaches full elastic/plastic physics and never triggers a
-//!   one-shot reset -- only a jump that clears the whole band in a single
-//!   step is treated as a real, lasting interface sweep.
-inline tk::real volfracSolidResetBuffer()
-{ return 2.0 * volfracSolidResetLim(); }
-
 //! \brief Per-call relaxation fraction used by resetSolidTensors() to blend
 //!   a trace solid's g/stress/eps_p toward their target (undeformed/
 //!   unstressed) state, rather than snapping to it in one step.
@@ -282,45 +261,6 @@ inline tk::real volfracSolidResetBuffer()
 //!   discontinuity injected into neighbors at each individual stage.
 inline tk::real solidResetRelaxFactor()
 { return 0.25; }
-
-//! \brief Lower edge of the solid stress-physics trust ramp (see
-//!   solidPhysicsWeight()): at or below this volume fraction, a solid's
-//!   elastic/plastic stress contribution is weighted to zero.
-inline tk::real solidPhysicsAlphaMin()
-{ return 1.0e-04; }
-
-//! \brief Upper edge of the solid stress-physics trust ramp (see
-//!   solidPhysicsWeight()): at or above this volume fraction, a solid's
-//!   elastic/plastic stress contribution is weighted to its full value.
-//!   Tied to volfracSolidResetBuffer(): a cell inside
-//!   [volfracSolidResetLim(), volfracSolidResetBuffer()) is, by definition,
-//!   one cleanTraceMaterial() is willing to reset on sight, so it should
-//!   also be the band this ramp treats as still partially trace.
-inline tk::real solidPhysicsAlphaMax()
-{ return volfracSolidResetBuffer(); }
-
-//! \brief Smooth [0,1] weight for how much a trace solid's elastic/plastic
-//!   stress physics should be trusted, as a function of its volume
-//!   fraction. Ramps from 0 at solidPhysicsAlphaMin() to 1 at
-//!   solidPhysicsAlphaMax(): below the former, g is driven almost entirely
-//!   by advection/interface-sharpening noise rather than real deformation;
-//!   above the latter, alpha is high enough that g reflects real material
-//!   deformation. Replaces a hard on/off switch at a single alpha value
-//!   (formerly solidPhysicsAlphaFloor()): THINC interface sharpening causes
-//!   many cells' alpha to hover and oscillate right at whatever single
-//!   value is chosen (observed identically at two different thresholds),
-//!   and every crossing of a hard switch injects a stress/flux
-//!   discontinuity large enough to collapse dt or fail the Newton plastic
-//!   relaxation solve. A continuous ramp has no such crossing: alpha
-//!   wobbling anywhere inside the band only wobbles the trust weight by a
-//!   similarly small, continuous amount.
-inline tk::real solidPhysicsWeight( tk::real alpha )
-{
-  tk::real t = std::clamp(
-    (alpha - solidPhysicsAlphaMin()) /
-    (solidPhysicsAlphaMax() - solidPhysicsAlphaMin()), 0.0, 1.0);
-  return t*t*(3.0 - 2.0*t);
-}
 
 //! \brief Get the index of the quantity d(g_il)/d(x_j)-d(g_ij)/d(x_l)
 //!  on the riemannDeriv array.
