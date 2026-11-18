@@ -1507,7 +1507,12 @@ class MultiSpecies {
                const std::vector< tk::real >& ul, tk::real x, tk::real y,
                tk::real z, tk::real t, const std::array< tk::real, 3 >& )
     {
-      return {{ ul, Problem::initialize( ncomp, mat_blk, x, y, z, t ) }};
+      auto ur = Problem::initialize( ncomp, mat_blk, x, y, z, t );
+      // initialize() returns only the conserved variables; append the
+      // temperature of the (uniform) background state so that both states have
+      // the layout expected by the Riemann solvers
+      ur.push_back( g_inputdeck.get< tag::ic, tag::temperature >() );
+      return {{ ul, std::move(ur) }};
     }
 
     // Other boundary condition types that do not depend on "Problem" should be
