@@ -68,7 +68,7 @@ module dg {
       entry void refine( const std::vector< tk::real >& l2ref );
       entry void initializeLinearSystem();
       entry void solveLinearSystem();
-      entry [reductiontarget] void aleMove( tk::real newdt );
+      entry [reductiontarget] void dtDone( tk::real newdt );
       entry void solve();
       entry void resized();
       entry void transferSol();
@@ -113,8 +113,7 @@ module dg {
         serial "nod" { writeFields( c, addedTets ); } }
 
       entry void wait4ale() {
-        when ownale_complete(), comale_complete() serial "ale"
-        { aleDone(); } }
+        when ownale_complete(), comale_complete() serial "ale" { finishStage(); } }
 
       entry void ownsol_complete();
       entry void comsol_complete();
